@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -18,6 +19,21 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 LOGGER = logging.getLogger("prepare_triples")
+
+
+def configure_hf_caches() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    cache_root = project_root / ".cache"
+    hf_home = cache_root / "huggingface"
+    transformers_cache = cache_root / "transformers"
+
+    os.environ.setdefault("HF_HOME", str(hf_home))
+    os.environ.setdefault("HF_DATASETS_CACHE", str(hf_home / "datasets"))
+    os.environ.setdefault("HF_HUB_CACHE", str(hf_home / "hub"))
+    os.environ.setdefault("TRANSFORMERS_CACHE", str(transformers_cache))
+
+    for path in [hf_home, hf_home / "datasets", hf_home / "hub", transformers_cache]:
+        path.mkdir(parents=True, exist_ok=True)
 
 
 @dataclass
@@ -141,6 +157,7 @@ def should_include(predicted: str, gold: str, only_wrong: bool) -> bool:
 
 def main() -> None:
     setup_logging()
+    configure_hf_caches()
     args = parse_args()
 
     dataset = load_dataset(args.dataset_name, args.dataset_config, split=args.split)
