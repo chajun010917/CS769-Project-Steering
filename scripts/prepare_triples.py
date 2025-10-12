@@ -211,7 +211,8 @@ def main() -> None:
     final_answer_pattern = args.final_answer_regex
 
     with output_path.open("w", encoding="utf-8") as sink:
-        for example in tqdm(dataset, desc="Collecting triples"):
+        progress_total = args.max_samples if args.max_samples is not None else len(dataset)
+        for example in tqdm(dataset, desc="Collecting triples", total=progress_total):
             stats["total_samples"] += 1
 
             prompt_text = example.get(args.prompt_field)
