@@ -20,6 +20,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from genalog.text.alignment import align_texts
 
 try:
     import umap
@@ -190,8 +191,9 @@ def build_teacher_forcing_text(prompt_text: str, chain_text: str, metadata: Dict
 
 
 def tokenize(tokenizer: AutoTokenizer, text: str, device: torch.device) -> Dict[str, torch.Tensor]:
-    encoded = tokenizer(text, return_tensors="pt")
-    return {key: tensor.to(device) for key, tensor in encoded.items()}
+    encoded = tokenizer(text, return_tensors="pt", return_attention_mask=True, return_offsets_mapping=True)
+    encoded = {key: value.to(device) if hasattr(value, "to") else value for key, value in encoded.items()}
+    return encoded
 
 
 def capture_hidden_states(
@@ -216,14 +218,34 @@ def token_strings(tokenizer: AutoTokenizer, input_ids: torch.Tensor) -> List[str
     return tokens
 
 
-def align_tokens(tokens_a: List[str], tokens_b: List[str]) -> List[Tuple[int, int]]:
-    from difflib import SequenceMatcher
+def align_tokens(
+    tokenizer: AutoTokenizer,
+    wrong_input: Dict[str, torch.Tensor],
+    right_input: Dict[str, torch.Tensor],
+) -> List[Tuple[int, int]]:
+    wrong_text = tokenizer.decode(wrong_input["input_ids"][0], skip_special_tokens=False)
+    right_text = tokenizer.decode(right_input["input_ids"][0], skip_special_tokens=False)
 
-    matcher = SequenceMatcher(a=tokens_a, b=tokens_b)
+    alignment = align_texts(wrong_text, right_text)
+    wrong_offsets = wrong_input["offset_mapping"][0].tolist()
+    right_offsets = right_input["offset_mapping"][0].tolist()
+
     matches: List[Tuple[int, int]] = []
-    for opcode, a0, a1, b0, b1 in matcher.get_opcodes():
-        if opcode == "equal":
-            matches.extend((ai, bi) for ai, bi in zip(range(a0, a1), range(b0, b1)))
+    for pair in alignment.matched_blocks:
+        wrong_span = pair.query_range
+        right_span = pair.reference_range
+        wrong_indices = [
+            idx
+            for idx, (start, end) in enumerate(wrong_offsets)
+            if start is not None and end is not None and start >= wrong_span.start and end <= wrong_span.end
+        ]
+        right_indices = [
+            idx
+            for idx, (start, end) in enumerate(right_offsets)
+            if start is not None and end is not None and start >= right_span.start and end <= right_span.end
+        ]
+        for w_idx, r_idx in zip(wrong_indices, right_indices):
+            matches.append((w_idx, r_idx))
     return matches
 
 
@@ -376,7 +398,7 @@ def main() -> None:
 
         wrong_tokens = token_strings(tokenizer, wrong_inputs["input_ids"].squeeze(0))
         right_tokens = token_strings(tokenizer, right_inputs["input_ids"].squeeze(0))
-        matches = align_tokens(wrong_tokens, right_tokens)
+        matches = align_tokens(tokenizer, wrong_inputs, right_inputs)
 
         sample_dir = args.output_dir / triple.sample_id
         sample_dir.mkdir(parents=True, exist_ok=True)

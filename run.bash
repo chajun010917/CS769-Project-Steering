@@ -36,7 +36,7 @@ python scripts/prepare_triples.py \
   --only-wrong \
   --output-path "${TRIPLES_OUT}"
 
-python scripts/prepare_triples.py --dataset-name "UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval" --split test --model-name "meta-llama/Meta-Llama-3.1-8B" --max-samples "5" --max-new-tokens "64" --only-wrong --output-path "artifacts/triples/triples_small.jsonl"
+python scripts/prepare_triples.py --dataset-name "UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval" --split test --model-name "meta-llama/Meta-Llama-3.1-8B-Instruct" --max-samples "50" --max-new-tokens "4096" --only-wrong --output-path "artifacts/triples/triples_sample.jsonl"
 
 # ---- step 2: capture hidden states + viz ----
 python scripts/collect_hidden_states.py \
