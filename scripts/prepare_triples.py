@@ -7,12 +7,13 @@ import argparse
 import json
 import logging
 import os
-import re
 import random
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
+import pandas as pd
 import torch
 from datasets import load_dataset
 from tqdm import tqdm
@@ -191,8 +192,17 @@ def main() -> None:
     configure_hf_caches()
     args = parse_args()
 
-    dataset = load_dataset(args.dataset_name, args.dataset_config, split=args.split)
+    raw_dataset = load_dataset(args.dataset_name, args.dataset_config, split=args.split)
+    dataset_frame = raw_dataset.to_pandas()
+    if "parsed_answer_correctness" in dataset_frame.columns:
+        dataset_frame = dataset_frame[dataset_frame["parsed_answer_correctness"] == True]
+    dataset_frame = dataset_frame.drop_duplicates(subset="id", keep="first")
+    examples = dataset_frame.to_dict(orient="records")
     rng = random.Random(args.seed)
+    rng.shuffle(examples)
+    if not examples:
+        LOGGER.error("No examples remain after filtering by parsed_answer_correctness.")
+        return
     tokenizer, model, device = load_model_and_tokenizer(args.model_name)
 
     output_path: Path = args.output_path
@@ -214,15 +224,10 @@ def main() -> None:
     final_answer_pattern = args.final_answer_regex
 
     with output_path.open("w", encoding="utf-8") as sink:
-        seen_ids: set[str] = set()
-        progress_total = args.max_samples if args.max_samples is not None else len(dataset)
-        for example in tqdm(dataset.shuffle(seed=args.seed), desc="Collecting triples", total=progress_total):
+        progress_total = args.max_samples if args.max_samples is not None else len(examples)
+        progress_total = min(progress_total, len(examples))
+        for example in tqdm(examples, desc="Collecting triples", total=progress_total):
             stats["total_samples"] += 1
-
-            sample_identifier = str(example.get("id", stats["total_samples"]))
-            if sample_identifier in seen_ids:
-                continue
-            seen_ids.add(sample_identifier)
 
             prompt_text = example.get(args.prompt_field)
             gold_answer = example.get(args.gold_answer_field)
