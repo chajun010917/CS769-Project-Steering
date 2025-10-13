@@ -47,4 +47,6 @@ python scripts/collect_hidden_states.py \
   --probe-max-samples "${PROBE_MAX}" \
   --max-samples "${MAX_SAMPLES}"
 
+python scripts/collect_hidden_states.py --triples-path "artifacts/triples/triples_sample.jsonl" --model-name "meta-llama/Meta-Llama-3.1-8B-Instruct" --layers "28 30" --probe-layer "30" --probe-max-samples "1000" --max-samples "50"
+
 echo "Done. Check artifacts/hidden_states/, artifacts/alignments/, and reports/hidden_state_viz/ for outputs."

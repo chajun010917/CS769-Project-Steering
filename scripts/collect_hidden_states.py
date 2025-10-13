@@ -9,18 +9,19 @@ import logging
 import os
 import random
 from dataclasses import dataclass
+from itertools import zip_longest
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import torch
+from Levenshtein import opcodes
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from genalog.text.alignment import align_texts
 
 try:
     import umap
@@ -192,7 +193,7 @@ def build_teacher_forcing_text(prompt_text: str, chain_text: str, metadata: Dict
 
 def tokenize(tokenizer: AutoTokenizer, text: str, device: torch.device) -> Dict[str, torch.Tensor]:
     encoded = tokenizer(text, return_tensors="pt", return_attention_mask=True, return_offsets_mapping=True)
-    encoded = {key: value.to(device) if hasattr(value, "to") else value for key, value in encoded.items()}
+    encoded = {key: value.to(device) if isinstance(value, torch.Tensor) else value for key, value in encoded.items()}
     return encoded
 
 
@@ -223,29 +224,14 @@ def align_tokens(
     wrong_input: Dict[str, torch.Tensor],
     right_input: Dict[str, torch.Tensor],
 ) -> List[Tuple[int, int]]:
-    wrong_text = tokenizer.decode(wrong_input["input_ids"][0], skip_special_tokens=False)
-    right_text = tokenizer.decode(right_input["input_ids"][0], skip_special_tokens=False)
+    wrong_tokens = tokenizer.convert_ids_to_tokens(wrong_input["input_ids"][0])
+    right_tokens = tokenizer.convert_ids_to_tokens(right_input["input_ids"][0])
 
-    alignment = align_texts(wrong_text, right_text)
-    wrong_offsets = wrong_input["offset_mapping"][0].tolist()
-    right_offsets = right_input["offset_mapping"][0].tolist()
-
+    alignment_opcodes = opcodes(wrong_tokens, right_tokens)
     matches: List[Tuple[int, int]] = []
-    for pair in alignment.matched_blocks:
-        wrong_span = pair.query_range
-        right_span = pair.reference_range
-        wrong_indices = [
-            idx
-            for idx, (start, end) in enumerate(wrong_offsets)
-            if start is not None and end is not None and start >= wrong_span.start and end <= wrong_span.end
-        ]
-        right_indices = [
-            idx
-            for idx, (start, end) in enumerate(right_offsets)
-            if start is not None and end is not None and start >= right_span.start and end <= right_span.end
-        ]
-        for w_idx, r_idx in zip(wrong_indices, right_indices):
-            matches.append((w_idx, r_idx))
+    for tag, i1, i2, j1, j2 in alignment_opcodes:
+        if tag == "equal":
+            matches.extend(zip(range(i1, i2), range(j1, j2)))
     return matches
 
 
