@@ -1,52 +1,155 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ---- Initialize conda ----
+# Source conda.sh to enable conda commands in this script
+if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/anaconda3/etc/profile.d/conda.sh"
+else
+    echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
+    exit 1
+fi
+
 # ---- config for the smoke test ----
-MODEL_ID="meta-llama/Meta-Llama-3.1-8B"
-TRIPLES_OUT="artifacts/triples/triples_small.jsonl"
-MAX_SAMPLES=5
+MODEL_ID="meta-llama/Llama-3.1-8B-Instruct"
+MAX_SAMPLES=100
 MAX_NEW_TOKENS=1024
-LAYERS="28 30"
-PROBE_LAYER=30
-PROBE_MAX=1000
+
+# Layers to analyze (space-separated list)
+# For Llama-3.1-8B: layers 0-31 available
+# Focusing on layer 28 which shows good separation with mean pooling
+LAYERS="26 27 28 29 30 31"
+
+# Pooling method: mean, last_token, or per_token
+POOLING_METHOD="last_token"
+
+PROBE_MAX=1000  # Max samples per layer for probe data
+DATASET_PATH="UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval"
+DATASET_CONFIG="ALL"
 
 # ---- setup ----
-conda create -n steering python=3.10
+
+# Create environment if it doesn't exist
+if ! conda info --envs | grep -q '^steering'; then
+  conda create -y -n steering python=3.10
+fi
 conda activate steering
 export HF_HOME="$(pwd)/.cache/huggingface"
 export HF_DATASETS_CACHE="${HF_HOME}/datasets"
 export HF_HUB_CACHE="${HF_HOME}/hub"
 export TRANSFORMERS_CACHE="$(pwd)/.cache/transformers"
 mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
-pip install --upgrade pip
-pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-pip install -r requirements.txt
 
+echo "Installing requirements..."
+pip install -q --upgrade pip
+pip3 install -q torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install -q -r requirements.txt
 
 # If first time using HF Hub, uncomment and run once (will prompt for token)
-# hf auth login
+#hf auth login
 
-# ---- step 1: generate small triple set ----
-python scripts/prepare_triples.py \
-  --dataset-name "UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval" \
-  --split test \
-  --model-name "${MODEL_ID}" \
-  --max-samples "${MAX_SAMPLES}" \
-  --max-new-tokens "${MAX_NEW_TOKENS}" \
-  --only-wrong \
-  --output-path "${TRIPLES_OUT}"
+# ---- step 1: generate triple set ----
+TRIPLES_OUT="artifacts/triples/triples_small.jsonl"
 
-python scripts/prepare_triples.py --dataset-name "UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval" --split test --model-name "meta-llama/Meta-Llama-3.1-8B-Instruct" --max-samples "50" --max-new-tokens "4096" --only-wrong --output-path "artifacts/triples/triples_sample.jsonl"
+if [ -f "${TRIPLES_OUT}" ]; then
+  echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
+  echo "To regenerate, delete the file and rerun."
+else
+  echo "=== Step 1: Generating triples ==="
+  export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+  export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+  python scripts/prepare_triples.py \
+    --dataset-name "${DATASET_PATH}" \
+    --split test \
+    --model-name "${MODEL_ID}" \
+    --max-samples "${MAX_SAMPLES}" \
+    --max-new-tokens "${MAX_NEW_TOKENS}" \
+    --only-wrong \
+    --output-path "${TRIPLES_OUT}"
+fi
 
-# ---- step 2: capture hidden states + viz ----
+# ---- step 2: capture hidden states ----
+echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
+# Note: collect_hidden_states.py will generate probe data for all layers specified
 python scripts/collect_hidden_states.py \
   --triples-path "${TRIPLES_OUT}" \
   --model-name "${MODEL_ID}" \
   --layers ${LAYERS} \
-  --probe-layer "${PROBE_LAYER}" \
   --probe-max-samples "${PROBE_MAX}" \
-  --max-samples "${MAX_SAMPLES}"
+  --max-samples "${MAX_SAMPLES}" \
+  --pooling-method "${POOLING_METHOD}"
 
-python scripts/collect_hidden_states.py --triples-path "artifacts/triples/triples_sample.jsonl" --model-name "meta-llama/Meta-Llama-3.1-8B-Instruct" --layers "28 30" --probe-layer "30" --probe-max-samples "1000" --max-samples "50"
+echo "Generated probe data for layers: ${LAYERS}"
 
-echo "Done. Check artifacts/hidden_states/, artifacts/alignments/, and reports/hidden_state_viz/ for outputs."
+# ---- step 3: compute probes and vectors for multiple layers ----
+echo "=== Step 3: Computing probes and vectors ==="
+ANALYSIS_OUTPUT="artifacts/probe_analysis"
+
+# Process each layer from the LAYERS variable
+for layer in ${LAYERS}; do
+  PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+  
+  if [ -f "${PROBE_DATA}" ]; then
+    echo "  Computing probes for layer ${layer}..."
+    python scripts/compute_probes.py \
+      --probe-data-path "${PROBE_DATA}" \
+      --output-dir "${ANALYSIS_OUTPUT}" \
+      --seed 42
+  else
+    echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
+  fi
+done
+
+# ---- step 4: generate visualizations for multiple layers ----
+echo "=== Step 4: Generating visualizations ==="
+PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
+
+# Plot each layer that was computed
+for layer in ${LAYERS}; do
+  METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
+  
+  if [ -f "${METRICS_FILE}" ]; then
+    echo "  Plotting layer ${layer}..."
+    python scripts/plot_probes.py \
+      --analysis-dir "${ANALYSIS_OUTPUT}" \
+      --layer ${layer} \
+      --output-dir "${PLOT_OUTPUT}"
+  else
+    echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
+  fi
+done
+
+# ---- step 5: analyze critical tokens (only for per_token pooling) ----
+if [ "${POOLING_METHOD}" = "per_token" ]; then
+  echo "=== Step 5: Analyzing critical token positions ==="
+  CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
+
+  for layer in ${LAYERS}; do
+    PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+    
+    if [ -f "${PROBE_DATA}" ]; then
+      echo "  Analyzing critical tokens for layer ${layer}..."
+      python scripts/analyze_critical_tokens.py \
+        --probe-data-path "${PROBE_DATA}" \
+        --alignments-dir "artifacts/alignments" \
+        --output-dir "${CRITICAL_TOKENS_OUTPUT}" \
+        --top-k 20
+    else
+      echo "  Warning: Probe data not found for layer ${layer}"
+    fi
+  done
+else
+  echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
+fi
+
+echo ""
+echo "=== Done! ==="
+echo "Results:"
+echo "  - Triples: ${TRIPLES_OUT}"
+echo "  - Hidden states: artifacts/hidden_states/"
+echo "  - Alignments: artifacts/alignments/"
+echo "  - Probe data: artifacts/probe_data/"
+echo "  - Computed probes: ${ANALYSIS_OUTPUT}/"
+echo "  - Visualizations: ${PLOT_OUTPUT}/"
+echo ""
+echo "Processed layers: ${LAYERS}"
