@@ -1,5 +1,9 @@
 **/.doc/**
 **/.agent/**
-# **/artifacts/**
-**/.cache/**
+**/artifacts/*
+!**/artifacts/triples/
+.cache
 **/.ipynb_checkpoints/**
+*.
+**/__pycache__
+/README
