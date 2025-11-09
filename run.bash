@@ -142,6 +142,57 @@ else
   echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
 fi
 
+# ---- step 6: compute steering vectors ----
+echo "=== Step 6: Computing steering vectors from last_token representations ==="
+STEERING_VECTORS_DIR="artifacts/steering_vectors"
+
+# Only compute steering vectors if using last_token pooling
+if [ "${POOLING_METHOD}" = "last_token" ]; then
+  echo "Computing steering vectors for layers: ${LAYERS}"
+  python scripts/compute_steering_vectors.py \
+    --triples-path "${TRIPLES_OUT}" \
+    --model-name "${MODEL_ID}" \
+    --layers ${LAYERS} \
+    --output-dir "${STEERING_VECTORS_DIR}" \
+    --max-samples "${MAX_SAMPLES}"
+  
+  echo "Steering vectors computed and saved to ${STEERING_VECTORS_DIR}"
+else
+  echo "=== Step 6: Skipping steering vector computation (only applicable for last_token pooling) ==="
+fi
+
+# ---- step 7: evaluate steering ----
+echo "=== Step 7: Evaluating steering vectors ==="
+STEERING_EVAL_DIR="artifacts/steering_evaluation"
+
+# Only evaluate steering if vectors were computed
+if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; then
+  # Evaluate each layer separately (or all together - you can modify this)
+  # For now, evaluate with the best layer (typically layer 28)
+  BEST_LAYER="28"  # Can be changed based on visualization results
+  
+  # Check if steering vector exists for the best layer
+  if [ -f "${STEERING_VECTORS_DIR}/layer${BEST_LAYER}_steering_vector.npy" ]; then
+    echo "Evaluating steering for layer ${BEST_LAYER}..."
+    python scripts/evaluate_steering.py \
+      --triples-path "${TRIPLES_OUT}" \
+      --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+      --model-name "${MODEL_ID}" \
+      --layers ${BEST_LAYER} \
+      --steering-coefficient 1.0 \
+      --output-dir "${STEERING_EVAL_DIR}" \
+      --max-samples "${MAX_SAMPLES}" \
+      --max-new-tokens "${MAX_NEW_TOKENS}" \
+      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+    
+    echo "Steering evaluation complete. Results saved to ${STEERING_EVAL_DIR}"
+  else
+    echo "  Warning: Steering vector not found for layer ${BEST_LAYER}, skipping evaluation"
+  fi
+else
+  echo "=== Step 7: Skipping steering evaluation (steering vectors not computed) ==="
+fi
+
 echo ""
 echo "=== Done! ==="
 echo "Results:"
@@ -151,5 +202,9 @@ echo "  - Alignments: artifacts/alignments/"
 echo "  - Probe data: artifacts/probe_data/"
 echo "  - Computed probes: ${ANALYSIS_OUTPUT}/"
 echo "  - Visualizations: ${PLOT_OUTPUT}/"
+if [ "${POOLING_METHOD}" = "last_token" ]; then
+  echo "  - Steering vectors: ${STEERING_VECTORS_DIR}/"
+  echo "  - Steering evaluation: ${STEERING_EVAL_DIR}/"
+fi
 echo ""
 echo "Processed layers: ${LAYERS}"
