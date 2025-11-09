@@ -102,8 +102,8 @@ def parse_args() -> argparse.Namespace:
         "--pooling-method",
         type=str,
         default="mean",
-        choices=["mean", "last_token", "per_token"],
-        help="Pooling method: 'mean' (average all tokens), 'last_token' (final token), 'per_token' (each matched token).",
+        choices=["mean", "last_token", "per_token", "before_final_answer"],
+        help="Pooling method: 'mean' (average all tokens), 'last_token' (final token), 'per_token' (each matched token), 'before_final_answer' (token before 'Final answer').",
     )
     return parser.parse_args()
 
@@ -187,6 +187,52 @@ def save_alignment(
     alignment_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def find_position_before_final_answer(tokens: List[str]) -> int:
+    """
+    Find the token position just before "Final answer" or "final answer" appears.
+
+    Args:
+        tokens: List of token strings
+
+    Returns:
+        Index of the token just before "final answer" starts, or -1 if not found
+    """
+    # Common patterns for "final answer" in tokenization
+    # Could be ["Final", " answer"], ["final", " answer"], ["Final", "answer"], etc.
+
+    for i in range(len(tokens) - 1):
+        # Check current and next token
+        current = tokens[i].lower().strip()
+        next_token = tokens[i + 1].lower().strip() if i + 1 < len(tokens) else ""
+
+        # Pattern 1: "Final" or "final" followed by "answer" or " answer"
+        if current in ["final", "▁final"] and "answer" in next_token:
+            # Return position before "Final"
+            return max(0, i - 1)
+
+        # Pattern 2: Single token "finalanswer" or "final_answer"
+        if "final" in current and "answer" in current:
+            return max(0, i - 1)
+
+    # Fallback: try searching in reconstructed text
+    # Join tokens and search for "final answer" case-insensitively
+    text = "".join(tokens).lower()
+    final_answer_pos = text.find("finalanswer")
+    if final_answer_pos == -1:
+        final_answer_pos = text.find("final answer")
+
+    if final_answer_pos != -1:
+        # Count tokens up to this position
+        char_count = 0
+        for i, token in enumerate(tokens):
+            char_count += len(token)
+            if char_count >= final_answer_pos:
+                return max(0, i - 1)
+
+    # If not found, return -1 (will use last token as fallback)
+    return -1
+
+
 def main() -> None:
     setup_logging()
     configure_hf_caches()
@@ -205,6 +251,37 @@ def main() -> None:
 
     # Load model
     model = ModelWrapper(args.model_name, device=args.device)
+
+    # Print GPU information
+    import os
+    num_gpus = torch.cuda.device_count()
+    visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES', 'All')
+    print(f"\n{'='*80}")
+    print(f"GPU CONFIGURATION:")
+    print(f"  Number of GPUs available: {num_gpus}")
+    print(f"  CUDA_VISIBLE_DEVICES: {visible_devices}")
+    print(f"  PyTorch CUDA available: {torch.cuda.is_available()}")
+
+    # Print device map (how model is distributed across GPUs)
+    if hasattr(model.model, 'hf_device_map'):
+        print(f"\n  Model Distribution Across GPUs:")
+        device_map = model.model.hf_device_map
+        device_counts = {}
+        for name, device in device_map.items():
+            device_str = str(device)
+            device_counts[device_str] = device_counts.get(device_str, 0) + 1
+
+        for device, count in sorted(device_counts.items()):
+            print(f"    {device}: {count} layers/components")
+
+    # Print memory usage per GPU
+    if torch.cuda.is_available():
+        print(f"\n  GPU Memory Usage:")
+        for i in range(num_gpus):
+            allocated = torch.cuda.memory_allocated(i) / 1024**3  # Convert to GB
+            reserved = torch.cuda.memory_reserved(i) / 1024**3
+            print(f"    GPU {i}: Allocated={allocated:.2f} GB, Reserved={reserved:.2f} GB")
+    print(f"{'='*80}\n")
 
     # Create output directories
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -319,6 +396,35 @@ def main() -> None:
                         layer_data["labels"].append(1)  # 1 = right
                         layer_data["token_positions"].append(right_idx)
                         layer_data["sample_ids"].append(triple.sample_id)
+
+            elif args.pooling_method == "before_final_answer":
+                # Token just before "Final answer" appears
+                if len(layer_data["features"]) < args.probe_max_samples * 2:
+                    # Find position before "Final answer" in wrong chain
+                    wrong_pos = find_position_before_final_answer(wrong_tokens)
+                    if wrong_pos == -1:  # Not found, fallback to last token
+                        wrong_pos = len(layer_tensor_wrong) - 1
+                        LOGGER.warning("Sample %s (wrong): 'Final answer' not found, using last token", triple.sample_id)
+
+                    # Find position before "Final answer" in correct chain
+                    right_pos = find_position_before_final_answer(right_tokens)
+                    if right_pos == -1:  # Not found, fallback to last token
+                        right_pos = len(layer_tensor_right) - 1
+                        LOGGER.warning("Sample %s (right): 'Final answer' not found, using last token", triple.sample_id)
+
+                    # Extract hidden states at these positions
+                    wrong_before_answer = layer_tensor_wrong[wrong_pos].numpy()
+                    right_before_answer = layer_tensor_right[right_pos].numpy()
+
+                    layer_data["features"].append(wrong_before_answer)
+                    layer_data["labels"].append(0)  # 0 = wrong
+                    layer_data["token_positions"].append(wrong_pos)
+                    layer_data["sample_ids"].append(triple.sample_id)
+
+                    layer_data["features"].append(right_before_answer)
+                    layer_data["labels"].append(1)  # 1 = right
+                    layer_data["token_positions"].append(right_pos)
+                    layer_data["sample_ids"].append(triple.sample_id)
 
         processed += 1
 

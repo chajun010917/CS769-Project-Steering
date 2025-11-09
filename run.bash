@@ -3,8 +3,16 @@ set -euo pipefail
 
 # ---- Initialize conda ----
 # Source conda.sh to enable conda commands in this script
-if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
-    source "$HOME/anaconda3/etc/profile.d/conda.sh"
+# Try common conda installation locations
+CONDA_SH=""
+for conda_path in "$HOME/anaconda3" "$HOME/miniconda3" "$CONDA_PREFIX/../.." "$(dirname $(dirname $(which conda 2>/dev/null) 2>/dev/null) 2>/dev/null)"; do
+    if [ -f "$conda_path/etc/profile.d/conda.sh" ]; then
+        CONDA_SH="$conda_path/etc/profile.d/conda.sh"
+        break
+    fi
+done
+if [ -n "$CONDA_SH" ]; then
+    source "$CONDA_SH"
 else
     echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
     exit 1
@@ -20,8 +28,8 @@ MAX_NEW_TOKENS=1024
 # Focusing on layer 28 which shows good separation with mean pooling
 LAYERS="26 27 28 29 30 31"
 
-# Pooling method: mean, last_token, or per_token
-POOLING_METHOD="last_token"
+# Pooling method: mean, last_token, or per_token, before_final_answer
+POOLING_METHOD="before_final_answer"
 
 PROBE_MAX=1000  # Max samples per layer for probe data
 DATASET_PATH="UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval"
