@@ -247,7 +247,7 @@ def main() -> None:
         # Get tokens and align
         wrong_tokens = model.token_strings(wrong_inputs["input_ids"].squeeze(0))
         right_tokens = model.token_strings(right_inputs["input_ids"].squeeze(0))
-        matches = align_tokens(model, wrong_inputs, right_inputs)
+        matches = align_tokens(model, wrong_inputs, right_inputs)   # get input tokens which match exactly
 
         # Save hidden states per sample
         sample_dir = args.output_dir / triple.sample_id
