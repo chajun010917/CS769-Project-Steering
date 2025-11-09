@@ -3,12 +3,20 @@ set -euo pipefail
 
 # ---- Initialize conda ----
 # Source conda.sh to enable conda commands in this script
-# if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
-#     source "$HOME/anaconda3/etc/profile.d/conda.sh"
-# else
-#     echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
-#     exit 1
-# fi
+# Try common conda installation locations
+CONDA_SH=""
+for conda_path in "$HOME/anaconda3" "$HOME/miniconda3" "$CONDA_PREFIX/../.." "$(dirname $(dirname $(which conda 2>/dev/null) 2>/dev/null) 2>/dev/null)"; do
+    if [ -f "$conda_path/etc/profile.d/conda.sh" ]; then
+        CONDA_SH="$conda_path/etc/profile.d/conda.sh"
+        break
+    fi
+done
+if [ -n "$CONDA_SH" ]; then
+    source "$CONDA_SH"
+else
+    echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
+    exit 1
+fi
 
 # ---- config for the smoke test ----
 MODEL_ID="meta-llama/Llama-3.1-8B-Instruct"
