@@ -64,6 +64,24 @@ else
   exit 1
 fi
 
+# if [ -f "${TRIPLES_OUT}" ]; then
+#   echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
+#   echo "To regenerate, delete the file and rerun."
+# else
+#   echo "=== Step 1: Generating triples ==="
+#   export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+#   export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+#   python scripts/prepare_triples.py \
+#     --dataset-name "${DATASET_PATH}" \
+#     --split test \
+#     --model-name "${MODEL_ID}" \
+#     --max-samples "${MAX_SAMPLES}" \
+#     --max-new-tokens "${MAX_NEW_TOKENS}" \
+#     --only-wrong \
+#     --output-path "${TRIPLES_OUT}" \
+#     --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+# fi
+
 # # ---- step 2: capture hidden states ----
 # echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
 # # Note: collect_hidden_states.py will generate probe data for all layers specified
@@ -113,6 +131,10 @@ fi
 #   fi
 # done
 
+# ---- step 5: analyze critical tokens (only for per_token pooling) ----
+# if [ "${POOLING_METHOD}" = "per_token" ]; then
+#   echo "=== Step 5: Analyzing critical token positions ==="
+#   CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
 # # ---- step 5: analyze critical tokens (only for per_token pooling) ----
 # if [ "${POOLING_METHOD}" = "per_token" ]; then
 #   echo "=== Step 5: Analyzing critical token positions ==="
@@ -136,10 +158,10 @@ fi
 #   echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
 # fi
 
-# # ---- step 6: compute steering vectors ----
-# echo "=== Step 6: Computing steering vectors with gradient-selected tokens ==="
+# ---- step 6: compute steering vectors ----
+#echo "=== Step 6: Computing steering vectors from last_token representations ==="
 STEERING_VECTORS_DIR="artifacts/steering_vectors"
-
+ 
 # python scripts/compute_steering_vectors.py \
 #   --triples-path "${TRIPLES_PATH}" \
 #   --model-name "${MODEL_ID}" \
@@ -158,7 +180,7 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
   # Evaluate each layer separately (or all together - you can modify this)
   # For now, evaluate with the best layer (typically layer 28)
   # To test a specific layer (e.g., layer 26), change BEST_LAYER="26"
-  BEST_LAYER="29"  # Can be changed based on visualization results  # can add a list of layers here
+  BEST_LAYER="30"  # Can be changed based on visualization results  # can add a list of layers here
   
   # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
   # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
