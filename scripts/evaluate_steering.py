@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
-import torch
 from tqdm import tqdm
 
 from model_wrapper import ModelWrapper
@@ -170,6 +169,9 @@ def main() -> None:
         "degradations": 0,  # Cases where steering broke correct predictions
     }
 
+    cnt = 0
+    cnt1 = 0
+
     # Evaluate each triple
     for triple in tqdm(triples, desc="Evaluating steering"):
         sample_id = triple.get("sample_id", "unknown")
@@ -178,7 +180,10 @@ def main() -> None:
         metadata = triple.get("metadata", {})
         
         # Reconstruct prompt using template from metadata
-        formatted_prompt = reconstruct_prompt(metadata, prompt_text)
+        formatted_prompt = reconstruct_prompt(metadata, prompt_text)    # this contains the {questions} and then the {prompt_template}
+        # if cnt == 0:
+        #     print(formatted_prompt)
+        #     cnt += 1
 
         # Generate without steering
         try:
@@ -190,6 +195,10 @@ def main() -> None:
                 system_prompt=args.system_prompt,
             )
             predicted_no_steering = extract_final_answer(response_no_steering)
+            # if cnt == 0:
+            #     print(f"No steering: {predicted_no_steering}")
+            #     print(f"Response no steering: {response_no_steering}")
+            #     cnt += 1
             correct_no_steering = answers_match(predicted_no_steering, correct_answer)
         except Exception as e:
             LOGGER.warning("Error generating without steering for sample %s: %s", sample_id, e)
@@ -199,12 +208,10 @@ def main() -> None:
 
         # Generate with steering
         try:
-            # Convert steering vectors to torch tensors (will be handled by generate_with_steering)
-            steering_tensors = {layer_id: torch.from_numpy(vec) for layer_id, vec in steering_vectors.items()}
-            
+            # Pass numpy arrays directly - generate_with_steering will handle conversion and device placement
             response_with_steering = model.generate_with_steering(
                 formatted_prompt,
-                steering_vectors=steering_tensors,
+                steering_vectors=steering_vectors,
                 steering_coefficient=args.steering_coefficient,
                 max_new_tokens=args.max_new_tokens,
                 temperature=0.0,
@@ -212,6 +219,11 @@ def main() -> None:
                 system_prompt=args.system_prompt,
             )
             predicted_with_steering = extract_final_answer(response_with_steering)
+            print(f"With steering: {predicted_with_steering}")
+            # if cnt1 == 0:
+            #     print(f"With steering: {predicted_with_steering}")
+            #     print(f"Response with steering: {response_with_steering}")
+            #     cnt1 += 1
             correct_with_steering = answers_match(predicted_with_steering, correct_answer)
         except Exception as e:
             LOGGER.warning("Error generating with steering for sample %s: %s", sample_id, e)
@@ -235,6 +247,8 @@ def main() -> None:
             results["improvements"] += 1
         elif correct_no_steering and not correct_with_steering:
             results["degradations"] += 1
+
+        print(f"results['with_steering']['correct']: {results['with_steering']['correct']}")
 
         # Store predictions
         results["without_steering"]["predictions"].append({

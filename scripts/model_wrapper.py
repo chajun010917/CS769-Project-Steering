@@ -249,64 +249,109 @@ class ModelWrapper:
             # Default: apply steering to all generated tokens (after prompt)
             instruction_end_pos = input_ids.shape[1]
         
-        # Convert steering vectors to tensors on the correct device
-        steering_tensors = {}
-        for layer_id, vec in steering_vectors.items():
-            if isinstance(vec, np.ndarray):
-                vec = torch.from_numpy(vec)
-            # Ensure vector is on the same device as the model and has correct dtype
-            if hasattr(self.model, 'device'):
-                # Try to get device from model's first parameter
-                device = next(self.model.parameters()).device
-            else:
-                device = self.device
-            vec = vec.to(device).to(self.dtype)
-            steering_tensors[layer_id] = vec * steering_coefficient
-
         # Register forward hooks to inject steering vectors
         hooks = []
         
         def create_steering_hook(layer_id: int, steering_vec: torch.Tensor, start_pos: int):
             """Create a hook that adds steering vector to hidden states after the layer."""
+            # Track if we've seen the initial prompt pass
+            is_initial_pass = True
+            
             def hook(module, input_tuple, output):
+                nonlocal is_initial_pass
+                
                 # For Llama models, output is a tuple: (hidden_states, past_key_value, ...)
                 # We need to modify hidden_states
                 if isinstance(output, tuple):
                     hidden_states = output[0]  # [batch_size, seq_len, hidden_dim]
                     batch_size, seq_len, hidden_dim = hidden_states.shape
                     
-                    # Apply steering only to tokens at or after instruction_end_pos
-                    if seq_len > start_pos:
+                    # Determine if we should apply steering:
+                    # 1. During initial pass (seq_len == start_pos): Don't apply steering to prompt
+                    # 2. During generation (seq_len < start_pos, typically seq_len == 1): Apply steering to all tokens
+                    # 3. If seq_len > start_pos: Apply steering to tokens after start_pos (shouldn't happen with KV cache, but handle it)
+                    
+                    should_steer = False
+                    steer_start_idx = 0
+                    steer_end_idx = seq_len
+                    
+                    if is_initial_pass and seq_len == start_pos:
+                        # Initial prompt pass - don't apply steering
+                        is_initial_pass = False
+                        should_steer = False
+                    elif seq_len < start_pos:
+                        # Generation mode (KV cache): seq_len is typically 1
+                        # Apply steering to all tokens in this forward pass
+                        should_steer = True
+                        steer_start_idx = 0
+                        steer_end_idx = seq_len
+                    elif seq_len > start_pos:
+                        # Edge case: more tokens than prompt (shouldn't happen with KV cache)
+                        # Apply steering only to generated tokens
+                        should_steer = True
+                        steer_start_idx = start_pos
+                        steer_end_idx = seq_len
+                    # If seq_len == start_pos and not initial pass, it shouldn't happen, but don't steer
+                    
+                    if should_steer:
+                        # print(f"Steering: seq_len: {seq_len}, start_pos: {start_pos}")
                         # Create a new tensor to avoid in-place modification issues
                         modified_hidden = hidden_states.clone()
                         
+                        # Calculate number of tokens to steer
+                        num_tokens_to_steer = steer_end_idx - steer_start_idx
+                        
                         # Expand steering vector to match batch and sequence dimensions
                         # steering_vec: [hidden_dim] -> [1, 1, hidden_dim] then broadcast
-                        num_tokens_to_steer = seq_len - start_pos
                         steering_add = steering_vec.unsqueeze(0).unsqueeze(0)  # [1, 1, hidden_dim]
                         steering_add = steering_add.expand(batch_size, num_tokens_to_steer, hidden_dim)
                         
-                        # Add steering vector to positions at and after start_pos
-                        modified_hidden[:, start_pos:, :] = modified_hidden[:, start_pos:, :] + steering_add
+                        # Add steering vector to the appropriate positions
+                        modified_hidden[:, steer_start_idx:steer_end_idx, :] = (
+                            modified_hidden[:, steer_start_idx:steer_end_idx, :] + steering_add
+                        )
                         
                         # Return modified output tuple
                         return (modified_hidden,) + output[1:]
                     else:
-                        # No steering needed if sequence is shorter than start_pos
+                        # Mark that we've completed the initial pass
+                        if is_initial_pass:
+                            is_initial_pass = False
                         return output
                 else:
                     # If output is not a tuple, it's just hidden_states
                     hidden_states = output
                     batch_size, seq_len, hidden_dim = hidden_states.shape
                     
-                    if seq_len > start_pos:
+                    # Same logic as above
+                    should_steer = False
+                    steer_start_idx = 0
+                    steer_end_idx = seq_len
+                    
+                    if is_initial_pass and seq_len == start_pos:
+                        is_initial_pass = False
+                        should_steer = False
+                    elif seq_len < start_pos:
+                        should_steer = True
+                        steer_start_idx = 0
+                        steer_end_idx = seq_len
+                    elif seq_len > start_pos:
+                        should_steer = True
+                        steer_start_idx = start_pos
+                        steer_end_idx = seq_len
+                    
+                    if should_steer:
                         modified_hidden = hidden_states.clone()
-                        num_tokens_to_steer = seq_len - start_pos
+                        num_tokens_to_steer = steer_end_idx - steer_start_idx
                         steering_add = steering_vec.unsqueeze(0).unsqueeze(0)
                         steering_add = steering_add.expand(batch_size, num_tokens_to_steer, hidden_dim)
-                        modified_hidden[:, start_pos:, :] = modified_hidden[:, start_pos:, :] + steering_add
+                        modified_hidden[:, steer_start_idx:steer_end_idx, :] = (
+                            modified_hidden[:, steer_start_idx:steer_end_idx, :] + steering_add
+                        )
                         return modified_hidden
                     else:
+                        if is_initial_pass:
+                            is_initial_pass = False
                         return output
             
             return hook
@@ -316,14 +361,27 @@ class ModelWrapper:
             # For Llama models, layers are at model.model.layers[layer_id]
             if hasattr(self.model, 'model') and hasattr(self.model.model, 'layers'):
                 layers_module = self.model.model.layers
-                for layer_id, steering_vec in steering_tensors.items():
-                    if layer_id < len(layers_module):
-                        hook = layers_module[layer_id].register_forward_hook(
-                            create_steering_hook(layer_id, steering_vec, instruction_end_pos)
-                        )
-                        hooks.append(hook)
-                    else:
+                for layer_id, vec in steering_vectors.items():
+                    if layer_id >= len(layers_module):
                         LOGGER.warning(f"Layer {layer_id} not found in model (max: {len(layers_module)-1})")
+                        continue
+                    
+                    # Get the device of this specific layer
+                    layer_module = layers_module[layer_id]
+                    # Get device from any parameter of this layer (they should all be on the same device)
+                    layer_device = next(layer_module.parameters()).device
+                    
+                    # Convert steering vector to tensor and move to layer's device
+                    if isinstance(vec, np.ndarray):
+                        vec = torch.from_numpy(vec)
+                    steering_vec = vec.to(layer_device).to(self.dtype) * steering_coefficient
+                    
+                    # Register hook with steering vector on the correct device
+                    hook = layer_module.register_forward_hook(
+                        create_steering_hook(layer_id, steering_vec, instruction_end_pos)
+                    )
+                    hooks.append(hook)
+                    LOGGER.debug(f"Registered steering hook for layer {layer_id} on device {layer_device}")
             else:
                 LOGGER.error("Model structure not recognized for steering injection")
                 raise ValueError("Cannot inject steering vectors: model structure not supported")
