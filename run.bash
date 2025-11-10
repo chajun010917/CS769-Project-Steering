@@ -3,12 +3,12 @@ set -euo pipefail
 
 # ---- Initialize conda ----
 # Source conda.sh to enable conda commands in this script
-if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
-    source "$HOME/anaconda3/etc/profile.d/conda.sh"
-else
-    echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
-    exit 1
-fi
+# if [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+#     source "$HOME/anaconda3/etc/profile.d/conda.sh"
+# else
+#     echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
+#     exit 1
+# fi
 
 # ---- config for the smoke test ----
 MODEL_ID="meta-llama/Llama-3.1-8B-Instruct"
@@ -30,20 +30,20 @@ DATASET_CONFIG="ALL"
 # ---- setup ----
 
 # Create environment if it doesn't exist
-if ! conda info --envs | grep -q '^steering'; then
-  conda create -y -n steering python=3.10
-fi
-conda activate steering
+# if ! conda info --envs | grep -q '^steering'; then
+#   conda create -y -n steering python=3.10
+# fi
+# conda activate steering
 export HF_HOME="$(pwd)/.cache/huggingface"
 export HF_DATASETS_CACHE="${HF_HOME}/datasets"
 export HF_HUB_CACHE="${HF_HOME}/hub"
 export TRANSFORMERS_CACHE="$(pwd)/.cache/transformers"
 mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
 
-echo "Installing requirements..."
-pip install -q --upgrade pip
-pip3 install -q torch torchvision --index-url https://download.pytorch.org/whl/cu118
-pip install -q -r requirements.txt
+# echo "Installing requirements..."
+# pip install -q --upgrade pip
+# pip3 install -q torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# pip install -q -r requirements.txt
 
 # If first time using HF Hub, uncomment and run once (will prompt for token)
 #hf auth login
@@ -69,55 +69,55 @@ else
 fi
 
 # ---- step 2: capture hidden states ----
-echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
-# Note: collect_hidden_states.py will generate probe data for all layers specified
-python scripts/collect_hidden_states.py \
-  --triples-path "${TRIPLES_OUT}" \
-  --model-name "${MODEL_ID}" \
-  --layers ${LAYERS} \
-  --probe-max-samples "${PROBE_MAX}" \
-  --max-samples "${MAX_SAMPLES}" \
-  --pooling-method "${POOLING_METHOD}"
+# echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
+# # Note: collect_hidden_states.py will generate probe data for all layers specified
+# python scripts/collect_hidden_states.py \
+#   --triples-path "${TRIPLES_OUT}" \
+#   --model-name "${MODEL_ID}" \
+#   --layers ${LAYERS} \
+#   --probe-max-samples "${PROBE_MAX}" \
+#   --max-samples "${MAX_SAMPLES}" \
+#   --pooling-method "${POOLING_METHOD}"
 
-echo "Generated probe data for layers: ${LAYERS}"
+# echo "Generated probe data for layers: ${LAYERS}"
 
 # ---- step 3: compute probes and vectors for multiple layers ----
-echo "=== Step 3: Computing probes and vectors ==="
-ANALYSIS_OUTPUT="artifacts/probe_analysis"
+# echo "=== Step 3: Computing probes and vectors ==="
+# ANALYSIS_OUTPUT="artifacts/probe_analysis"
 
-# Process each layer from the LAYERS variable
-for layer in ${LAYERS}; do
-  PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+# # Process each layer from the LAYERS variable
+# for layer in ${LAYERS}; do
+#   PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
   
-  if [ -f "${PROBE_DATA}" ]; then
-    echo "  Computing probes for layer ${layer}..."
-    python scripts/compute_probes.py \
-      --probe-data-path "${PROBE_DATA}" \
-      --output-dir "${ANALYSIS_OUTPUT}" \
-      --seed 42
-  else
-    echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
-  fi
-done
+#   if [ -f "${PROBE_DATA}" ]; then
+#     echo "  Computing probes for layer ${layer}..."
+#     python scripts/compute_probes.py \
+#       --probe-data-path "${PROBE_DATA}" \
+#       --output-dir "${ANALYSIS_OUTPUT}" \
+#       --seed 42
+#   else
+#     echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
+#   fi
+# done
 
 # ---- step 4: generate visualizations for multiple layers ----
-echo "=== Step 4: Generating visualizations ==="
-PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
+# echo "=== Step 4: Generating visualizations ==="
+# PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
 
-# Plot each layer that was computed
-for layer in ${LAYERS}; do
-  METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
+# # Plot each layer that was computed
+# for layer in ${LAYERS}; do
+#   METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
   
-  if [ -f "${METRICS_FILE}" ]; then
-    echo "  Plotting layer ${layer}..."
-    python scripts/plot_probes.py \
-      --analysis-dir "${ANALYSIS_OUTPUT}" \
-      --layer ${layer} \
-      --output-dir "${PLOT_OUTPUT}"
-  else
-    echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
-  fi
-done
+#   if [ -f "${METRICS_FILE}" ]; then
+#     echo "  Plotting layer ${layer}..."
+#     python scripts/plot_probes.py \
+#       --analysis-dir "${ANALYSIS_OUTPUT}" \
+#       --layer ${layer} \
+#       --output-dir "${PLOT_OUTPUT}"
+#   else
+#     echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
+#   fi
+# done
 
 # ---- step 5: analyze critical tokens (only for per_token pooling) ----
 if [ "${POOLING_METHOD}" = "per_token" ]; then
@@ -147,19 +147,19 @@ echo "=== Step 6: Computing steering vectors from last_token representations ===
 STEERING_VECTORS_DIR="artifacts/steering_vectors"
 
 # Only compute steering vectors if using last_token pooling
-if [ "${POOLING_METHOD}" = "last_token" ]; then
-  echo "Computing steering vectors for layers: ${LAYERS}"
-  python scripts/compute_steering_vectors.py \
-    --triples-path "${TRIPLES_OUT}" \
-    --model-name "${MODEL_ID}" \
-    --layers ${LAYERS} \
-    --output-dir "${STEERING_VECTORS_DIR}" \
-    --max-samples "${MAX_SAMPLES}"
+# if [ "${POOLING_METHOD}" = "last_token" ]; then
+#   echo "Computing steering vectors for layers: ${LAYERS}"
+#   python scripts/compute_steering_vectors.py \
+#     --triples-path "${TRIPLES_OUT}" \
+#     --model-name "${MODEL_ID}" \
+#     --layers ${LAYERS} \
+#     --output-dir "${STEERING_VECTORS_DIR}" \
+#     --max-samples "${MAX_SAMPLES}"
   
-  echo "Steering vectors computed and saved to ${STEERING_VECTORS_DIR}"
-else
-  echo "=== Step 6: Skipping steering vector computation (only applicable for last_token pooling) ==="
-fi
+#   echo "Steering vectors computed and saved to ${STEERING_VECTORS_DIR}"
+# else
+#   echo "=== Step 6: Skipping steering vector computation (only applicable for last_token pooling) ==="
+# fi
 
 # ---- step 7: evaluate steering ----
 echo "=== Step 7: Evaluating steering vectors ==="
