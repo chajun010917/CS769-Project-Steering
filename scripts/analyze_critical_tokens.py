@@ -162,12 +162,28 @@ def main() -> None:
     token_positions = data.get("token_positions", None)
     sample_ids = data.get("sample_ids", None)
     layer = int(data["layer"])
-    
+
+    # Load valid flag if it exists, otherwise assume all samples are valid
+    if "valid" in data:
+        valid = data["valid"]
+        LOGGER.info("Loaded %d tokens from layer %d (%d valid, %d invalid)",
+                   len(features), layer, valid.sum(), (~valid).sum())
+
+        # Filter to only valid samples
+        features = features[valid]
+        labels = labels[valid]
+        if token_positions is not None:
+            token_positions = token_positions[valid]
+        if sample_ids is not None:
+            sample_ids = sample_ids[valid]
+        LOGGER.info("Using only valid samples: %d tokens", len(features))
+    else:
+        LOGGER.info("Loaded %d tokens from layer %d (no validity flag found, assuming all valid)",
+                   len(features), layer)
+
     if token_positions is None:
         LOGGER.error("Probe data does not contain token positions. Re-run collect_hidden_states.py")
         return
-    
-    LOGGER.info("Loaded %d tokens from layer %d", len(features), layer)
     
     # Analyze critical tokens
     LOGGER.info("Analyzing token contributions to PC2 separation...")

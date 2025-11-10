@@ -209,9 +209,22 @@ def main() -> None:
     labels = data["labels"]
     layer = int(data["layer"])
 
-    LOGGER.info("Loaded %d samples from layer %d", features.shape[0], layer)
+    # Load valid flag if it exists, otherwise assume all samples are valid
+    if "valid" in data:
+        valid = data["valid"]
+        LOGGER.info("Loaded %d samples from layer %d (%d valid, %d invalid)",
+                   features.shape[0], layer, valid.sum(), (~valid).sum())
+
+        # Filter to only valid samples
+        features = features[valid]
+        labels = labels[valid]
+        LOGGER.info("Using only valid samples: %d samples", features.shape[0])
+    else:
+        LOGGER.info("Loaded %d samples from layer %d (no validity flag found, assuming all valid)",
+                   features.shape[0], layer)
+
     LOGGER.info("Feature dimension: %d", features.shape[1])
-    LOGGER.info("Label distribution: %d wrong, %d right", 
+    LOGGER.info("Label distribution: %d wrong, %d right",
                 (labels == 0).sum(), (labels == 1).sum())
 
     # Create output directory

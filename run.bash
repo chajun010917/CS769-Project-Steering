@@ -79,6 +79,7 @@ fi
 # ---- step 2: capture hidden states ----
 echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
 # Note: collect_hidden_states.py will generate probe data for all layers specified
+export CUDA_VISIBLE_DEVICES=3,4,5  # Using GPUs 3, 4, 5
 python scripts/collect_hidden_states.py \
   --triples-path "${TRIPLES_OUT}" \
   --model-name "${MODEL_ID}" \
