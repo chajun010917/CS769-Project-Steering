@@ -9,10 +9,11 @@ import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from Levenshtein import opcodes
 from tqdm import tqdm
 
@@ -105,6 +106,42 @@ def parse_args() -> argparse.Namespace:
         choices=["mean", "last_token", "per_token"],
         help="Pooling method: 'mean' (average all tokens), 'last_token' (final token), 'per_token' (each matched token).",
     )
+    parser.add_argument(
+        "--alignment-method",
+        type=str,
+        default="text",
+        choices=["text", "hidden_dp"],
+        help="Token alignment strategy. 'text' uses exact token matches; 'hidden_dp' uses hidden-state dynamic programming with fallback.",
+    )
+    parser.add_argument(
+        "--alignment-layer",
+        type=int,
+        default=None,
+        help="Layer id whose hidden states are used for hidden_dp alignment (defaults to first layer in --layers).",
+    )
+    parser.add_argument(
+        "--dp-max-shift",
+        type=int,
+        default=None,
+        help="Maximum index shift allowed between matched tokens for hidden_dp alignment.",
+    )
+    parser.add_argument(
+        "--dp-gap-penalty",
+        type=float,
+        default=None,
+        help="Gap penalty used in hidden_dp alignment (defaults to mean cosine distance).",
+    )
+    parser.add_argument(
+        "--dp-distance-threshold",
+        type=float,
+        default=None,
+        help="Distance threshold for accepting matches in hidden_dp alignment (defaults to mean + std of distances).",
+    )
+    parser.add_argument(
+        "--system-prompt",
+        default="You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'.",
+        help="System message used when the tokenizer supports chat templates.",
+    )
     return parser.parse_args()
 
 
@@ -130,31 +167,224 @@ def load_triples(path: Path) -> List[Triple]:
     return triples
 
 
-def align_tokens(
-    model: ModelWrapper,
-    wrong_input: Dict[str, torch.Tensor],
-    right_input: Dict[str, torch.Tensor],
-) -> List[Tuple[int, int]]:
-    """
-    Align tokens between wrong and right chains using Levenshtein edit distance.
-
-    Args:
-        model: ModelWrapper instance
-        wrong_input: Tokenized wrong chain
-        right_input: Tokenized right chain
-
-    Returns:
-        List of (wrong_idx, right_idx) tuples for matching tokens
-    """
-    wrong_tokens = model.token_strings(wrong_input["input_ids"][0])
-    right_tokens = model.token_strings(right_input["input_ids"][0])
-
+def _align_tokens_text(
+    wrong_tokens: List[str],
+    right_tokens: List[str],
+) -> Tuple[List[Tuple[int, int]], Dict[str, Any]]:
     alignment_opcodes = opcodes(wrong_tokens, right_tokens)
     matches: List[Tuple[int, int]] = []
     for tag, i1, i2, j1, j2 in alignment_opcodes:
         if tag == "equal":
             matches.extend(zip(range(i1, i2), range(j1, j2)))
-    return matches
+    metadata: Dict[str, Any] = {
+        "strategy": "text",
+        "num_matches": len(matches),
+    }
+    return matches, metadata
+
+
+def _cosine_distance_matrix(
+    wrong_hidden: torch.Tensor,
+    right_hidden: torch.Tensor,
+) -> np.ndarray:
+    wrong_norm = F.normalize(wrong_hidden, p=2, dim=1)
+    right_norm = F.normalize(right_hidden, p=2, dim=1)
+    similarity = torch.matmul(wrong_norm, right_norm.T).clamp(-1.0, 1.0)
+    distances = 1.0 - similarity
+    return distances.cpu().numpy()
+
+
+def _hidden_alignment_dp(
+    wrong_hidden: torch.Tensor,
+    right_hidden: torch.Tensor,
+    max_shift: Optional[int] = None,
+    gap_penalty: Optional[float] = None,
+    distance_threshold: Optional[float] = None,
+) -> Tuple[List[Tuple[int, int]], Dict[str, Any]]:
+    if wrong_hidden.ndim != 2 or right_hidden.ndim != 2:
+        raise ValueError("Hidden states must be 2D tensors [seq_len, hidden_dim].")
+
+    distance_matrix = _cosine_distance_matrix(wrong_hidden, right_hidden)
+    if np.isnan(distance_matrix).any():
+        return [], {"strategy": "hidden_dp", "error": "NaN distances detected."}
+
+    n, m = distance_matrix.shape
+    if n == 0 or m == 0:
+        return [], {"strategy": "hidden_dp", "error": "Empty hidden state sequence."}
+
+    if gap_penalty is None:
+        gap_penalty = float(max(np.mean(distance_matrix), 1e-4))
+
+    if distance_threshold is None:
+        distance_threshold = float(np.mean(distance_matrix) + np.std(distance_matrix))
+
+    if max_shift is None:
+        max_shift = max(abs(n - m) + 5, int(0.2 * max(n, m)))
+
+    scores = np.full((n + 1, m + 1), np.inf, dtype=np.float64)
+    traceback = np.full((n + 1, m + 1), -1, dtype=np.int8)
+
+    scores[0, 0] = 0.0
+    for i in range(1, n + 1):
+        scores[i, 0] = scores[i - 1, 0] + gap_penalty
+        traceback[i, 0] = 1  # up
+    for j in range(1, m + 1):
+        scores[0, j] = scores[0, j - 1] + gap_penalty
+        traceback[0, j] = 2  # left
+
+    for i in range(1, n + 1):
+        i_idx = i - 1
+        for j in range(1, m + 1):
+            j_idx = j - 1
+            if abs(i_idx - j_idx) > max_shift:
+                match_cost = np.inf
+            else:
+                match_cost = scores[i - 1, j - 1] + distance_matrix[i_idx, j_idx]
+            delete_cost = scores[i - 1, j] + gap_penalty
+            insert_cost = scores[i, j - 1] + gap_penalty
+            best_cost = min(match_cost, delete_cost, insert_cost)
+
+            scores[i, j] = best_cost
+            if best_cost == match_cost:
+                traceback[i, j] = 0  # diagonal
+            elif best_cost == delete_cost:
+                traceback[i, j] = 1  # up
+            else:
+                traceback[i, j] = 2  # left
+
+    if not np.isfinite(scores[n, m]):
+        return [], {
+            "strategy": "hidden_dp",
+            "error": "Alignment score is infinite (path not found).",
+        }
+
+    matches: List[Tuple[int, int]] = []
+    matched_distances: List[float] = []
+    discarded = 0
+    gap_steps = 0
+
+    i, j = n, m
+    while i > 0 or j > 0:
+        direction = traceback[i, j]
+        if direction == 0 and i > 0 and j > 0:
+            i -= 1
+            j -= 1
+            dist_val = float(distance_matrix[i, j])
+            if dist_val <= distance_threshold:
+                matches.append((i, j))
+                matched_distances.append(dist_val)
+            else:
+                discarded += 1
+        elif direction == 1 and i > 0:
+            i -= 1
+            gap_steps += 1
+        elif direction == 2 and j > 0:
+            j -= 1
+            gap_steps += 1
+        else:
+            LOGGER.warning("Unexpected traceback direction %s at (%d, %d)", direction, i, j)
+            break
+
+    matches.reverse()
+    matched_distances.reverse()
+
+    total_steps = len(matches) + discarded + gap_steps
+    avg_distance = float(np.mean(matched_distances)) if matched_distances else None
+
+    metrics: Dict[str, Any] = {
+        "strategy": "hidden_dp",
+        "num_matches": len(matches),
+        "avg_distance": avg_distance,
+        "distance_threshold": float(distance_threshold),
+        "gap_steps": gap_steps,
+        "discarded_high_distance": discarded,
+        "total_steps": total_steps,
+        "gap_ratio": float(gap_steps / total_steps) if total_steps else None,
+        "score": float(scores[n, m]),
+        "sequence_lengths": {"wrong": n, "right": m},
+    }
+
+    return matches, metrics
+
+
+def _dp_quality_ok(metrics: Dict[str, Any]) -> bool:
+    if metrics.get("error"):
+        return False
+    num_matches = metrics.get("num_matches", 0)
+    if num_matches == 0:
+        return False
+    avg_distance = metrics.get("avg_distance")
+    if avg_distance is None:
+        return False
+    threshold = metrics.get("distance_threshold")
+    if threshold is not None and avg_distance > threshold:
+        return False
+    gap_ratio = metrics.get("gap_ratio")
+    if gap_ratio is not None and gap_ratio > 0.6:
+        return False
+    return True
+
+
+def align_tokens(
+    wrong_tokens: List[str],
+    right_tokens: List[str],
+    wrong_hidden: Optional[torch.Tensor],
+    right_hidden: Optional[torch.Tensor],
+    method: str = "text",
+    max_shift: Optional[int] = None,
+    gap_penalty: Optional[float] = None,
+    distance_threshold: Optional[float] = None,
+) -> Tuple[List[Tuple[int, int]], Dict[str, Any]]:
+    text_matches, text_metadata = _align_tokens_text(wrong_tokens, right_tokens)
+
+    if method != "hidden_dp":
+        return text_matches, text_metadata
+
+    if wrong_hidden is None or right_hidden is None:
+        fallback_meta = dict(text_metadata)
+        fallback_meta.update(
+            {
+                "strategy": "text_fallback",
+                "used_fallback": True,
+                "fallback_reason": "hidden_states_unavailable",
+            }
+        )
+        return text_matches, fallback_meta
+
+    try:
+        dp_matches, dp_metrics = _hidden_alignment_dp(
+            wrong_hidden,
+            right_hidden,
+            max_shift=max_shift,
+            gap_penalty=gap_penalty,
+            distance_threshold=distance_threshold,
+        )
+    except Exception as exc:
+        LOGGER.warning("Hidden-state DP alignment failed; falling back to text alignment: %s", exc)
+        fallback_meta = dict(text_metadata)
+        fallback_meta.update(
+            {
+                "strategy": "text_fallback",
+                "used_fallback": True,
+                "fallback_reason": f"exception: {exc}",
+            }
+        )
+        return text_matches, fallback_meta
+
+    if _dp_quality_ok(dp_metrics):
+        dp_metrics["used_fallback"] = False
+        return dp_matches, dp_metrics
+
+    fallback_meta = dict(text_metadata)
+    fallback_meta.update(
+        {
+            "strategy": "text_fallback",
+            "used_fallback": True,
+            "fallback_reason": dp_metrics.get("error", "quality_check_failed"),
+            "dp_metrics": dp_metrics,
+        }
+    )
+    return text_matches, fallback_meta
 
 
 def subsample_pairs(
@@ -172,7 +402,8 @@ def save_alignment(
     alignment_path: Path,
     wrong_tokens: List[str],
     right_tokens: List[str],
-    matches: List[Tuple[int, int]]
+    matches: List[Tuple[int, int]],
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Save token alignment to JSON."""
     alignment_path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,6 +415,8 @@ def save_alignment(
             for wrong_idx, right_idx in matches
         ],
     }
+    if metadata:
+        payload["metadata"] = metadata
     alignment_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
@@ -202,6 +435,14 @@ def main() -> None:
     # Setup layers
     target_layers = sorted(set(args.layers))
     LOGGER.info("Target layers for hidden state capture: %s", target_layers)
+
+    alignment_layer = args.alignment_layer if args.alignment_layer is not None else target_layers[0]
+    if args.alignment_method == "hidden_dp" and alignment_layer not in target_layers:
+        LOGGER.info(
+            "Alignment layer %s not in --layers; adding for hidden-state capture.",
+            alignment_layer,
+        )
+    capture_layers = sorted(set(target_layers + [alignment_layer]))
 
     # Load model
     model = ModelWrapper(args.model_name, device=args.device)
@@ -236,18 +477,48 @@ def main() -> None:
             triple.prompt, triple.correct_chain, triple.metadata
         )
 
+        # Apply system prompt formatting for tokenization (to match get_hidden_states)
+        wrong_text_formatted = wrong_text
+        right_text_formatted = right_text
+        if hasattr(model.tokenizer, "apply_chat_template") and args.system_prompt:
+            wrong_messages = [
+                {"role": "system", "content": args.system_prompt},
+                {"role": "user", "content": wrong_text},
+            ]
+            right_messages = [
+                {"role": "system", "content": args.system_prompt},
+                {"role": "user", "content": right_text},
+            ]
+            wrong_text_formatted = model.tokenizer.apply_chat_template(
+                wrong_messages, tokenize=False, add_generation_prompt=False
+            )
+            right_text_formatted = model.tokenizer.apply_chat_template(
+                right_messages, tokenize=False, add_generation_prompt=False
+            )
+
         # Tokenize
-        wrong_inputs = model.tokenize(wrong_text, return_offsets_mapping=True)
-        right_inputs = model.tokenize(right_text, return_offsets_mapping=True)
+        wrong_inputs = model.tokenize(wrong_text_formatted, return_offsets_mapping=True)
+        right_inputs = model.tokenize(right_text_formatted, return_offsets_mapping=True)
 
         # Get hidden states
-        wrong_hidden = model.get_hidden_states(wrong_text, target_layers)
-        right_hidden = model.get_hidden_states(right_text, target_layers)
+        wrong_hidden = model.get_hidden_states(wrong_text, capture_layers, system_prompt=args.system_prompt)
+        right_hidden = model.get_hidden_states(right_text, capture_layers, system_prompt=args.system_prompt)
 
         # Get tokens and align
         wrong_tokens = model.token_strings(wrong_inputs["input_ids"].squeeze(0))
         right_tokens = model.token_strings(right_inputs["input_ids"].squeeze(0))
-        matches = align_tokens(model, wrong_inputs, right_inputs)   # get input tokens which match exactly
+        alignment_hidden_wrong = wrong_hidden.get(alignment_layer)
+        alignment_hidden_right = right_hidden.get(alignment_layer)
+        matches, alignment_metadata = align_tokens(
+            wrong_tokens,
+            right_tokens,
+            alignment_hidden_wrong,
+            alignment_hidden_right,
+            method=args.alignment_method,
+            max_shift=args.dp_max_shift,
+            gap_penalty=args.dp_gap_penalty,
+            distance_threshold=args.dp_distance_threshold,
+        )
 
         # Save hidden states per sample
         sample_dir = args.output_dir / triple.sample_id
@@ -259,7 +530,7 @@ def main() -> None:
 
         # Save alignment
         alignment_path = args.alignment_dir / f"{triple.sample_id}.json"
-        save_alignment(alignment_path, wrong_tokens, right_tokens, matches)
+        save_alignment(alignment_path, wrong_tokens, right_tokens, matches, alignment_metadata)
 
         # Collect probe data for all layers using specified pooling method
         for layer_id in target_layers:

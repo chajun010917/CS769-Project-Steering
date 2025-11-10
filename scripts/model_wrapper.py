@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -147,6 +147,7 @@ class ModelWrapper:
         self,
         text: str,
         target_layers: Iterable[int],
+        system_prompt: Optional[str] = None,
     ) -> Dict[int, torch.Tensor]:
         """
         Capture hidden states at specified layers.
@@ -154,11 +155,25 @@ class ModelWrapper:
         Args:
             text: Input text to process
             target_layers: Layer indices to capture (0-indexed)
+            system_prompt: Optional system message (uses chat template if available)
 
         Returns:
             Dictionary mapping layer_id -> hidden_states tensor (CPU, detached)
         """
-        inputs = self.tokenize(text, return_offsets_mapping=True)
+        # Apply chat template if available and system prompt provided
+        formatted_text = text
+        if hasattr(self.tokenizer, "apply_chat_template") and system_prompt:
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": formatted_text},
+            ]
+            formatted_text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=False,
+            )
+        
+        inputs = self.tokenize(formatted_text, return_offsets_mapping=True)
         
         # Remove offset_mapping from inputs (not needed for forward pass)
         inputs = {k: v for k, v in inputs.items() if k != "offset_mapping"}
@@ -180,6 +195,68 @@ class ModelWrapper:
             captures[layer_id] = hidden_states[index].squeeze(0).detach().cpu()
 
         return captures
+
+    def forward_with_hidden_states(
+        self,
+        text: str,
+        target_layers: Iterable[int],
+        enable_grad: bool = False,
+        system_prompt: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Forward pass that returns logits and selected layer hidden states (optionally retaining gradients).
+
+        Args:
+            text: Input text to process
+            target_layers: Layer indices to capture (0-indexed)
+            enable_grad: Whether to retain gradients for the captured hidden states
+            system_prompt: Optional system message (uses chat template if available)
+
+        Returns:
+            Dictionary containing logits, input_ids, attention_mask, and hidden_states per target layer
+        """
+        # Apply chat template if available and system prompt provided
+        formatted_text = text
+        if hasattr(self.tokenizer, "apply_chat_template") and system_prompt:
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": formatted_text},
+            ]
+            formatted_text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=False,
+            )
+        
+        inputs = self.tokenize(formatted_text, return_offsets_mapping=False)
+
+        outputs = self.model(
+            **inputs,
+            output_hidden_states=True,
+            use_cache=False,
+            return_dict=True,
+        )
+
+        hidden_states: Tuple[torch.Tensor, ...] = outputs.hidden_states  # type: ignore[attr-defined]
+        captures: Dict[int, torch.Tensor] = {}
+        for layer_id in target_layers:
+            index = layer_id + 1
+            if index >= len(hidden_states):
+                raise ValueError(
+                    f"Layer {layer_id} exceeds available layers ({len(hidden_states) - 1})"
+                )
+            layer_tensor = hidden_states[index].squeeze(0)
+            if enable_grad:
+                layer_tensor.retain_grad()
+            captures[layer_id] = layer_tensor
+
+        result: Dict[str, Any] = {
+            "logits": outputs.logits.squeeze(0),
+            "input_ids": inputs["input_ids"].squeeze(0),
+            "attention_mask": inputs["attention_mask"].squeeze(0),
+            "hidden_states": captures,
+        }
+        return result
 
     def token_strings(self, input_ids: torch.Tensor) -> List[str]:
         """
