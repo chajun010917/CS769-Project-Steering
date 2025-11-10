@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -180,6 +180,53 @@ class ModelWrapper:
             captures[layer_id] = hidden_states[index].squeeze(0).detach().cpu()
 
         return captures
+
+    def forward_with_hidden_states(
+        self,
+        text: str,
+        target_layers: Iterable[int],
+        enable_grad: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Forward pass that returns logits and selected layer hidden states (optionally retaining gradients).
+
+        Args:
+            text: Input text to process
+            target_layers: Layer indices to capture (0-indexed)
+            enable_grad: Whether to retain gradients for the captured hidden states
+
+        Returns:
+            Dictionary containing logits, input_ids, attention_mask, and hidden_states per target layer
+        """
+        inputs = self.tokenize(text, return_offsets_mapping=False)
+
+        outputs = self.model(
+            **inputs,
+            output_hidden_states=True,
+            use_cache=False,
+            return_dict=True,
+        )
+
+        hidden_states: Tuple[torch.Tensor, ...] = outputs.hidden_states  # type: ignore[attr-defined]
+        captures: Dict[int, torch.Tensor] = {}
+        for layer_id in target_layers:
+            index = layer_id + 1
+            if index >= len(hidden_states):
+                raise ValueError(
+                    f"Layer {layer_id} exceeds available layers ({len(hidden_states) - 1})"
+                )
+            layer_tensor = hidden_states[index].squeeze(0)
+            if enable_grad:
+                layer_tensor.retain_grad()
+            captures[layer_id] = layer_tensor
+
+        result: Dict[str, Any] = {
+            "logits": outputs.logits.squeeze(0),
+            "input_ids": inputs["input_ids"].squeeze(0),
+            "attention_mask": inputs["attention_mask"].squeeze(0),
+            "hidden_states": captures,
+        }
+        return result
 
     def token_strings(self, input_ids: torch.Tensor) -> List[str]:
         """

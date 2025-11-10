@@ -1,6 +1,7 @@
 **/.doc/**
 **/.agent/**
 **/artifacts/*
+!**/artifacts/manual_review/
 !**/artifacts/triples/
 .cache
 **/.ipynb_checkpoints/**

@@ -9,7 +9,7 @@ import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -106,6 +106,37 @@ def parse_args() -> argparse.Namespace:
         choices=["mean", "last_token", "per_token"],
         help="Pooling method: 'mean' (average all tokens), 'last_token' (final token), 'per_token' (each matched token).",
     )
+    parser.add_argument(
+        "--alignment-method",
+        type=str,
+        default="text",
+        choices=["text", "hidden_dp"],
+        help="Token alignment strategy. 'text' uses exact token matches; 'hidden_dp' uses hidden-state dynamic programming with fallback.",
+    )
+    parser.add_argument(
+        "--alignment-layer",
+        type=int,
+        default=None,
+        help="Layer id whose hidden states are used for hidden_dp alignment (defaults to first layer in --layers).",
+    )
+    parser.add_argument(
+        "--dp-max-shift",
+        type=int,
+        default=None,
+        help="Maximum index shift allowed between matched tokens for hidden_dp alignment.",
+    )
+    parser.add_argument(
+        "--dp-gap-penalty",
+        type=float,
+        default=None,
+        help="Gap penalty used in hidden_dp alignment (defaults to mean cosine distance).",
+    )
+    parser.add_argument(
+        "--dp-distance-threshold",
+        type=float,
+        default=None,
+        help="Distance threshold for accepting matches in hidden_dp alignment (defaults to mean + std of distances).",
+    )
     return parser.parse_args()
 
 
@@ -131,20 +162,32 @@ def load_triples(path: Path) -> List[Triple]:
     return triples
 
 
-def _align_tokens_text(wrong_tokens: List[str], right_tokens: List[str]) -> List[Tuple[int, int]]:
+def _align_tokens_text(
+    wrong_tokens: List[str],
+    right_tokens: List[str],
+) -> Tuple[List[Tuple[int, int]], Dict[str, Any]]:
     alignment_opcodes = opcodes(wrong_tokens, right_tokens)
     matches: List[Tuple[int, int]] = []
     for tag, i1, i2, j1, j2 in alignment_opcodes:
         if tag == "equal":
             matches.extend(zip(range(i1, i2), range(j1, j2)))
-    return matches
+    metadata: Dict[str, Any] = {
+        "strategy": "text",
+        "num_matches": len(matches),
+    }
+    return matches, metadata
 
-def _cosine_distance_matrix(wrong_hidden: torch.Tensor, right_hidden: torch.Tensor) -> np.ndarray:
+
+def _cosine_distance_matrix(
+    wrong_hidden: torch.Tensor,
+    right_hidden: torch.Tensor,
+) -> np.ndarray:
     wrong_norm = F.normalize(wrong_hidden, p=2, dim=1)
     right_norm = F.normalize(right_hidden, p=2, dim=1)
-    similarity = torch.matmul(wrong_norm, right_norm.T)
+    similarity = torch.matmul(wrong_norm, right_norm.T).clamp(-1.0, 1.0)
     distances = 1.0 - similarity
     return distances.cpu().numpy()
+
 
 def _hidden_alignment_dp(
     wrong_hidden: torch.Tensor,
@@ -258,6 +301,7 @@ def _hidden_alignment_dp(
 
     return matches, metrics
 
+
 def _dp_quality_ok(metrics: Dict[str, Any]) -> bool:
     if metrics.get("error"):
         return False
@@ -275,11 +319,6 @@ def _dp_quality_ok(metrics: Dict[str, Any]) -> bool:
         return False
     return True
 
-
-def subsample_pairs(pairs: List[Tuple[int, int]], max_samples: int, rng: random.Random) -> List[Tuple[int, int]]:
-    if len(pairs) <= max_samples:
-        return pairs
-    return rng.sample(pairs, max_samples)
 
 def align_tokens(
     wrong_tokens: List[str],
@@ -343,20 +382,10 @@ def align_tokens(
     return text_matches, fallback_meta
 
 
-
-def save_alignment(alignment_path: Path, wrong_tokens: List[str], right_tokens: List[str], matches: List[Tuple[int, int]], metadata: Optional[Dict[str, Any]] = None) -> None:
-    alignment_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "wrong_tokens": wrong_tokens,
-        "right_tokens": right_tokens,
-        "matches": [
-            {"wrong_index": wrong_idx, "right_index": right_idx}
-            for wrong_idx, right_idx in matches
-        ],
-    }
-    if metadata:
-        payload["metadata"] = metadata
-    alignment_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+def subsample_pairs(pairs: List[Tuple[int, int]], max_samples: int, rng: random.Random) -> List[Tuple[int, int]]:
+    if len(pairs) <= max_samples:
+        return pairs
+    return rng.sample(pairs, max_samples)
 
 
 def main() -> None:
@@ -374,6 +403,14 @@ def main() -> None:
     # Setup layers
     target_layers = sorted(set(args.layers))
     LOGGER.info("Target layers for hidden state capture: %s", target_layers)
+
+    alignment_layer = args.alignment_layer if args.alignment_layer is not None else target_layers[0]
+    if args.alignment_method == "hidden_dp" and alignment_layer not in target_layers:
+        LOGGER.info(
+            "Alignment layer %s not in --layers; adding for hidden-state capture.",
+            alignment_layer,
+        )
+    capture_layers = sorted(set(target_layers + [alignment_layer]))
 
     # Load model
     model = ModelWrapper(args.model_name, device=args.device)
@@ -413,13 +450,24 @@ def main() -> None:
         right_inputs = model.tokenize(right_text, return_offsets_mapping=True)
 
         # Get hidden states
-        wrong_hidden = model.get_hidden_states(wrong_text, target_layers)
-        right_hidden = model.get_hidden_states(right_text, target_layers)
+        wrong_hidden = model.get_hidden_states(wrong_text, capture_layers)
+        right_hidden = model.get_hidden_states(right_text, capture_layers)
 
         # Get tokens and align
         wrong_tokens = model.token_strings(wrong_inputs["input_ids"].squeeze(0))
         right_tokens = model.token_strings(right_inputs["input_ids"].squeeze(0))
-        matches = align_tokens(model, wrong_inputs, right_inputs)   # get input tokens which match exactly
+        alignment_hidden_wrong = wrong_hidden.get(alignment_layer)
+        alignment_hidden_right = right_hidden.get(alignment_layer)
+        matches, alignment_metadata = align_tokens(
+            wrong_tokens,
+            right_tokens,
+            alignment_hidden_wrong,
+            alignment_hidden_right,
+            method=args.alignment_method,
+            max_shift=args.dp_max_shift,
+            gap_penalty=args.dp_gap_penalty,
+            distance_threshold=args.dp_distance_threshold,
+        )
 
         # Save hidden states per sample
         sample_dir = args.output_dir / triple.sample_id
@@ -431,7 +479,7 @@ def main() -> None:
 
         # Save alignment
         alignment_path = args.alignment_dir / f"{triple.sample_id}.json"
-        save_alignment(alignment_path, wrong_tokens, right_tokens, matches, alignment_info)
+        save_alignment(alignment_path, wrong_tokens, right_tokens, matches, alignment_metadata)
 
         # Collect probe data for all layers using specified pooling method
         for layer_id in target_layers:
