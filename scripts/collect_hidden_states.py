@@ -137,6 +137,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Distance threshold for accepting matches in hidden_dp alignment (defaults to mean + std of distances).",
     )
+    parser.add_argument(
+        "--system-prompt",
+        default="You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'.",
+        help="System message used when the tokenizer supports chat templates.",
+    )
     return parser.parse_args()
 
 
@@ -479,13 +484,32 @@ def main() -> None:
             triple.prompt, triple.correct_chain, triple.metadata
         )
 
+        # Apply system prompt formatting for tokenization (to match get_hidden_states)
+        wrong_text_formatted = wrong_text
+        right_text_formatted = right_text
+        if hasattr(model.tokenizer, "apply_chat_template") and args.system_prompt:
+            wrong_messages = [
+                {"role": "system", "content": args.system_prompt},
+                {"role": "user", "content": wrong_text},
+            ]
+            right_messages = [
+                {"role": "system", "content": args.system_prompt},
+                {"role": "user", "content": right_text},
+            ]
+            wrong_text_formatted = model.tokenizer.apply_chat_template(
+                wrong_messages, tokenize=False, add_generation_prompt=False
+            )
+            right_text_formatted = model.tokenizer.apply_chat_template(
+                right_messages, tokenize=False, add_generation_prompt=False
+            )
+
         # Tokenize
-        wrong_inputs = model.tokenize(wrong_text, return_offsets_mapping=True)
-        right_inputs = model.tokenize(right_text, return_offsets_mapping=True)
+        wrong_inputs = model.tokenize(wrong_text_formatted, return_offsets_mapping=True)
+        right_inputs = model.tokenize(right_text_formatted, return_offsets_mapping=True)
 
         # Get hidden states
-        wrong_hidden = model.get_hidden_states(wrong_text, capture_layers)
-        right_hidden = model.get_hidden_states(right_text, capture_layers)
+        wrong_hidden = model.get_hidden_states(wrong_text, capture_layers, system_prompt=args.system_prompt)
+        right_hidden = model.get_hidden_states(right_text, capture_layers, system_prompt=args.system_prompt)
 
         # Get tokens and align
         wrong_tokens = model.token_strings(wrong_inputs["input_ids"].squeeze(0))

@@ -80,6 +80,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional torch device override (defaults to cuda if available else cpu).",
     )
+    parser.add_argument(
+        "--system-prompt",
+        default="You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'.",
+        help="System message used when the tokenizer supports chat templates.",
+    )
     return parser.parse_args()
 
 
@@ -300,11 +305,13 @@ def main() -> None:
             wrong_text,
             target_layers=target_layers,
             enable_grad=use_gradient,
+            system_prompt=args.system_prompt,
         )
         right_forward = model.forward_with_hidden_states(
             right_text,
             target_layers=target_layers,
             enable_grad=False,
+            system_prompt=args.system_prompt,
         )
 
         selected_positions: Dict[int, int] = {}
@@ -338,7 +345,7 @@ def main() -> None:
         # Fallback or last token selection
         for layer_id in target_layers:
             layer_states = wrong_forward["hidden_states"][layer_id]
-            seq_len = layer_states.shape[1]
+            seq_len = layer_states.shape[0]
             default_idx = max(0, seq_len - 1)
             selected_positions.setdefault(layer_id, default_idx)
 

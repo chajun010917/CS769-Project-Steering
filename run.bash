@@ -64,23 +64,23 @@ else
   exit 1
 fi
 
-# if [ -f "${TRIPLES_OUT}" ]; then
-#   echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
-#   echo "To regenerate, delete the file and rerun."
-# else
-#   echo "=== Step 1: Generating triples ==="
-#   export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-#   export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-#   python scripts/prepare_triples.py \
-#     --dataset-name "${DATASET_PATH}" \
-#     --split test \
-#     --model-name "${MODEL_ID}" \
-#     --max-samples "${MAX_SAMPLES}" \
-#     --max-new-tokens "${MAX_NEW_TOKENS}" \
-#     --only-wrong \
-#     --output-path "${TRIPLES_OUT}" \
-#     --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
-# fi
+if [ -f "${TRIPLES_OUT}" ]; then
+  echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
+  echo "To regenerate, delete the file and rerun."
+else
+  echo "=== Step 1: Generating triples ==="
+  export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+  export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+  python scripts/prepare_triples.py \
+    --dataset-name "${DATASET_PATH}" \
+    --split test \
+    --model-name "${MODEL_ID}" \
+    --max-samples "${MAX_SAMPLES}" \
+    --max-new-tokens "${MAX_NEW_TOKENS}" \
+    --only-wrong \
+    --output-path "${TRIPLES_OUT}" \
+    --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+fi
 
 # # ---- step 2: capture hidden states ----
 # echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
@@ -94,42 +94,45 @@ fi
 #   --pooling-method "${POOLING_METHOD}" \
 #   --alignment-method hidden_dp \
 #   --alignment-layer 28 \
-#   --dp-max-shift 40
+#   --dp-max-shift 40 \
+#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
 
 # # echo "Generated probe data for layers: ${LAYERS}"
 
-# # ---- step 3: compute probes and vectors for multiple layers ----
-# echo "=== Step 3: Computing probes and vectors ==="
-# # Process each layer from the LAYERS variable
-# for layer in ${LAYERS}; do
-#   PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+---- step 3: compute probes and vectors for multiple layers ----
+echo "=== Step 3: Computing probes and vectors ==="
+ANALYSIS_OUTPUT="artifacts/probe_analysis"
+
+# Process each layer from the LAYERS variable
+for layer in ${LAYERS}; do
+  PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
   
-#   if [ -f "${PROBE_DATA}" ]; then
-#     echo "  Computing probes for layer ${layer}..."
-#     python scripts/compute_probes.py \
-#       --probe-data-path "${PROBE_DATA}" \
-#       --output-dir "${ANALYSIS_OUTPUT}" \
-#       --seed 42
-#   else
-#     echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
-#   fi
-# done
+  if [ -f "${PROBE_DATA}" ]; then
+    echo "  Computing probes for layer ${layer}..."
+    python scripts/compute_probes.py \
+      --probe-data-path "${PROBE_DATA}" \
+      --output-dir "${ANALYSIS_OUTPUT}" \
+      --seed 42
+  else
+    echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
+  fi
+done
 
 # # ---- step 4: generate visualizations for multiple layers ----
 # echo "=== Step 4: Generating visualizations ==="
 # for layer in ${LAYERS}; do
 #   METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
   
-#   if [ -f "${METRICS_FILE}" ]; then
-#     echo "  Plotting layer ${layer}..."
-#     python scripts/plot_probes.py \
-#       --analysis-dir "${ANALYSIS_OUTPUT}" \
-#       --layer ${layer} \
-#       --output-dir "${PLOT_OUTPUT}"
-#   else
-#     echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
-#   fi
-# done
+  if [ -f "${METRICS_FILE}" ]; then
+    echo "  Plotting layer ${layer}..."
+    python scripts/plot_probes.py \
+      --analysis-dir "${ANALYSIS_OUTPUT}" \
+      --layer ${layer} \
+      --output-dir "${PLOT_OUTPUT}"
+  else
+    echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
+  fi
+done
 
 # ---- step 5: analyze critical tokens (only for per_token pooling) ----
 # if [ "${POOLING_METHOD}" = "per_token" ]; then
@@ -140,23 +143,23 @@ fi
 #   echo "=== Step 5: Analyzing critical token positions ==="
 #   CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
 
-#   for layer in ${LAYERS}; do
-#     PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+  for layer in ${LAYERS}; do
+    PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
     
-#     if [ -f "${PROBE_DATA}" ]; then
-#       echo "  Analyzing critical tokens for layer ${layer}..."
-#       python scripts/analyze_critical_tokens.py \
-#         --probe-data-path "${PROBE_DATA}" \
-#         --alignments-dir "artifacts/alignments" \
-#         --output-dir "${CRITICAL_TOKENS_OUTPUT}" \
-#         --top-k 20
-#     else
-#       echo "  Warning: Probe data not found for layer ${layer}"
-#     fi
-#   done
-# else
-#   echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
-# fi
+    if [ -f "${PROBE_DATA}" ]; then
+      echo "  Analyzing critical tokens for layer ${layer}..."
+      python scripts/analyze_critical_tokens.py \
+        --probe-data-path "${PROBE_DATA}" \
+        --alignments-dir "artifacts/alignments" \
+        --output-dir "${CRITICAL_TOKENS_OUTPUT}" \
+        --top-k 20
+    else
+      echo "  Warning: Probe data not found for layer ${layer}"
+    fi
+  done
+else
+  echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
+fi
 
 # ---- step 6: compute steering vectors ----
 #echo "=== Step 6: Computing steering vectors from last_token representations ==="
@@ -168,7 +171,8 @@ STEERING_VECTORS_DIR="artifacts/steering_vectors"
 #   --layers ${LAYERS} \
 #   --output-dir "${STEERING_VECTORS_DIR}" \
 #   --max-samples "${MAX_SAMPLES}" \
-#   --token-selection-method gradient
+#   --token-selection-method gradient \
+#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
 
 # ---- step 7: evaluate steering ----
 echo "=== Step 7: Evaluating steering vectors ==="
@@ -180,7 +184,7 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
   # Evaluate each layer separately (or all together - you can modify this)
   # For now, evaluate with the best layer (typically layer 28)
   # To test a specific layer (e.g., layer 26), change BEST_LAYER="26"
-  BEST_LAYER="30"  # Can be changed based on visualization results  # can add a list of layers here
+  BEST_LAYER="29"  # Can be changed based on visualization results  # can add a list of layers here
   
   # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
   # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
