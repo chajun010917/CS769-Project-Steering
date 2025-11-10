@@ -59,6 +59,23 @@ def parse_args() -> argparse.Namespace:
         help="Multiplier for steering vectors (default: 1.0).",
     )
     parser.add_argument(
+        "--skip-baseline",
+        action="store_true",
+        help="Skip baseline (without steering) evaluation to save computation time.",
+    )
+    parser.add_argument(
+        "--baseline-correct",
+        type=int,
+        default=None,
+        help="Number of correct baseline predictions (required if --skip-baseline is used).",
+    )
+    parser.add_argument(
+        "--baseline-incorrect",
+        type=int,
+        default=None,
+        help="Number of incorrect baseline predictions (required if --skip-baseline is used).",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("artifacts/steering_evaluation"),
@@ -124,6 +141,14 @@ def main() -> None:
     configure_hf_caches()
     args = parse_args()
 
+    # Validate baseline arguments
+    if args.skip_baseline:
+        if args.baseline_correct is None or args.baseline_incorrect is None:
+            LOGGER.error("--baseline-correct and --baseline-incorrect are required when --skip-baseline is used.")
+            return
+        LOGGER.info("Skipping baseline evaluation. Using provided baseline: %d correct, %d incorrect", 
+                   args.baseline_correct, args.baseline_incorrect)
+
     # Load triples
     triples = load_triples(args.triples_path)
     if not triples:
@@ -134,6 +159,12 @@ def main() -> None:
         triples = triples[:args.max_samples]
 
     LOGGER.info("Loaded %d triples for evaluation", len(triples))
+
+    # Validate baseline matches number of triples if provided
+    if args.skip_baseline:
+        if args.baseline_correct + args.baseline_incorrect != len(triples):
+            LOGGER.warning("Baseline totals (%d) don't match number of triples (%d). Continuing anyway.",
+                          args.baseline_correct + args.baseline_incorrect, len(triples))
 
     # Load steering vectors
     steering_vectors = load_steering_vectors(args.steering_vectors_dir, args.layers)
@@ -154,8 +185,8 @@ def main() -> None:
         "steering_coefficient": args.steering_coefficient,
         "num_triples": len(triples),
         "without_steering": {
-            "correct": 0,
-            "incorrect": 0,
+            "correct": args.baseline_correct if args.skip_baseline else 0,
+            "incorrect": args.baseline_incorrect if args.skip_baseline else 0,
             "accuracy": 0.0,
             "predictions": [],
         },
@@ -167,10 +198,8 @@ def main() -> None:
         },
         "improvements": 0,  # Cases where steering fixed wrong predictions
         "degradations": 0,  # Cases where steering broke correct predictions
+        "skip_baseline": args.skip_baseline,
     }
-
-    cnt = 0
-    cnt1 = 0
 
     # Evaluate each triple
     for triple in tqdm(triples, desc="Evaluating steering"):
@@ -181,30 +210,27 @@ def main() -> None:
         
         # Reconstruct prompt using template from metadata
         formatted_prompt = reconstruct_prompt(metadata, prompt_text)    # this contains the {questions} and then the {prompt_template}
-        # if cnt == 0:
-        #     print(formatted_prompt)
-        #     cnt += 1
 
-        # Generate without steering
-        try:
-            response_no_steering = model.generate(
-                formatted_prompt,
-                max_new_tokens=args.max_new_tokens,
-                temperature=0.0,
-                strip_prompt=True,
-                system_prompt=args.system_prompt,
-            )
-            predicted_no_steering = extract_final_answer(response_no_steering)
-            # if cnt == 0:
-            #     print(f"No steering: {predicted_no_steering}")
-            #     print(f"Response no steering: {response_no_steering}")
-            #     cnt += 1
-            correct_no_steering = answers_match(predicted_no_steering, correct_answer)
-        except Exception as e:
-            LOGGER.warning("Error generating without steering for sample %s: %s", sample_id, e)
-            response_no_steering = ""
-            predicted_no_steering = ""
-            correct_no_steering = False
+        # Generate without steering (skip if baseline is skipped)
+        predicted_no_steering = ""
+        correct_no_steering = False
+        response_no_steering = ""
+        if not args.skip_baseline:
+            try:
+                response_no_steering = model.generate(
+                    formatted_prompt,
+                    max_new_tokens=args.max_new_tokens,
+                    temperature=0.0,
+                    strip_prompt=True,
+                    system_prompt=args.system_prompt,
+                )
+                predicted_no_steering = extract_final_answer(response_no_steering)
+                correct_no_steering = answers_match(predicted_no_steering, correct_answer)
+            except Exception as e:
+                LOGGER.warning("Error generating without steering for sample %s: %s", sample_id, e)
+                response_no_steering = ""
+                predicted_no_steering = ""
+                correct_no_steering = False
 
         # Generate with steering
         try:
@@ -220,10 +246,6 @@ def main() -> None:
             )
             predicted_with_steering = extract_final_answer(response_with_steering)
             print(f"With steering: {predicted_with_steering}")
-            # if cnt1 == 0:
-            #     print(f"With steering: {predicted_with_steering}")
-            #     print(f"Response with steering: {response_with_steering}")
-            #     cnt1 += 1
             correct_with_steering = answers_match(predicted_with_steering, correct_answer)
         except Exception as e:
             LOGGER.warning("Error generating with steering for sample %s: %s", sample_id, e)
@@ -232,32 +254,34 @@ def main() -> None:
             correct_with_steering = False
 
         # Update results
-        if correct_no_steering:
-            results["without_steering"]["correct"] += 1
-        else:
-            results["without_steering"]["incorrect"] += 1
+        if not args.skip_baseline:
+            if correct_no_steering:
+                results["without_steering"]["correct"] += 1
+            else:
+                results["without_steering"]["incorrect"] += 1
+
+            # Track improvements and degradations (only if baseline was computed)
+            if not correct_no_steering and correct_with_steering:
+                results["improvements"] += 1
+            elif correct_no_steering and not correct_with_steering:
+                results["degradations"] += 1
 
         if correct_with_steering:
             results["with_steering"]["correct"] += 1
         else:
             results["with_steering"]["incorrect"] += 1
 
-        # Track improvements and degradations
-        if not correct_no_steering and correct_with_steering:
-            results["improvements"] += 1
-        elif correct_no_steering and not correct_with_steering:
-            results["degradations"] += 1
-
         print(f"results['with_steering']['correct']: {results['with_steering']['correct']}")
 
         # Store predictions
-        results["without_steering"]["predictions"].append({
-            "sample_id": sample_id,
-            "predicted": predicted_no_steering,
-            "correct": correct_answer,
-            "is_correct": correct_no_steering,
-            "response": response_no_steering[:500],  # Truncate for storage
-        })
+        if not args.skip_baseline:
+            results["without_steering"]["predictions"].append({
+                "sample_id": sample_id,
+                "predicted": predicted_no_steering,
+                "correct": correct_answer,
+                "is_correct": correct_no_steering,
+                "response": response_no_steering[:500],  # Truncate for storage
+            })
         results["with_steering"]["predictions"].append({
             "sample_id": sample_id,
             "predicted": predicted_with_steering,
@@ -282,21 +306,32 @@ def main() -> None:
     LOGGER.info("=" * 60)
     LOGGER.info("Total triples evaluated: %d", total)
     LOGGER.info("")
-    LOGGER.info("Without steering:")
-    LOGGER.info("  Correct: %d", results["without_steering"]["correct"])
-    LOGGER.info("  Incorrect: %d", results["without_steering"]["incorrect"])
-    LOGGER.info("  Accuracy: %.2f%%", results["without_steering"]["accuracy"] * 100)
+    if args.skip_baseline:
+        LOGGER.info("Without steering (from provided baseline):")
+        LOGGER.info("  Correct: %d", results["without_steering"]["correct"])
+        LOGGER.info("  Incorrect: %d", results["without_steering"]["incorrect"])
+        LOGGER.info("  Accuracy: %.2f%%", results["without_steering"]["accuracy"] * 100)
+    else:
+        LOGGER.info("Without steering:")
+        LOGGER.info("  Correct: %d", results["without_steering"]["correct"])
+        LOGGER.info("  Incorrect: %d", results["without_steering"]["incorrect"])
+        LOGGER.info("  Accuracy: %.2f%%", results["without_steering"]["accuracy"] * 100)
     LOGGER.info("")
     LOGGER.info("With steering (coefficient=%.2f):", args.steering_coefficient)
     LOGGER.info("  Correct: %d", results["with_steering"]["correct"])
     LOGGER.info("  Incorrect: %d", results["with_steering"]["incorrect"])
     LOGGER.info("  Accuracy: %.2f%%", results["with_steering"]["accuracy"] * 100)
     LOGGER.info("")
-    LOGGER.info("Improvements (wrong -> correct): %d", results["improvements"])
-    LOGGER.info("Degradations (correct -> wrong): %d", results["degradations"])
-    LOGGER.info("")
-    accuracy_diff = results["with_steering"]["accuracy"] - results["without_steering"]["accuracy"]
-    LOGGER.info("Accuracy change: %+.2f%%", accuracy_diff * 100)
+    if not args.skip_baseline:
+        LOGGER.info("Improvements (wrong -> correct): %d", results["improvements"])
+        LOGGER.info("Degradations (correct -> wrong): %d", results["degradations"])
+        LOGGER.info("")
+        accuracy_diff = results["with_steering"]["accuracy"] - results["without_steering"]["accuracy"]
+        LOGGER.info("Accuracy change: %+.2f%%", accuracy_diff * 100)
+    else:
+        accuracy_diff = results["with_steering"]["accuracy"] - results["without_steering"]["accuracy"]
+        LOGGER.info("Accuracy change (vs. baseline): %+.2f%%", accuracy_diff * 100)
+        LOGGER.info("(Improvements/degradations not tracked when baseline is skipped)")
     LOGGER.info("=" * 60)
 
 
