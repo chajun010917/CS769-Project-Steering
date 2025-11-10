@@ -402,15 +402,16 @@ def main() -> None:
                 if len(layer_data["features"]) < args.probe_max_samples * 2:
                     # Find position before "Final answer" in wrong chain
                     wrong_pos = find_position_before_final_answer(wrong_tokens)
-                    if wrong_pos == -1:  # Not found, fallback to last token
-                        wrong_pos = len(layer_tensor_wrong) - 1
-                        LOGGER.warning("Sample %s (wrong): 'Final answer' not found, using last token", triple.sample_id)
-
                     # Find position before "Final answer" in correct chain
                     right_pos = find_position_before_final_answer(right_tokens)
-                    if right_pos == -1:  # Not found, fallback to last token
-                        right_pos = len(layer_tensor_right) - 1
-                        LOGGER.warning("Sample %s (right): 'Final answer' not found, using last token", triple.sample_id)
+
+                    # Skip this sample if "Final answer" not found in either chain
+                    if wrong_pos == -1 or right_pos == -1:
+                        if wrong_pos == -1:
+                            LOGGER.warning("Sample %s (wrong): 'Final answer' not found, skipping sample", triple.sample_id)
+                        if right_pos == -1:
+                            LOGGER.warning("Sample %s (right): 'Final answer' not found, skipping sample", triple.sample_id)
+                        continue  # Skip to next layer (will skip all layers for this sample)
 
                     # Extract hidden states at these positions
                     wrong_before_answer = layer_tensor_wrong[wrong_pos].numpy()
