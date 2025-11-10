@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import logging
 from pathlib import Path
@@ -24,6 +25,7 @@ from setup import (
     configure_hf_caches,
     setup_logging,
     reconstruct_prompt,
+    build_teacher_forcing_text,
 )
 
 LOGGER = logging.getLogger("compare_steering_embeddings")
@@ -134,6 +136,7 @@ def collect_hidden_states(
     system_prompt: str = "",
     pooling_method: str = "last_token",
     max_samples: Optional[int] = None,
+    use_correct_chain: bool = False,
 ) -> np.ndarray:
     """
     Collect hidden states from the prompt's last token.
@@ -152,6 +155,7 @@ def collect_hidden_states(
         system_prompt: System prompt for chat template (used for formatting)
         pooling_method: How to pool hidden states (last_token or mean)
         max_samples: Optional limit on number of samples
+        use_correct_chain: If True, use prompt + correct_chain instead of just prompt
     
     Returns:
         Array of hidden states [n_samples, hidden_dim]
@@ -165,23 +169,46 @@ def collect_hidden_states(
         prompt_text = triple.get("prompt", "")
         metadata = triple.get("metadata", {})
         
-        # Reconstruct prompt
-        formatted_prompt = reconstruct_prompt(metadata, prompt_text)
+        # Build text: either prompt only or prompt + correct_chain
+        if use_correct_chain:
+            correct_chain = triple.get("correct_chain", "")
+            # Handle correct_chain which might be a string representation of a list
+            if isinstance(correct_chain, str):
+                # Try to parse as a list if it looks like one
+                try:
+                    parsed = ast.literal_eval(correct_chain)
+                    if isinstance(parsed, list):
+                        correct_chain = "\n".join(parsed) if parsed else ""
+                    else:
+                        # If it's not a list after parsing, use as-is
+                        correct_chain = str(parsed) if parsed else ""
+                except (ValueError, SyntaxError):
+                    # If parsing fails, use the string as-is
+                    correct_chain = correct_chain if correct_chain else ""
+            elif isinstance(correct_chain, list):
+                # If correct_chain is already a list, join it
+                correct_chain = "\n".join(correct_chain) if correct_chain else ""
+            else:
+                # Convert to string if it's something else
+                correct_chain = str(correct_chain) if correct_chain else ""
+            formatted_text = build_teacher_forcing_text(prompt_text, correct_chain, metadata)
+        else:
+            formatted_text = reconstruct_prompt(metadata, prompt_text)
         
         # Apply chat template if available and system prompt provided (for consistency with generation)
         if hasattr(model.tokenizer, "apply_chat_template") and system_prompt:
             messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": formatted_prompt},
+                {"role": "user", "content": formatted_text},
             ]
-            formatted_prompt = model.tokenizer.apply_chat_template(
+            formatted_text = model.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
             )
         
-        # Get hidden states from prompt
-        hidden_states = model.get_hidden_states(formatted_prompt, target_layers=[layer])
+        # Get hidden states from text
+        hidden_states = model.get_hidden_states(formatted_text, target_layers=[layer])
         hidden_state = hidden_states[layer]  # [seq_len, hidden_dim]
         
         # Apply pooling
@@ -202,19 +229,21 @@ def collect_hidden_states(
 
 
 def plot_embedding_comparison(
-    embeddings_no_steering: np.ndarray,
-    embeddings_with_steering: np.ndarray,
+    embeddings_correct: np.ndarray,
+    embeddings_wrong_no_steering: np.ndarray,
+    embeddings_wrong_with_steering: np.ndarray,
     method: str,
     output_path: Path,
     layer: int,
     steering_coefficient: float,
 ) -> None:
     """
-    Plot comparison of embeddings with and without steering.
+    Plot comparison of embeddings: correct, wrong without steering, and wrong with steering.
     
     Args:
-        embeddings_no_steering: Embeddings without steering [n_samples, hidden_dim]
-        embeddings_with_steering: Embeddings with steering [n_samples, hidden_dim]
+        embeddings_correct: Correct embeddings [n_samples, hidden_dim]
+        embeddings_wrong_no_steering: Wrong embeddings without steering [n_samples, hidden_dim]
+        embeddings_wrong_with_steering: Wrong embeddings with steering [n_samples, hidden_dim]
         method: Visualization method ('pca' or 'umap')
         output_path: Path to save plot
         layer: Layer ID
@@ -223,7 +252,11 @@ def plot_embedding_comparison(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
     # Combine embeddings for fitting
-    combined_embeddings = np.vstack([embeddings_no_steering, embeddings_with_steering])
+    combined_embeddings = np.vstack([
+        embeddings_correct,
+        embeddings_wrong_no_steering,
+        embeddings_wrong_with_steering
+    ])
     
     # Apply dimensionality reduction
     if method == "pca":
@@ -243,45 +276,62 @@ def plot_embedding_comparison(
     else:
         raise ValueError(f"Unknown method: {method}")
     
-    # Split back into no-steering and with-steering
-    n_samples = len(embeddings_no_steering)
-    transformed_no_steering = transformed[:n_samples]
-    transformed_with_steering = transformed[n_samples:]
+    # Split back into correct, wrong no steering, wrong with steering
+    n_samples = len(embeddings_correct)
+    transformed_correct = transformed[:n_samples]
+    transformed_wrong_no_steering = transformed[n_samples:2*n_samples]
+    transformed_wrong_with_steering = transformed[2*n_samples:]
     
     # Create comparison plot
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
     
-    # Plot 1: Without steering
+    # Plot 1: Correct embeddings
     ax1 = axes[0]
     ax1.scatter(
-        transformed_no_steering[:, 0],
-        transformed_no_steering[:, 1],
+        transformed_correct[:, 0],
+        transformed_correct[:, 1],
         alpha=0.6,
         s=30,
-        c='blue',
-        label='Without Steering',
+        c='green',
+        label='Correct',
     )
-    ax1.set_title(f'Embeddings Without Steering (Layer {layer})', fontsize=14, fontweight='bold')
+    ax1.set_title(f'Correct Embeddings (Layer {layer})', fontsize=14, fontweight='bold')
     ax1.set_xlabel(xlabel, fontsize=12)
     ax1.set_ylabel(ylabel, fontsize=12)
     ax1.legend(fontsize=11)
     ax1.grid(True, alpha=0.3)
     
-    # Plot 2: With steering
+    # Plot 2: Wrong without steering
     ax2 = axes[1]
     ax2.scatter(
-        transformed_with_steering[:, 0],
-        transformed_with_steering[:, 1],
+        transformed_wrong_no_steering[:, 0],
+        transformed_wrong_no_steering[:, 1],
         alpha=0.6,
         s=30,
-        c='red',
-        label=f'With Steering (coeff={steering_coefficient})',
+        c='blue',
+        label='Wrong (No Steering)',
     )
-    ax2.set_title(f'Embeddings With Steering (Layer {layer})', fontsize=14, fontweight='bold')
+    ax2.set_title(f'Wrong Embeddings Without Steering (Layer {layer})', fontsize=14, fontweight='bold')
     ax2.set_xlabel(xlabel, fontsize=12)
     ax2.set_ylabel(ylabel, fontsize=12)
     ax2.legend(fontsize=11)
     ax2.grid(True, alpha=0.3)
+    
+    # Plot 3: Wrong with steering
+    ax3 = axes[2]
+    ax3.scatter(
+        transformed_wrong_with_steering[:, 0],
+        transformed_wrong_with_steering[:, 1],
+        alpha=0.6,
+        s=30,
+        c='red',
+        label=f'Wrong (With Steering, coeff={steering_coefficient})',
+    )
+    ax3.set_title(f'Wrong Embeddings With Steering (Layer {layer})', fontsize=14, fontweight='bold')
+    ax3.set_xlabel(xlabel, fontsize=12)
+    ax3.set_ylabel(ylabel, fontsize=12)
+    ax3.legend(fontsize=11)
+    ax3.grid(True, alpha=0.3)
     
     plt.suptitle(f'Embedding Space Comparison: {method.upper()} (Layer {layer})', 
                  fontsize=16, fontweight='bold', y=1.02)
@@ -293,19 +343,21 @@ def plot_embedding_comparison(
 
 
 def plot_overlay_comparison(
-    embeddings_no_steering: np.ndarray,
-    embeddings_with_steering: np.ndarray,
+    embeddings_correct: np.ndarray,
+    embeddings_wrong_no_steering: np.ndarray,
+    embeddings_wrong_with_steering: np.ndarray,
     method: str,
     output_path: Path,
     layer: int,
     steering_coefficient: float,
 ) -> None:
     """
-    Plot overlay comparison showing both embeddings in the same space.
+    Plot overlay comparison showing correct, wrong without steering, and wrong with steering in the same space.
     
     Args:
-        embeddings_no_steering: Embeddings without steering [n_samples, hidden_dim]
-        embeddings_with_steering: Embeddings with steering [n_samples, hidden_dim]
+        embeddings_correct: Correct embeddings [n_samples, hidden_dim]
+        embeddings_wrong_no_steering: Wrong embeddings without steering [n_samples, hidden_dim]
+        embeddings_wrong_with_steering: Wrong embeddings with steering [n_samples, hidden_dim]
         method: Visualization method ('pca' or 'umap')
         output_path: Path to save plot
         layer: Layer ID
@@ -314,7 +366,11 @@ def plot_overlay_comparison(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
     # Combine embeddings for fitting
-    combined_embeddings = np.vstack([embeddings_no_steering, embeddings_with_steering])
+    combined_embeddings = np.vstack([
+        embeddings_correct,
+        embeddings_wrong_no_steering,
+        embeddings_wrong_with_steering
+    ])
     
     # Apply dimensionality reduction
     if method == "pca":
@@ -334,55 +390,76 @@ def plot_overlay_comparison(
     else:
         raise ValueError(f"Unknown method: {method}")
     
-    # Split back into no-steering and with-steering
-    n_samples = len(embeddings_no_steering)
-    transformed_no_steering = transformed[:n_samples]
-    transformed_with_steering = transformed[n_samples:]
+    # Split back into correct, wrong no steering, wrong with steering
+    n_samples = len(embeddings_correct)
+    transformed_correct = transformed[:n_samples]
+    transformed_wrong_no_steering = transformed[n_samples:2*n_samples]
+    transformed_wrong_with_steering = transformed[2*n_samples:]
     
     # Create overlay plot
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(12, 10))
     
+    # Plot correct embeddings (green)
     plt.scatter(
-        transformed_no_steering[:, 0],
-        transformed_no_steering[:, 1],
+        transformed_correct[:, 0],
+        transformed_correct[:, 1],
+        alpha=0.6,
+        s=50,
+        c='green',
+        label='Correct Embeddings',
+        marker='o',
+        edgecolors='darkgreen',
+        linewidths=0.5,
+    )
+    
+    # Plot wrong embeddings without steering (blue)
+    plt.scatter(
+        transformed_wrong_no_steering[:, 0],
+        transformed_wrong_no_steering[:, 1],
         alpha=0.5,
         s=40,
         c='blue',
-        label='Without Steering',
-        marker='o',
+        label='Wrong (Before Steering)',
+        marker='s',
+        edgecolors='darkblue',
+        linewidths=0.5,
     )
+    
+    # Plot wrong embeddings with steering (red)
     plt.scatter(
-        transformed_with_steering[:, 0],
-        transformed_with_steering[:, 1],
+        transformed_wrong_with_steering[:, 0],
+        transformed_wrong_with_steering[:, 1],
         alpha=0.5,
         s=40,
         c='red',
-        label=f'With Steering (coeff={steering_coefficient})',
+        label=f'Wrong (After Steering, coeff={steering_coefficient})',
         marker='x',
+        linewidths=1.5,
     )
     
-    # Draw arrows from no-steering to with-steering for a few samples
+    # Draw arrows from wrong no-steering to wrong with-steering for a few samples
     n_arrows = min(20, n_samples)  # Show arrows for up to 20 samples
     indices = np.linspace(0, n_samples - 1, n_arrows, dtype=int)
     for idx in indices:
         plt.arrow(
-            transformed_no_steering[idx, 0],
-            transformed_no_steering[idx, 1],
-            transformed_with_steering[idx, 0] - transformed_no_steering[idx, 0],
-            transformed_with_steering[idx, 1] - transformed_no_steering[idx, 1],
+            transformed_wrong_no_steering[idx, 0],
+            transformed_wrong_no_steering[idx, 1],
+            transformed_wrong_with_steering[idx, 0] - transformed_wrong_no_steering[idx, 0],
+            transformed_wrong_with_steering[idx, 1] - transformed_wrong_no_steering[idx, 1],
             head_width=0.05,
             head_length=0.05,
             fc='gray',
             ec='gray',
-            alpha=0.3,
+            alpha=0.4,
             length_includes_head=True,
+            linestyle='--',
         )
     
     plt.title(f'Embedding Space Overlay: {method.upper()} (Layer {layer})', 
               fontsize=14, fontweight='bold')
     plt.xlabel(xlabel, fontsize=12)
     plt.ylabel(ylabel, fontsize=12)
-    plt.legend(fontsize=11, loc='best')
+    plt.legend(fontsize=11, loc='best', framealpha=0.9)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
@@ -392,40 +469,80 @@ def plot_overlay_comparison(
 
 
 def compute_shift_statistics(
-    embeddings_no_steering: np.ndarray,
-    embeddings_with_steering: np.ndarray,
+    embeddings_correct: np.ndarray,
+    embeddings_wrong_no_steering: np.ndarray,
+    embeddings_wrong_with_steering: np.ndarray,
 ) -> Dict:
     """
-    Compute statistics about how much embeddings shift with steering.
+    Compute statistics about how much embeddings shift with steering and distances to correct.
     
     Args:
-        embeddings_no_steering: Embeddings without steering [n_samples, hidden_dim]
-        embeddings_with_steering: Embeddings with steering [n_samples, hidden_dim]
+        embeddings_correct: Correct embeddings [n_samples, hidden_dim]
+        embeddings_wrong_no_steering: Wrong embeddings without steering [n_samples, hidden_dim]
+        embeddings_wrong_with_steering: Wrong embeddings with steering [n_samples, hidden_dim]
     
     Returns:
         Dictionary with shift statistics
     """
-    # Compute per-sample L2 distances
-    shifts = embeddings_with_steering - embeddings_no_steering
-    l2_distances = np.linalg.norm(shifts, axis=1)
+    # Compute per-sample L2 distances from wrong (no steering) to wrong (with steering)
+    shifts = embeddings_wrong_with_steering - embeddings_wrong_no_steering
+    l2_distances_steering = np.linalg.norm(shifts, axis=1)
+    
+    # Compute distances from wrong (no steering) to correct
+    wrong_to_correct_before = embeddings_correct - embeddings_wrong_no_steering
+    l2_distances_to_correct_before = np.linalg.norm(wrong_to_correct_before, axis=1)
+    
+    # Compute distances from wrong (with steering) to correct
+    wrong_to_correct_after = embeddings_correct - embeddings_wrong_with_steering
+    l2_distances_to_correct_after = np.linalg.norm(wrong_to_correct_after, axis=1)
     
     # Compute cosine similarities
     def cosine_similarity(a, b):
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8)
     
-    cosine_sims = np.array([
-        cosine_similarity(embeddings_no_steering[i], embeddings_with_steering[i])
-        for i in range(len(embeddings_no_steering))
+    cosine_sims_steering = np.array([
+        cosine_similarity(embeddings_wrong_no_steering[i], embeddings_wrong_with_steering[i])
+        for i in range(len(embeddings_wrong_no_steering))
+    ])
+    
+    cosine_sims_to_correct_before = np.array([
+        cosine_similarity(embeddings_wrong_no_steering[i], embeddings_correct[i])
+        for i in range(len(embeddings_wrong_no_steering))
+    ])
+    
+    cosine_sims_to_correct_after = np.array([
+        cosine_similarity(embeddings_wrong_with_steering[i], embeddings_correct[i])
+        for i in range(len(embeddings_wrong_with_steering))
     ])
     
     return {
-        "mean_l2_shift": float(np.mean(l2_distances)),
-        "std_l2_shift": float(np.std(l2_distances)),
-        "median_l2_shift": float(np.median(l2_distances)),
-        "max_l2_shift": float(np.max(l2_distances)),
-        "mean_cosine_similarity": float(np.mean(cosine_sims)),
-        "std_cosine_similarity": float(np.std(cosine_sims)),
-        "min_cosine_similarity": float(np.min(cosine_sims)),
+        "steering_shift": {
+            "mean_l2_shift": float(np.mean(l2_distances_steering)),
+            "std_l2_shift": float(np.std(l2_distances_steering)),
+            "median_l2_shift": float(np.median(l2_distances_steering)),
+            "max_l2_shift": float(np.max(l2_distances_steering)),
+            "mean_cosine_similarity": float(np.mean(cosine_sims_steering)),
+            "std_cosine_similarity": float(np.std(cosine_sims_steering)),
+            "min_cosine_similarity": float(np.min(cosine_sims_steering)),
+        },
+        "distance_to_correct_before_steering": {
+            "mean_l2": float(np.mean(l2_distances_to_correct_before)),
+            "std_l2": float(np.std(l2_distances_to_correct_before)),
+            "median_l2": float(np.median(l2_distances_to_correct_before)),
+            "mean_cosine_similarity": float(np.mean(cosine_sims_to_correct_before)),
+            "std_cosine_similarity": float(np.std(cosine_sims_to_correct_before)),
+        },
+        "distance_to_correct_after_steering": {
+            "mean_l2": float(np.mean(l2_distances_to_correct_after)),
+            "std_l2": float(np.std(l2_distances_to_correct_after)),
+            "median_l2": float(np.median(l2_distances_to_correct_after)),
+            "mean_cosine_similarity": float(np.mean(cosine_sims_to_correct_after)),
+            "std_cosine_similarity": float(np.std(cosine_sims_to_correct_after)),
+        },
+        "improvement": {
+            "mean_l2_reduction": float(np.mean(l2_distances_to_correct_before - l2_distances_to_correct_after)),
+            "mean_cosine_improvement": float(np.mean(cosine_sims_to_correct_after - cosine_sims_to_correct_before)),
+        },
     }
 
 
@@ -454,9 +571,9 @@ def main() -> None:
     # Load model
     model = ModelWrapper(args.model_name, device=args.device)
     
-    # Collect hidden states without steering
-    LOGGER.info("Collecting hidden states without steering...")
-    embeddings_no_steering = collect_hidden_states(
+    # Collect correct embeddings (from prompt + correct_chain)
+    LOGGER.info("Collecting correct embeddings (prompt + correct_chain)...")
+    embeddings_correct = collect_hidden_states(
         model=model,
         triples=triples,
         layer=args.layer,
@@ -464,13 +581,29 @@ def main() -> None:
         system_prompt=args.system_prompt,
         pooling_method=args.pooling_method,
         max_samples=args.max_samples,
+        use_correct_chain=True,
     )
-    LOGGER.info("Collected %d embeddings without steering (shape: %s)", 
-                len(embeddings_no_steering), embeddings_no_steering.shape)
+    LOGGER.info("Collected %d correct embeddings (shape: %s)", 
+                len(embeddings_correct), embeddings_correct.shape)
     
-    # Collect hidden states with steering (steering vector added to simulate effect)
-    LOGGER.info("Collecting hidden states with steering (simulated by adding steering vector)...")
-    embeddings_with_steering = collect_hidden_states(
+    # Collect wrong hidden states without steering (from prompt only)
+    LOGGER.info("Collecting wrong embeddings without steering (prompt only)...")
+    embeddings_wrong_no_steering = collect_hidden_states(
+        model=model,
+        triples=triples,
+        layer=args.layer,
+        steering_vector=None,
+        system_prompt=args.system_prompt,
+        pooling_method=args.pooling_method,
+        max_samples=args.max_samples,
+        use_correct_chain=False,
+    )
+    LOGGER.info("Collected %d wrong embeddings without steering (shape: %s)", 
+                len(embeddings_wrong_no_steering), embeddings_wrong_no_steering.shape)
+    
+    # Collect wrong hidden states with steering (steering vector added to simulate effect)
+    LOGGER.info("Collecting wrong embeddings with steering (simulated by adding steering vector)...")
+    embeddings_wrong_with_steering = collect_hidden_states(
         model=model,
         triples=triples,
         layer=args.layer,
@@ -479,19 +612,31 @@ def main() -> None:
         system_prompt=args.system_prompt,
         pooling_method=args.pooling_method,
         max_samples=args.max_samples,
+        use_correct_chain=False,
     )
-    LOGGER.info("Collected %d embeddings with steering (shape: %s)", 
-                len(embeddings_with_steering), embeddings_with_steering.shape)
+    LOGGER.info("Collected %d wrong embeddings with steering (shape: %s)", 
+                len(embeddings_wrong_with_steering), embeddings_wrong_with_steering.shape)
     
     # Compute shift statistics
-    stats = compute_shift_statistics(embeddings_no_steering, embeddings_with_steering)
+    stats = compute_shift_statistics(
+        embeddings_correct,
+        embeddings_wrong_no_steering,
+        embeddings_wrong_with_steering
+    )
     LOGGER.info("Shift statistics:")
-    LOGGER.info("  Mean L2 shift: %.4f ± %.4f", stats["mean_l2_shift"], stats["std_l2_shift"])
-    LOGGER.info("  Median L2 shift: %.4f", stats["median_l2_shift"])
-    LOGGER.info("  Max L2 shift: %.4f", stats["max_l2_shift"])
-    LOGGER.info("  Mean cosine similarity: %.4f ± %.4f", 
-                stats["mean_cosine_similarity"], stats["std_cosine_similarity"])
-    LOGGER.info("  Min cosine similarity: %.4f", stats["min_cosine_similarity"])
+    LOGGER.info("  Steering shift - Mean L2: %.4f ± %.4f", 
+                stats["steering_shift"]["mean_l2_shift"], 
+                stats["steering_shift"]["std_l2_shift"])
+    LOGGER.info("  Distance to correct (before) - Mean L2: %.4f ± %.4f", 
+                stats["distance_to_correct_before_steering"]["mean_l2"],
+                stats["distance_to_correct_before_steering"]["std_l2"])
+    LOGGER.info("  Distance to correct (after) - Mean L2: %.4f ± %.4f", 
+                stats["distance_to_correct_after_steering"]["mean_l2"],
+                stats["distance_to_correct_after_steering"]["std_l2"])
+    LOGGER.info("  Improvement - Mean L2 reduction: %.4f", 
+                stats["improvement"]["mean_l2_reduction"])
+    LOGGER.info("  Improvement - Mean cosine improvement: %.4f", 
+                stats["improvement"]["mean_cosine_improvement"])
     
     # Save statistics
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -506,8 +651,9 @@ def main() -> None:
     # PCA comparison
     pca_comparison_path = args.output_dir / f"layer{args.layer}_pca_comparison.png"
     plot_embedding_comparison(
-        embeddings_no_steering,
-        embeddings_with_steering,
+        embeddings_correct,
+        embeddings_wrong_no_steering,
+        embeddings_wrong_with_steering,
         method="pca",
         output_path=pca_comparison_path,
         layer=args.layer,
@@ -517,8 +663,9 @@ def main() -> None:
     # PCA overlay
     pca_overlay_path = args.output_dir / f"layer{args.layer}_pca_overlay.png"
     plot_overlay_comparison(
-        embeddings_no_steering,
-        embeddings_with_steering,
+        embeddings_correct,
+        embeddings_wrong_no_steering,
+        embeddings_wrong_with_steering,
         method="pca",
         output_path=pca_overlay_path,
         layer=args.layer,
@@ -529,8 +676,9 @@ def main() -> None:
     if umap is not None:
         umap_comparison_path = args.output_dir / f"layer{args.layer}_umap_comparison.png"
         plot_embedding_comparison(
-            embeddings_no_steering,
-            embeddings_with_steering,
+            embeddings_correct,
+            embeddings_wrong_no_steering,
+            embeddings_wrong_with_steering,
             method="umap",
             output_path=umap_comparison_path,
             layer=args.layer,
@@ -540,8 +688,9 @@ def main() -> None:
         # UMAP overlay
         umap_overlay_path = args.output_dir / f"layer{args.layer}_umap_overlay.png"
         plot_overlay_comparison(
-            embeddings_no_steering,
-            embeddings_with_steering,
+            embeddings_correct,
+            embeddings_wrong_no_steering,
+            embeddings_wrong_with_steering,
             method="umap",
             output_path=umap_overlay_path,
             layer=args.layer,

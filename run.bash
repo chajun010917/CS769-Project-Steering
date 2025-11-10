@@ -170,7 +170,7 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
   # Evaluate each layer separately (or all together - you can modify this)
   # For now, evaluate with the best layer (typically layer 28)
   # To test a specific layer (e.g., layer 26), change BEST_LAYER="26"
-  BEST_LAYER="26"  # Can be changed based on visualization results  # can add a list of layers here
+  BEST_LAYER="29"  # Can be changed based on visualization results  # can add a list of layers here
   
   # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
   # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
