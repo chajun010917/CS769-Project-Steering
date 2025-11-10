@@ -84,25 +84,59 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_triples(path: Path) -> List[Triple]:
-    """Load triples from JSONL file."""
+    """Load triples from JSONL or JSON file."""
     triples: List[Triple] = []
     with path.open("r", encoding="utf-8") as src:
-        for line in src:
-            payload = json.loads(line)
-            correct_chain = payload.get("correct_chain")
-            if not correct_chain:
-                continue
-            triples.append(
-                Triple(
-                    sample_id=str(payload.get("sample_id")),
-                    prompt=str(payload.get("prompt", "")),
-                    wrong_chain=str(payload.get("wrong_chain", "")),
-                    correct_chain=str(correct_chain),
-                    wrong_answer=str(payload.get("wrong_answer", "")),
-                    correct_answer=str(payload.get("correct_answer", "")),
-                    metadata=dict(payload.get("metadata", {})),
-                )
+        first_chunk = src.read(1)
+
+    if not first_chunk:
+        LOGGER.error("Triples file %s is empty.", path)
+        return triples
+
+    is_json_array = first_chunk in ("[", "{")
+
+    if is_json_array:
+        with path.open("r", encoding="utf-8") as src:
+            try:
+                payloads = json.load(src)
+            except json.JSONDecodeError as exc:
+                LOGGER.error("Failed to parse JSON file %s: %s", path, exc)
+                return triples
+
+        if isinstance(payloads, dict):
+            payloads = payloads.get("records") or payloads.get("data") or []
+            if not isinstance(payloads, list):
+                LOGGER.error("JSON file %s does not contain a list of records.", path)
+                return triples
+    else:
+        payloads = []
+        with path.open("r", encoding="utf-8") as src:
+            for line in src:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    payloads.append(json.loads(line))
+                except json.JSONDecodeError as exc:
+                    LOGGER.warning("Skipping malformed JSON line: %s (error: %s)", line[:200], exc)
+
+    for payload in payloads:
+        if not isinstance(payload, dict):
+            continue
+        correct_chain = payload.get("correct_chain")
+        if not correct_chain:
+            continue
+        triples.append(
+            Triple(
+                sample_id=str(payload.get("sample_id")),
+                prompt=str(payload.get("prompt", "")),
+                wrong_chain=str(payload.get("wrong_chain", "")),
+                correct_chain=str(correct_chain),
+                wrong_answer=str(payload.get("wrong_answer", "")),
+                correct_answer=str(payload.get("correct_answer", "")),
+                metadata=dict(payload.get("metadata", {})),
             )
+        )
     return triples
 
 
@@ -164,6 +198,7 @@ def select_tokens_via_gradient(
         if grad_tensor is None:
             raise ValueError(f"Gradient not available for layer {layer_id}.")
 
+        grad_tensor = grad_tensor.squeeze(0)
         grad_norm = grad_tensor.norm(p=2, dim=1)
         if grad_norm.numel() == 0:
             raise ValueError(f"No tokens available for layer {layer_id}.")
@@ -303,14 +338,14 @@ def main() -> None:
         # Fallback or last token selection
         for layer_id in target_layers:
             layer_states = wrong_forward["hidden_states"][layer_id]
-            seq_len = layer_states.shape[0]
+            seq_len = layer_states.shape[1]
             default_idx = max(0, seq_len - 1)
             selected_positions.setdefault(layer_id, default_idx)
 
         # Compute differences using selected tokens
         for layer_id in target_layers:
-            wrong_states = wrong_forward["hidden_states"][layer_id]
-            right_states = right_forward["hidden_states"][layer_id]
+            wrong_states = wrong_forward["hidden_states"][layer_id].squeeze(0)
+            right_states = right_forward["hidden_states"][layer_id].squeeze(0)
 
             token_idx = selected_positions[layer_id]
             token_idx = max(0, min(token_idx, wrong_states.shape[0] - 1))

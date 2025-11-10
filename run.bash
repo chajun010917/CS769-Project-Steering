@@ -15,17 +15,21 @@ MODEL_ID="meta-llama/Llama-3.1-8B-Instruct"
 MAX_SAMPLES=100
 MAX_NEW_TOKENS=1024
 
+# Pooling method: mean, last_token, or per_token
+POOLING_METHOD="last_token"
+
 # Layers to analyze (space-separated list)
 # For Llama-3.1-8B: layers 0-31 available
 # Focusing on layer 28 which shows good separation with mean pooling
 LAYERS="26 27 28 29 30 31"
 
-# Pooling method: mean, last_token, or per_token
-POOLING_METHOD="last_token"
-
 PROBE_MAX=1000  # Max samples per layer for probe data
 DATASET_PATH="UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval"
 DATASET_CONFIG="ALL"
+
+# Derived artifact locations
+ANALYSIS_OUTPUT="artifacts/probe_analysis"
+PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
 
 # ---- setup ----
 
@@ -49,75 +53,63 @@ mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
 #hf auth login
 
 # ---- step 1: generate triple set ----
-TRIPLES_OUT="artifacts/triples/triples_small.jsonl"
+TRIPLES_OUT="./artifacts/manual_review/10232025_human_review.json"
 
 if [ -f "${TRIPLES_OUT}" ]; then
-  echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
-  echo "To regenerate, delete the file and rerun."
+  echo "=== Step 1: Using manually reviewed triples: ${TRIPLES_OUT} ==="
 else
-  echo "=== Step 1: Generating triples ==="
-  export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-  export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-  python scripts/prepare_triples.py \
-    --dataset-name "${DATASET_PATH}" \
-    --split test \
-    --model-name "${MODEL_ID}" \
-    --max-samples "${MAX_SAMPLES}" \
-    --max-new-tokens "${MAX_NEW_TOKENS}" \
-    --only-wrong \
-    --output-path "${TRIPLES_OUT}"
+  echo "ERROR: Manual triples file not found at ${TRIPLES_OUT}"
+  exit 1
 fi
 
-# ---- step 2: capture hidden states ----
-# echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
-# # Note: collect_hidden_states.py will generate probe data for all layers specified
-# python scripts/collect_hidden_states.py \
-#   --triples-path "${TRIPLES_OUT}" \
-#   --model-name "${MODEL_ID}" \
-#   --layers ${LAYERS} \
-#   --probe-max-samples "${PROBE_MAX}" \
-#   --max-samples "${MAX_SAMPLES}" \
-#   --pooling-method "${POOLING_METHOD}"
+---- step 2: capture hidden states ----
+echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
+# Note: collect_hidden_states.py will generate probe data for all layers specified
+python scripts/collect_hidden_states.py \
+  --triples-path "${TRIPLES_OUT}" \
+  --model-name "${MODEL_ID}" \
+  --layers ${LAYERS} \
+  --probe-max-samples "${PROBE_MAX}" \
+  --max-samples "${MAX_SAMPLES}" \
+  --pooling-method "${POOLING_METHOD}" \
+  --alignment-method hidden_dp \
+  --alignment-layer 28 \
+  --dp-max-shift 40
 
 # echo "Generated probe data for layers: ${LAYERS}"
 
 # ---- step 3: compute probes and vectors for multiple layers ----
-# echo "=== Step 3: Computing probes and vectors ==="
-# ANALYSIS_OUTPUT="artifacts/probe_analysis"
-
-# # Process each layer from the LAYERS variable
-# for layer in ${LAYERS}; do
-#   PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+echo "=== Step 3: Computing probes and vectors ==="
+# Process each layer from the LAYERS variable
+for layer in ${LAYERS}; do
+  PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
   
-#   if [ -f "${PROBE_DATA}" ]; then
-#     echo "  Computing probes for layer ${layer}..."
-#     python scripts/compute_probes.py \
-#       --probe-data-path "${PROBE_DATA}" \
-#       --output-dir "${ANALYSIS_OUTPUT}" \
-#       --seed 42
-#   else
-#     echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
-#   fi
-# done
+  if [ -f "${PROBE_DATA}" ]; then
+    echo "  Computing probes for layer ${layer}..."
+    python scripts/compute_probes.py \
+      --probe-data-path "${PROBE_DATA}" \
+      --output-dir "${ANALYSIS_OUTPUT}" \
+      --seed 42
+  else
+    echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
+  fi
+done
 
 # ---- step 4: generate visualizations for multiple layers ----
-# echo "=== Step 4: Generating visualizations ==="
-# PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
-
-# # Plot each layer that was computed
-# for layer in ${LAYERS}; do
-#   METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
+echo "=== Step 4: Generating visualizations ==="
+for layer in ${LAYERS}; do
+  METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
   
-#   if [ -f "${METRICS_FILE}" ]; then
-#     echo "  Plotting layer ${layer}..."
-#     python scripts/plot_probes.py \
-#       --analysis-dir "${ANALYSIS_OUTPUT}" \
-#       --layer ${layer} \
-#       --output-dir "${PLOT_OUTPUT}"
-#   else
-#     echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
-#   fi
-# done
+  if [ -f "${METRICS_FILE}" ]; then
+    echo "  Plotting layer ${layer}..."
+    python scripts/plot_probes.py \
+      --analysis-dir "${ANALYSIS_OUTPUT}" \
+      --layer ${layer} \
+      --output-dir "${PLOT_OUTPUT}"
+  else
+    echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
+  fi
+done
 
 # ---- step 5: analyze critical tokens (only for per_token pooling) ----
 if [ "${POOLING_METHOD}" = "per_token" ]; then
@@ -143,23 +135,16 @@ else
 fi
 
 # ---- step 6: compute steering vectors ----
-echo "=== Step 6: Computing steering vectors from last_token representations ==="
+echo "=== Step 6: Computing steering vectors with gradient-selected tokens ==="
 STEERING_VECTORS_DIR="artifacts/steering_vectors"
 
-# Only compute steering vectors if using last_token pooling
-# if [ "${POOLING_METHOD}" = "last_token" ]; then
-#   echo "Computing steering vectors for layers: ${LAYERS}"
-#   python scripts/compute_steering_vectors.py \
-#     --triples-path "${TRIPLES_OUT}" \
-#     --model-name "${MODEL_ID}" \
-#     --layers ${LAYERS} \
-#     --output-dir "${STEERING_VECTORS_DIR}" \
-#     --max-samples "${MAX_SAMPLES}"
-  
-#   echo "Steering vectors computed and saved to ${STEERING_VECTORS_DIR}"
-# else
-#   echo "=== Step 6: Skipping steering vector computation (only applicable for last_token pooling) ==="
-# fi
+python scripts/compute_steering_vectors.py \
+  --triples-path "${TRIPLES_OUT}" \
+  --model-name "${MODEL_ID}" \
+  --layers ${LAYERS} \
+  --output-dir "${STEERING_VECTORS_DIR}" \
+  --max-samples "${MAX_SAMPLES}" \
+  --token-selection-method gradient
 
 # ---- step 7: evaluate steering ----
 echo "=== Step 7: Evaluating steering vectors ==="
@@ -174,9 +159,9 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
   
   # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
   # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
-  SKIP_BASELINE=1
-  BASELINE_CORRECT=8
-  BASELINE_INCORRECT=92
+  SKIP_BASELINE=0
+  BASELINE_CORRECT=0
+  BASELINE_INCORRECT=0
   
   # Check if steering vector exists for the best layer
   if [ -f "${STEERING_VECTORS_DIR}/layer${BEST_LAYER}_steering_vector.npy" ]; then

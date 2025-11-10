@@ -107,13 +107,45 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_triples(path: Path) -> List[Dict]:
-    """Load triples from JSONL file."""
+    """Load triples from JSONL or JSON file."""
     triples: List[Dict] = []
     with path.open("r", encoding="utf-8") as src:
-        for line in src:
-            payload = json.loads(line)
-            if payload.get("correct_chain"):
-                triples.append(payload)
+        first_chunk = src.read(1)
+
+    if not first_chunk:
+        LOGGER.error("Triples file %s is empty.", path)
+        return triples
+
+    is_json_array = first_chunk in ("[", "{")
+
+    if is_json_array:
+        with path.open("r", encoding="utf-8") as src:
+            try:
+                payloads = json.load(src)
+            except json.JSONDecodeError as exc:
+                LOGGER.error("Failed to parse JSON file %s: %s", path, exc)
+                return triples
+
+        if isinstance(payloads, dict):
+            payloads = payloads.get("records") or payloads.get("data") or []
+            if not isinstance(payloads, list):
+                LOGGER.error("JSON file %s does not contain a list of records.", path)
+                return triples
+    else:
+        payloads = []
+        with path.open("r", encoding="utf-8") as src:
+            for line in src:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    payloads.append(json.loads(line))
+                except json.JSONDecodeError as exc:
+                    LOGGER.warning("Skipping malformed JSON line: %s (error: %s)", line[:200], exc)
+
+    for payload in payloads:
+        if isinstance(payload, dict) and payload.get("correct_chain"):
+            triples.append(payload)
     return triples
 
 

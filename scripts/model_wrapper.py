@@ -200,12 +200,13 @@ class ModelWrapper:
         """
         inputs = self.tokenize(text, return_offsets_mapping=False)
 
-        outputs = self.model(
-            **inputs,
-            output_hidden_states=True,
-            use_cache=False,
-            return_dict=True,
-        )
+        with torch.set_grad_enabled(enable_grad):
+            outputs = self.model(
+                **inputs,
+                output_hidden_states=True,
+                use_cache=False,
+                return_dict=True,
+            )
 
         hidden_states: Tuple[torch.Tensor, ...] = outputs.hidden_states  # type: ignore[attr-defined]
         captures: Dict[int, torch.Tensor] = {}
@@ -215,7 +216,7 @@ class ModelWrapper:
                 raise ValueError(
                     f"Layer {layer_id} exceeds available layers ({len(hidden_states) - 1})"
                 )
-            layer_tensor = hidden_states[index].squeeze(0)
+            layer_tensor = hidden_states[index]  # [batch, seq_len, hidden_dim]
             if enable_grad:
                 layer_tensor.retain_grad()
             captures[layer_id] = layer_tensor
