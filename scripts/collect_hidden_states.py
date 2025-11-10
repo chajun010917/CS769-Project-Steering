@@ -560,7 +560,7 @@ def main() -> None:
 
     # Probe data collection - track per layer
     probe_data_per_layer = {
-        layer: {"features": [], "labels": [], "token_positions": [], "sample_ids": []} 
+        layer: {"features": [], "labels": [], "token_positions": [], "sample_ids": [], "valid": []}
         for layer in target_layers
     }
 
@@ -643,7 +643,10 @@ def main() -> None:
             layer_data = probe_data_per_layer[layer_id]
             layer_tensor_wrong = wrong_hidden[layer_id]
             layer_tensor_right = right_hidden[layer_id]
-            
+
+            # Track validity for this sample (will be set to False if we need to skip)
+            sample_valid = True
+
             if args.pooling_method == "mean":
                 # Mean pooling over entire sequence
                 if len(layer_data["features"]) < args.probe_max_samples * 2:  # *2 for wrong+right
@@ -654,11 +657,13 @@ def main() -> None:
                     layer_data["labels"].append(0)  # 0 = wrong
                     layer_data["token_positions"].append(-1)  # -1 indicates pooled
                     layer_data["sample_ids"].append(triple.sample_id)
-                    
+                    layer_data["valid"].append(True)
+
                     layer_data["features"].append(right_pooled)
                     layer_data["labels"].append(1)  # 1 = right
                     layer_data["token_positions"].append(-1)
                     layer_data["sample_ids"].append(triple.sample_id)
+                    layer_data["valid"].append(True)
             
             elif args.pooling_method == "last_token":
                 # Last token (typically where the answer is generated)
@@ -670,11 +675,13 @@ def main() -> None:
                     layer_data["labels"].append(0)
                     layer_data["token_positions"].append(len(layer_tensor_wrong) - 1)
                     layer_data["sample_ids"].append(triple.sample_id)
-                    
+                    layer_data["valid"].append(True)
+
                     layer_data["features"].append(right_last)
                     layer_data["labels"].append(1)
                     layer_data["token_positions"].append(len(layer_tensor_right) - 1)
                     layer_data["sample_ids"].append(triple.sample_id)
+                    layer_data["valid"].append(True)
             
             elif args.pooling_method == "per_token":
                 # Per-token: use matched token positions
@@ -690,12 +697,14 @@ def main() -> None:
                         layer_data["labels"].append(0)  # 0 = wrong
                         layer_data["token_positions"].append(wrong_idx)
                         layer_data["sample_ids"].append(triple.sample_id)
-                        
+                        layer_data["valid"].append(True)
+
                         # Add right token representation
                         layer_data["features"].append(layer_tensor_right[right_idx].numpy())
                         layer_data["labels"].append(1)  # 1 = right
                         layer_data["token_positions"].append(right_idx)
                         layer_data["sample_ids"].append(triple.sample_id)
+                        layer_data["valid"].append(True)
 
             elif args.pooling_method == "before_final_answer":
                 # Token just before "Final answer" appears
@@ -705,13 +714,16 @@ def main() -> None:
                     # Find position before "Final answer" in correct chain
                     right_pos = find_position_before_final_answer(right_tokens)
 
-                    # Skip this sample if "Final answer" not found in either chain
+                    # Mark sample as invalid if "Final answer" not found in either chain
                     if wrong_pos == -1 or right_pos == -1:
                         if wrong_pos == -1:
-                            LOGGER.warning("Sample %s (wrong): 'Final answer' not found, skipping sample", triple.sample_id)
+                            LOGGER.warning("Sample %s (wrong): 'Final answer' not found, marking as invalid", triple.sample_id)
                         if right_pos == -1:
-                            LOGGER.warning("Sample %s (right): 'Final answer' not found, skipping sample", triple.sample_id)
-                        continue  # Skip to next layer (will skip all layers for this sample)
+                            LOGGER.warning("Sample %s (right): 'Final answer' not found, marking as invalid", triple.sample_id)
+                        sample_valid = False
+                        # Use last token as fallback position for invalid samples
+                        wrong_pos = len(layer_tensor_wrong) - 1 if wrong_pos == -1 else wrong_pos
+                        right_pos = len(layer_tensor_right) - 1 if right_pos == -1 else right_pos
 
                     # Extract hidden states at these positions
                     wrong_before_answer = layer_tensor_wrong[wrong_pos].numpy()
@@ -721,15 +733,25 @@ def main() -> None:
                     layer_data["labels"].append(0)  # 0 = wrong
                     layer_data["token_positions"].append(wrong_pos)
                     layer_data["sample_ids"].append(triple.sample_id)
+                    layer_data["valid"].append(sample_valid)
 
                     layer_data["features"].append(right_before_answer)
                     layer_data["labels"].append(1)  # 1 = right
                     layer_data["token_positions"].append(right_pos)
                     layer_data["sample_ids"].append(triple.sample_id)
+                    layer_data["valid"].append(sample_valid)
+
+        # Clean up memory after processing each sample
+        del wrong_hidden
+        del right_hidden
+        del wrong_inputs
+        del right_inputs
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         processed += 1
 
-    LOGGER.info("Processed %d triples (skipped %d missing correct chains)", 
+    LOGGER.info("Processed %d triples (skipped %d missing correct chains)",
                processed, skipped_missing_chain)
 
     # Save probe data for each layer
@@ -740,7 +762,8 @@ def main() -> None:
             label_array = np.array(layer_data["labels"])
             position_array = np.array(layer_data["token_positions"])
             sample_id_array = np.array(layer_data["sample_ids"])
-            
+            valid_array = np.array(layer_data["valid"])
+
             probe_data_path = args.probe_data_dir / f"layer{layer_id}_probe_data.npz"
             np.savez(
                 probe_data_path,
@@ -748,10 +771,14 @@ def main() -> None:
                 labels=label_array,
                 token_positions=position_array,
                 sample_ids=sample_id_array,
+                valid=valid_array,
                 layer=layer_id,
             )
-            LOGGER.info("Saved probe data for layer %d to %s (%d samples)", 
-                       layer_id, probe_data_path, len(layer_data["features"]))
+
+            num_valid = np.sum(valid_array)
+            num_invalid = len(valid_array) - num_valid
+            LOGGER.info("Saved probe data for layer %d to %s (%d total samples, %d valid, %d invalid)",
+                       layer_id, probe_data_path, len(layer_data["features"]), num_valid, num_invalid)
         else:
             LOGGER.warning("No probe samples collected for layer %d.", layer_id)
 
