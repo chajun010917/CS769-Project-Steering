@@ -75,6 +75,12 @@ def parse_args() -> argparse.Namespace:
         help="Optional cap on number of triples to process (for debugging).",
     )
     parser.add_argument(
+        "--sample-offset",
+        type=int,
+        default=0,
+        help="Number of triples to skip before processing (useful for out-of-sample splits).",
+    )
+    parser.add_argument(
         "--system-prompt",
         default="You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'.",
         help="System message used when the tokenizer supports chat templates.",
@@ -589,6 +595,9 @@ def main() -> None:
         LOGGER.error("No usable triples found. Exiting.")
         return
     
+    if args.sample_offset:
+        triples = triples[args.sample_offset:]
+
     if args.max_samples:
         triples = triples[:args.max_samples]
     
@@ -604,7 +613,11 @@ def main() -> None:
     model = ModelWrapper(args.model_name, device=args.device)
     
     # Collect correct embeddings (from prompt + correct_chain)
-    LOGGER.info("Collecting correct embeddings (prompt + correct_chain)...")
+    LOGGER.info(
+        "Collecting correct embeddings (prompt + correct_chain)... [offset=%d, max=%s]",
+        args.sample_offset,
+        args.max_samples,
+    )
     embeddings_correct = collect_hidden_states(
         model=model,
         triples=triples,
@@ -655,6 +668,13 @@ def main() -> None:
         embeddings_wrong_no_steering,
         embeddings_wrong_with_steering
     )
+    stats["collect_config"] = {
+        "layer": args.layer,
+        "steering_coefficient": args.steering_coefficient,
+        "pooling_method": args.pooling_method,
+        "max_samples": args.max_samples,
+        "sample_offset": args.sample_offset,
+    }
     LOGGER.info("Shift statistics:")
     LOGGER.info("  Steering shift - Mean L2: %.4f ± %.4f", 
                 stats["steering_shift"]["mean_l2_shift"], 
@@ -671,8 +691,9 @@ def main() -> None:
                 stats["improvement"]["mean_cosine_improvement"])
     
     # Save statistics
+    split_suffix = f"offset{args.sample_offset}" if args.sample_offset else "offset0"
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    stats_path = args.output_dir / f"layer{args.layer}_shift_statistics.json"
+    stats_path = args.output_dir / f"layer{args.layer}_shift_statistics_{split_suffix}.json"
     with stats_path.open("w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2)
     LOGGER.info("Saved statistics to %s", stats_path)
@@ -681,7 +702,7 @@ def main() -> None:
     LOGGER.info("Creating visualizations...")
     
     # PCA comparison
-    pca_comparison_path = args.output_dir / f"layer{args.layer}_pca_comparison.png"
+    pca_comparison_path = args.output_dir / f"layer{args.layer}_pca_comparison_{split_suffix}.png"
     plot_embedding_comparison(
         embeddings_correct,
         embeddings_wrong_no_steering,
@@ -693,7 +714,7 @@ def main() -> None:
     )
     
     # PCA overlay
-    pca_overlay_path = args.output_dir / f"layer{args.layer}_pca_overlay.png"
+    pca_overlay_path = args.output_dir / f"layer{args.layer}_pca_overlay_{split_suffix}.png"
     plot_overlay_comparison(
         embeddings_correct,
         embeddings_wrong_no_steering,
@@ -706,7 +727,7 @@ def main() -> None:
     
     # UMAP comparison (if available)
     if umap is not None:
-        umap_comparison_path = args.output_dir / f"layer{args.layer}_umap_comparison.png"
+        umap_comparison_path = args.output_dir / f"layer{args.layer}_umap_comparison_{split_suffix}.png"
         plot_embedding_comparison(
             embeddings_correct,
             embeddings_wrong_no_steering,
@@ -718,7 +739,7 @@ def main() -> None:
         )
         
         # UMAP overlay
-        umap_overlay_path = args.output_dir / f"layer{args.layer}_umap_overlay.png"
+        umap_overlay_path = args.output_dir / f"layer{args.layer}_umap_overlay_{split_suffix}.png"
         plot_overlay_comparison(
             embeddings_correct,
             embeddings_wrong_no_steering,

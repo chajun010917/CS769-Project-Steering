@@ -88,6 +88,12 @@ def parse_args() -> argparse.Namespace:
         help="Optional cap on number of triples to evaluate (for debugging).",
     )
     parser.add_argument(
+        "--sample-offset",
+        type=int,
+        default=0,
+        help="Number of triples to skip before evaluation (useful for out-of-sample splits).",
+    )
+    parser.add_argument(
         "--max-new-tokens",
         type=int,
         default=1024,
@@ -187,6 +193,9 @@ def main() -> None:
         LOGGER.error("No usable triples found. Exiting.")
         return
 
+    if args.sample_offset:
+        triples = triples[args.sample_offset:]
+
     if args.max_samples:
         triples = triples[:args.max_samples]
 
@@ -216,6 +225,7 @@ def main() -> None:
         "layers": args.layers,
         "steering_coefficient": args.steering_coefficient,
         "num_triples": len(triples),
+        "sample_offset": args.sample_offset,
         "without_steering": {
             "correct": args.baseline_correct if args.skip_baseline else 0,
             "incorrect": args.baseline_incorrect if args.skip_baseline else 0,
@@ -328,7 +338,9 @@ def main() -> None:
     results["with_steering"]["accuracy"] = results["with_steering"]["correct"] / total if total > 0 else 0.0
 
     # Save results
-    results_path = args.output_dir / "steering_evaluation_results.json"
+    split_suffix = f"offset{args.sample_offset}" if args.sample_offset else "offset0"
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    results_path = args.output_dir / f"steering_evaluation_results_{split_suffix}.json"
     results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
     LOGGER.info("Saved evaluation results to %s", results_path)
 

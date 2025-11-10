@@ -53,102 +53,105 @@ mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
 #hf auth login
 
 # ---- step 1: generate triple set ----
-TRIPLES_OUT="./artifacts/manual_review/10232025_human_review.json"
+TRIPLES_PATH="./artifacts/manual_review/10232025_human_review.json"
+TRAIN_OFFSET=0
+EVAL_OFFSET=100
 
-if [ -f "${TRIPLES_OUT}" ]; then
-  echo "=== Step 1: Using manually reviewed triples: ${TRIPLES_OUT} ==="
+if [ -f "${TRIPLES_PATH}" ]; then
+  echo "=== Step 1: Using manually reviewed triples: ${TRIPLES_PATH} ==="
 else
-  echo "ERROR: Manual triples file not found at ${TRIPLES_OUT}"
+  echo "ERROR: Manual triples file not found at ${TRIPLES_PATH}"
   exit 1
 fi
 
----- step 2: capture hidden states ----
-echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
-# Note: collect_hidden_states.py will generate probe data for all layers specified
-python scripts/collect_hidden_states.py \
-  --triples-path "${TRIPLES_OUT}" \
-  --model-name "${MODEL_ID}" \
-  --layers ${LAYERS} \
-  --probe-max-samples "${PROBE_MAX}" \
-  --max-samples "${MAX_SAMPLES}" \
-  --pooling-method "${POOLING_METHOD}" \
-  --alignment-method hidden_dp \
-  --alignment-layer 28 \
-  --dp-max-shift 40
+# # ---- step 2: capture hidden states ----
+# echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
+# # Note: collect_hidden_states.py will generate probe data for all layers specified
+# python scripts/collect_hidden_states.py \
+#   --triples-path "${TRIPLES_PATH}" \
+#   --model-name "${MODEL_ID}" \
+#   --layers ${LAYERS} \
+#   --probe-max-samples "${PROBE_MAX}" \
+#   --max-samples "${MAX_SAMPLES}" \
+#   --pooling-method "${POOLING_METHOD}" \
+#   --alignment-method hidden_dp \
+#   --alignment-layer 28 \
+#   --dp-max-shift 40
 
-# echo "Generated probe data for layers: ${LAYERS}"
+# # echo "Generated probe data for layers: ${LAYERS}"
 
-# ---- step 3: compute probes and vectors for multiple layers ----
-echo "=== Step 3: Computing probes and vectors ==="
-# Process each layer from the LAYERS variable
-for layer in ${LAYERS}; do
-  PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+# # ---- step 3: compute probes and vectors for multiple layers ----
+# echo "=== Step 3: Computing probes and vectors ==="
+# # Process each layer from the LAYERS variable
+# for layer in ${LAYERS}; do
+#   PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
   
-  if [ -f "${PROBE_DATA}" ]; then
-    echo "  Computing probes for layer ${layer}..."
-    python scripts/compute_probes.py \
-      --probe-data-path "${PROBE_DATA}" \
-      --output-dir "${ANALYSIS_OUTPUT}" \
-      --seed 42
-  else
-    echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
-  fi
-done
+#   if [ -f "${PROBE_DATA}" ]; then
+#     echo "  Computing probes for layer ${layer}..."
+#     python scripts/compute_probes.py \
+#       --probe-data-path "${PROBE_DATA}" \
+#       --output-dir "${ANALYSIS_OUTPUT}" \
+#       --seed 42
+#   else
+#     echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
+#   fi
+# done
 
-# ---- step 4: generate visualizations for multiple layers ----
-echo "=== Step 4: Generating visualizations ==="
-for layer in ${LAYERS}; do
-  METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
+# # ---- step 4: generate visualizations for multiple layers ----
+# echo "=== Step 4: Generating visualizations ==="
+# for layer in ${LAYERS}; do
+#   METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
   
-  if [ -f "${METRICS_FILE}" ]; then
-    echo "  Plotting layer ${layer}..."
-    python scripts/plot_probes.py \
-      --analysis-dir "${ANALYSIS_OUTPUT}" \
-      --layer ${layer} \
-      --output-dir "${PLOT_OUTPUT}"
-  else
-    echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
-  fi
-done
+#   if [ -f "${METRICS_FILE}" ]; then
+#     echo "  Plotting layer ${layer}..."
+#     python scripts/plot_probes.py \
+#       --analysis-dir "${ANALYSIS_OUTPUT}" \
+#       --layer ${layer} \
+#       --output-dir "${PLOT_OUTPUT}"
+#   else
+#     echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
+#   fi
+# done
 
-# ---- step 5: analyze critical tokens (only for per_token pooling) ----
-if [ "${POOLING_METHOD}" = "per_token" ]; then
-  echo "=== Step 5: Analyzing critical token positions ==="
-  CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
+# # ---- step 5: analyze critical tokens (only for per_token pooling) ----
+# if [ "${POOLING_METHOD}" = "per_token" ]; then
+#   echo "=== Step 5: Analyzing critical token positions ==="
+#   CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
 
-  for layer in ${LAYERS}; do
-    PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
+#   for layer in ${LAYERS}; do
+#     PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
     
-    if [ -f "${PROBE_DATA}" ]; then
-      echo "  Analyzing critical tokens for layer ${layer}..."
-      python scripts/analyze_critical_tokens.py \
-        --probe-data-path "${PROBE_DATA}" \
-        --alignments-dir "artifacts/alignments" \
-        --output-dir "${CRITICAL_TOKENS_OUTPUT}" \
-        --top-k 20
-    else
-      echo "  Warning: Probe data not found for layer ${layer}"
-    fi
-  done
-else
-  echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
-fi
+#     if [ -f "${PROBE_DATA}" ]; then
+#       echo "  Analyzing critical tokens for layer ${layer}..."
+#       python scripts/analyze_critical_tokens.py \
+#         --probe-data-path "${PROBE_DATA}" \
+#         --alignments-dir "artifacts/alignments" \
+#         --output-dir "${CRITICAL_TOKENS_OUTPUT}" \
+#         --top-k 20
+#     else
+#       echo "  Warning: Probe data not found for layer ${layer}"
+#     fi
+#   done
+# else
+#   echo "=== Step 5: Skipping critical token analysis (only applicable for per_token pooling) ==="
+# fi
 
-# ---- step 6: compute steering vectors ----
-echo "=== Step 6: Computing steering vectors with gradient-selected tokens ==="
+# # ---- step 6: compute steering vectors ----
+# echo "=== Step 6: Computing steering vectors with gradient-selected tokens ==="
 STEERING_VECTORS_DIR="artifacts/steering_vectors"
 
-python scripts/compute_steering_vectors.py \
-  --triples-path "${TRIPLES_OUT}" \
-  --model-name "${MODEL_ID}" \
-  --layers ${LAYERS} \
-  --output-dir "${STEERING_VECTORS_DIR}" \
-  --max-samples "${MAX_SAMPLES}" \
-  --token-selection-method gradient
+# python scripts/compute_steering_vectors.py \
+#   --triples-path "${TRIPLES_PATH}" \
+#   --model-name "${MODEL_ID}" \
+#   --layers ${LAYERS} \
+#   --output-dir "${STEERING_VECTORS_DIR}" \
+#   --max-samples "${MAX_SAMPLES}" \
+#   --token-selection-method gradient
 
 # ---- step 7: evaluate steering ----
 echo "=== Step 7: Evaluating steering vectors ==="
-STEERING_EVAL_DIR="artifacts/steering_evaluation"
+STEERING_EVAL_DIR_IN="artifacts/steering_evaluation_in_sample"
+STEERING_EVAL_DIR_OUT="artifacts/steering_evaluation_out_of_sample"
 
 # Only evaluate steering if vectors were computed
 if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; then
@@ -169,34 +172,40 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
     
     if [ "${SKIP_BASELINE}" = "1" ]; then
       echo "Skipping baseline evaluation (using provided: ${BASELINE_CORRECT} correct, ${BASELINE_INCORRECT} incorrect)"
-      python scripts/evaluate_steering.py \
-        --triples-path "${TRIPLES_OUT}" \
-        --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
-        --model-name "${MODEL_ID}" \
-        --layers ${BEST_LAYER} \
-        --steering-coefficient 1.0 \
-        --output-dir "${STEERING_EVAL_DIR}" \
-        --max-samples "${MAX_SAMPLES}" \
-        --max-new-tokens "${MAX_NEW_TOKENS}" \
-        --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
-        --skip-baseline \
-        --baseline-correct "${BASELINE_CORRECT}" \
-        --baseline-incorrect "${BASELINE_INCORRECT}"
+      SKIP_ARGS=(--skip-baseline --baseline-correct "${BASELINE_CORRECT}" --baseline-incorrect "${BASELINE_INCORRECT}")
     else
-      echo "Evaluating with baseline computation..."
-      python scripts/evaluate_steering.py \
-        --triples-path "${TRIPLES_OUT}" \
-        --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
-        --model-name "${MODEL_ID}" \
-        --layers ${BEST_LAYER} \
-        --steering-coefficient 1.0 \
-        --output-dir "${STEERING_EVAL_DIR}" \
-        --max-samples "${MAX_SAMPLES}" \
-        --max-new-tokens "${MAX_NEW_TOKENS}" \
-        --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+      SKIP_ARGS=()
     fi
+
+    echo "Evaluating in-sample steering performance..."
+    python scripts/evaluate_steering.py \
+      --triples-path "${TRIPLES_PATH}" \
+      --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+      --model-name "${MODEL_ID}" \
+      --layers ${BEST_LAYER} \
+      --steering-coefficient 1.0 \
+      --output-dir "${STEERING_EVAL_DIR_IN}" \
+      --max-samples "${MAX_SAMPLES}" \
+      --max-new-tokens "${MAX_NEW_TOKENS}" \
+      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+      --sample-offset "${TRAIN_OFFSET}" \
+      "${SKIP_ARGS[@]}"
+
+    echo "Evaluating out-of-sample steering performance..."
+    python scripts/evaluate_steering.py \
+      --triples-path "${TRIPLES_PATH}" \
+      --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+      --model-name "${MODEL_ID}" \
+      --layers ${BEST_LAYER} \
+      --steering-coefficient 1.0 \
+      --output-dir "${STEERING_EVAL_DIR_OUT}" \
+      --max-samples "${MAX_SAMPLES}" \
+      --max-new-tokens "${MAX_NEW_TOKENS}" \
+      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+      --sample-offset "${EVAL_OFFSET}" \
+      "${SKIP_ARGS[@]}"
     
-    echo "Steering evaluation complete. Results saved to ${STEERING_EVAL_DIR}"
+    echo "Steering evaluation complete. Results saved to ${STEERING_EVAL_DIR_IN} and ${STEERING_EVAL_DIR_OUT}"
   else
     echo "  Warning: Steering vector not found for layer ${BEST_LAYER}, skipping evaluation"
   fi
@@ -206,25 +215,40 @@ fi
 
 # ---- step 8: compare embeddings with and without steering ----
 echo "=== Step 8: Comparing embeddings with and without steering ==="
-EMBEDDING_COMPARISON_DIR="reports/steering_embedding_comparison"
+EMBEDDING_COMPARISON_DIR_IN="reports/steering_embedding_comparison_in_sample"
+EMBEDDING_COMPARISON_DIR_OUT="reports/steering_embedding_comparison_out_of_sample"
 
 # Only compare embeddings if steering vectors exist
 if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; then
   if [ -f "${STEERING_VECTORS_DIR}/layer${BEST_LAYER}_steering_vector.npy" ]; then
     echo "Comparing embeddings for layer ${BEST_LAYER}..."
     python scripts/compare_steering_embeddings.py \
-      --triples-path "${TRIPLES_OUT}" \
+      --triples-path "${TRIPLES_PATH}" \
       --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
       --model-name "${MODEL_ID}" \
       --layer ${BEST_LAYER} \
       --steering-coefficient 1.0 \
-      --output-dir "${EMBEDDING_COMPARISON_DIR}" \
+      --output-dir "${EMBEDDING_COMPARISON_DIR_IN}" \
       --max-samples "${MAX_SAMPLES}" \
       --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
       --pooling-method "${POOLING_METHOD}" \
+      --sample-offset "${TRAIN_OFFSET}" \
       --seed 42
     
-    echo "Embedding comparison complete. Results saved to ${EMBEDDING_COMPARISON_DIR}"
+    python scripts/compare_steering_embeddings.py \
+      --triples-path "${TRIPLES_PATH}" \
+      --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+      --model-name "${MODEL_ID}" \
+      --layer ${BEST_LAYER} \
+      --steering-coefficient 1.0 \
+      --output-dir "${EMBEDDING_COMPARISON_DIR_OUT}" \
+      --max-samples "${MAX_SAMPLES}" \
+      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+      --pooling-method "${POOLING_METHOD}" \
+      --sample-offset "${EVAL_OFFSET}" \
+      --seed 42
+    
+    echo "Embedding comparison complete. Results saved to ${EMBEDDING_COMPARISON_DIR_IN} and ${EMBEDDING_COMPARISON_DIR_OUT}"
   else
     echo "  Warning: Steering vector not found for layer ${BEST_LAYER}, skipping embedding comparison"
   fi
@@ -235,7 +259,8 @@ fi
 echo ""
 echo "=== Done! ==="
 echo "Results:"
-echo "  - Triples: ${TRIPLES_OUT}"
+echo "  - Triples source: ${TRIPLES_PATH}"
+echo "  - Train offset: ${TRAIN_OFFSET}, Eval offset: ${EVAL_OFFSET}"
 echo "  - Hidden states: artifacts/hidden_states/"
 echo "  - Alignments: artifacts/alignments/"
 echo "  - Probe data: artifacts/probe_data/"
@@ -243,8 +268,10 @@ echo "  - Computed probes: ${ANALYSIS_OUTPUT}/"
 echo "  - Visualizations: ${PLOT_OUTPUT}/"
 if [ "${POOLING_METHOD}" = "last_token" ]; then
   echo "  - Steering vectors: ${STEERING_VECTORS_DIR}/"
-  echo "  - Steering evaluation: ${STEERING_EVAL_DIR}/"
-  echo "  - Embedding comparison: ${EMBEDDING_COMPARISON_DIR}/"
+  echo "  - Steering evaluation (in-sample): ${STEERING_EVAL_DIR_IN}/"
+  echo "  - Steering evaluation (out-of-sample): ${STEERING_EVAL_DIR_OUT}/"
+  echo "  - Embedding comparison (in-sample): ${EMBEDDING_COMPARISON_DIR_IN}/"
+  echo "  - Embedding comparison (out-of-sample): ${EMBEDDING_COMPARISON_DIR_OUT}/"
 fi
 echo ""
 echo "Processed layers: ${LAYERS}"
