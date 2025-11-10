@@ -7,9 +7,10 @@ import argparse
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+import torch
 from tqdm import tqdm
 
 from model_wrapper import ModelWrapper
@@ -78,8 +79,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("artifacts/steering_evaluation"),
-        help="Directory for saving evaluation results.",
+        default=Path("artifacts/steered_embeddings"),
+        help="Directory for saving evaluation results and steered embeddings.",
     )
     parser.add_argument(
         "--max-samples",
@@ -102,6 +103,24 @@ def parse_args() -> argparse.Namespace:
         "--device",
         default=None,
         help="Optional torch device override (defaults to cuda if available else cpu).",
+    )
+    parser.add_argument(
+        "--hidden-states-dir",
+        type=Path,
+        default=Path("artifacts/hidden_states"),
+        help="Directory containing stored embeddings (sample_id/wrong_layer{layer}.pt).",
+    )
+    parser.add_argument(
+        "--save-steered-embeddings",
+        action="store_true",
+        help="Save steered embeddings by applying steering vectors to wrong embeddings.",
+    )
+    parser.add_argument(
+        "--pooling-method",
+        type=str,
+        choices=["last_token", "mean"],
+        default="last_token",
+        help="Method to pool hidden states when saving steered embeddings: last_token or mean.",
     )
     return parser.parse_args()
 
@@ -134,6 +153,95 @@ def load_steering_vectors(steering_dir: Path, layers: List[int]) -> Dict[int, np
             np.linalg.norm(steering_vector),
         )
     return steering_vectors
+
+
+def get_sample_ids_from_triples(triples: List[Dict]) -> List[str]:
+    """Extract sample IDs from triples."""
+    return [triple.get("sample_id", "") for triple in triples if triple.get("sample_id")]
+
+
+def save_steered_embeddings(
+    hidden_states_dir: Path,
+    output_dir: Path,
+    sample_ids: List[str],
+    layers: List[int],
+    steering_vectors: Dict[int, np.ndarray],
+    steering_coefficient: float,
+    pooling_method: str = "last_token",
+) -> None:
+    """
+    Apply steering vectors to wrong embeddings and save as steered embeddings.
+    
+    Args:
+        hidden_states_dir: Directory containing sample_id subdirectories with wrong embeddings
+        output_dir: Directory where steered embeddings will be saved
+        sample_ids: List of sample IDs to process
+        layers: List of layer IDs to process
+        steering_vectors: Dictionary mapping layer_id -> steering vector [hidden_dim]
+        steering_coefficient: Multiplier for steering vector
+        pooling_method: Method to pool hidden states (for logging, but we save full tensors)
+    """
+    LOGGER.info("=" * 80)
+    LOGGER.info("Saving steered embeddings")
+    LOGGER.info("=" * 80)
+    
+    # Create output directory
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    for layer in layers:
+        if layer not in steering_vectors:
+            LOGGER.warning("No steering vector for layer %d, skipping", layer)
+            continue
+        
+        steering_vector = steering_vectors[layer]
+        steering_tensor = torch.from_numpy(steering_vector * steering_coefficient)
+        
+        saved_count = 0
+        skipped_count = 0
+        
+        for sample_id in tqdm(sample_ids, desc=f"Saving steered embeddings for layer {layer}"):
+            # Load wrong embedding from hidden_states_dir
+            wrong_sample_dir = hidden_states_dir / sample_id
+            wrong_path = wrong_sample_dir / f"wrong_layer{layer}.pt"
+            
+            # Save steered embedding to output_dir
+            steered_sample_dir = output_dir / sample_id
+            steered_path = steered_sample_dir / f"steered_layer{layer}.pt"
+            
+            if not wrong_path.exists():
+                LOGGER.debug("Wrong embedding not found: %s", wrong_path)
+                skipped_count += 1
+                continue
+            
+            try:
+                # Load wrong embedding tensor [seq_len, hidden_dim]
+                wrong_tensor = torch.load(wrong_path, map_location="cpu")
+                
+                # Apply steering to all tokens and save full tensor
+                steered_tensor_full = wrong_tensor.clone()
+                for i in range(steered_tensor_full.shape[0]):
+                    steered_tensor_full[i] = steered_tensor_full[i] + steering_tensor
+                
+                # Save steered embedding
+                steered_sample_dir.mkdir(parents=True, exist_ok=True)
+                torch.save(steered_tensor_full, steered_path)
+                saved_count += 1
+                
+            except Exception as e:
+                LOGGER.warning("Error processing sample %s, layer %d: %s", sample_id, layer, e)
+                skipped_count += 1
+                continue
+        
+        LOGGER.info(
+            "Layer %d: Saved %d steered embeddings, skipped %d samples",
+            layer,
+            saved_count,
+            skipped_count,
+        )
+    
+    LOGGER.info("=" * 80)
+    LOGGER.info("Finished saving steered embeddings")
+    LOGGER.info("=" * 80)
 
 
 def main() -> None:
@@ -172,11 +280,24 @@ def main() -> None:
         LOGGER.error("No steering vectors loaded. Exiting.")
         return
 
-    # Load model
-    model = ModelWrapper(args.model_name, device=args.device)
-
     # Create output directory
     args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save steered embeddings if requested
+    if args.save_steered_embeddings:
+        sample_ids = get_sample_ids_from_triples(triples)
+        save_steered_embeddings(
+            args.hidden_states_dir,
+            args.output_dir,
+            sample_ids,
+            args.layers,
+            steering_vectors,
+            args.steering_coefficient,
+            args.pooling_method,
+        )
+
+    # Load model
+    model = ModelWrapper(args.model_name, device=args.device)
 
     # Evaluation results
     results = {

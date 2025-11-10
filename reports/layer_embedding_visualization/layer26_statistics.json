@@ -1,0 +1,10 @@
+{
+  "distance_wrong_to_correct": 27.921875,
+  "steering_vector_norm": 21.984375,
+  "distance_steered_to_correct": 17.421875,
+  "improvement": 10.5,
+  "improvement_ratio": 37.59765625,
+  "cosine_wrong_correct": 0.4326500732001076,
+  "cosine_steering_alignment": 0.7809446253944472,
+  "cosine_steered_correct": 0.7979094076543846
+}
