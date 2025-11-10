@@ -169,21 +169,47 @@ STEERING_EVAL_DIR="artifacts/steering_evaluation"
 if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; then
   # Evaluate each layer separately (or all together - you can modify this)
   # For now, evaluate with the best layer (typically layer 28)
-  BEST_LAYER="28"  # Can be changed based on visualization results
+  # To test a specific layer (e.g., layer 26), change BEST_LAYER="26"
+  BEST_LAYER="26"  # Can be changed based on visualization results  # can add a list of layers here
+  
+  # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
+  # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
+  SKIP_BASELINE=1
+  BASELINE_CORRECT=8
+  BASELINE_INCORRECT=92
   
   # Check if steering vector exists for the best layer
   if [ -f "${STEERING_VECTORS_DIR}/layer${BEST_LAYER}_steering_vector.npy" ]; then
     echo "Evaluating steering for layer ${BEST_LAYER}..."
-    python scripts/evaluate_steering.py \
-      --triples-path "${TRIPLES_OUT}" \
-      --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
-      --model-name "${MODEL_ID}" \
-      --layers ${BEST_LAYER} \
-      --steering-coefficient 1.0 \
-      --output-dir "${STEERING_EVAL_DIR}" \
-      --max-samples "${MAX_SAMPLES}" \
-      --max-new-tokens "${MAX_NEW_TOKENS}" \
-      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+    
+    if [ "${SKIP_BASELINE}" = "1" ]; then
+      echo "Skipping baseline evaluation (using provided: ${BASELINE_CORRECT} correct, ${BASELINE_INCORRECT} incorrect)"
+      python scripts/evaluate_steering.py \
+        --triples-path "${TRIPLES_OUT}" \
+        --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+        --model-name "${MODEL_ID}" \
+        --layers ${BEST_LAYER} \
+        --steering-coefficient 1.0 \
+        --output-dir "${STEERING_EVAL_DIR}" \
+        --max-samples "${MAX_SAMPLES}" \
+        --max-new-tokens "${MAX_NEW_TOKENS}" \
+        --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+        --skip-baseline \
+        --baseline-correct "${BASELINE_CORRECT}" \
+        --baseline-incorrect "${BASELINE_INCORRECT}"
+    else
+      echo "Evaluating with baseline computation..."
+      python scripts/evaluate_steering.py \
+        --triples-path "${TRIPLES_OUT}" \
+        --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+        --model-name "${MODEL_ID}" \
+        --layers ${BEST_LAYER} \
+        --steering-coefficient 1.0 \
+        --output-dir "${STEERING_EVAL_DIR}" \
+        --max-samples "${MAX_SAMPLES}" \
+        --max-new-tokens "${MAX_NEW_TOKENS}" \
+        --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+    fi
     
     echo "Steering evaluation complete. Results saved to ${STEERING_EVAL_DIR}"
   else
@@ -191,6 +217,34 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
   fi
 else
   echo "=== Step 7: Skipping steering evaluation (steering vectors not computed) ==="
+fi
+
+# ---- step 8: compare embeddings with and without steering ----
+echo "=== Step 8: Comparing embeddings with and without steering ==="
+EMBEDDING_COMPARISON_DIR="reports/steering_embedding_comparison"
+
+# Only compare embeddings if steering vectors exist
+if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; then
+  if [ -f "${STEERING_VECTORS_DIR}/layer${BEST_LAYER}_steering_vector.npy" ]; then
+    echo "Comparing embeddings for layer ${BEST_LAYER}..."
+    python scripts/compare_steering_embeddings.py \
+      --triples-path "${TRIPLES_OUT}" \
+      --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
+      --model-name "${MODEL_ID}" \
+      --layer ${BEST_LAYER} \
+      --steering-coefficient 1.0 \
+      --output-dir "${EMBEDDING_COMPARISON_DIR}" \
+      --max-samples "${MAX_SAMPLES}" \
+      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+      --pooling-method "${POOLING_METHOD}" \
+      --seed 42
+    
+    echo "Embedding comparison complete. Results saved to ${EMBEDDING_COMPARISON_DIR}"
+  else
+    echo "  Warning: Steering vector not found for layer ${BEST_LAYER}, skipping embedding comparison"
+  fi
+else
+  echo "=== Step 8: Skipping embedding comparison (steering vectors not computed) ==="
 fi
 
 echo ""
@@ -205,6 +259,7 @@ echo "  - Visualizations: ${PLOT_OUTPUT}/"
 if [ "${POOLING_METHOD}" = "last_token" ]; then
   echo "  - Steering vectors: ${STEERING_VECTORS_DIR}/"
   echo "  - Steering evaluation: ${STEERING_EVAL_DIR}/"
+  echo "  - Embedding comparison: ${EMBEDDING_COMPARISON_DIR}/"
 fi
 echo ""
 echo "Processed layers: ${LAYERS}"
