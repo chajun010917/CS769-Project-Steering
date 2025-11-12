@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
+import json
+import math
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,8 +43,84 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Plot only the points that passed DP alignment filtering (if metadata is available).",
     )
+    parser.add_argument(
+        "--dp-tail-k",
+        type=int,
+        default=0,
+        help="Annotate outputs for DP tail sampling (match --dp-tail-k from compute_probes).",
+    )
     return parser.parse_args()
 
+
+def _load_dp_tail_mask(analysis_dir: Path, layer: int, expected_length: int) -> np.ndarray | None:
+    """Return mask selecting final third of DP-aligned tokens per sample."""
+    metrics_path = analysis_dir / f"layer{layer}_metrics.json"
+    dp_requested = False
+    if metrics_path.exists():
+        try:
+            metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+            dp_info = metrics.get("dp_alignment")
+            dp_requested = bool(dp_info and dp_info.get("requested"))
+        except Exception as exc:
+            LOGGER.warning("Failed to read metrics file %s: %s", metrics_path, exc)
+    if not dp_requested:
+        return None
+
+    probe_data_path = analysis_dir.parent / "probe_data" / f"layer{layer}_probe_data.npz"
+    if not probe_data_path.exists():
+        LOGGER.warning("Probe data not found at %s; skipping DP tail filter.", probe_data_path)
+        return None
+
+    probe_data = np.load(probe_data_path)
+    if "dp_pair_index" not in probe_data or "sample_ids" not in probe_data:
+        LOGGER.warning("Probe data missing DP metadata; skipping DP tail filter.")
+        return None
+
+    base_mask = np.ones(probe_data["dp_pair_index"].shape[0], dtype=bool)
+    if "valid" in probe_data:
+        base_mask &= probe_data["valid"].astype(bool)
+    if "dp_used_alignment" in probe_data:
+        base_mask &= probe_data["dp_used_alignment"].astype(bool)
+    if "dp_used_fallback" in probe_data:
+        base_mask &= ~probe_data["dp_used_fallback"].astype(bool)
+
+    pair_indices = probe_data["dp_pair_index"][base_mask]
+    sample_ids = probe_data["sample_ids"][base_mask]
+
+    if pair_indices.shape[0] != expected_length:
+        LOGGER.warning(
+            "DP tail filter length mismatch for layer %d (expected %d, found %d); skipping.",
+            layer,
+            expected_length,
+            pair_indices.shape[0],
+        )
+        return None
+
+    tail_mask = np.zeros(expected_length, dtype=bool)
+    unique_samples = np.unique(sample_ids)
+    for sample in unique_samples:
+        sample_indices = np.where(sample_ids == sample)[0]
+        sample_pairs = pair_indices[sample_indices]
+        valid_pairs = sample_pairs[sample_pairs >= 0]
+        if valid_pairs.size == 0:
+            continue
+
+        pair_count = int(valid_pairs.max()) + 1
+        tail_len = max(1, int(math.ceil(pair_count / 3.0)))
+        tail_start = pair_count - tail_len
+        sample_tail_mask = sample_pairs >= tail_start
+
+        if not np.any(sample_tail_mask):
+            max_pair = np.max(sample_pairs)
+            tail_mask[sample_indices[sample_pairs == max_pair]] = True
+        else:
+            tail_mask[sample_indices[sample_tail_mask]] = True
+
+    if not tail_mask.any():
+        LOGGER.warning("DP tail filtering removed all samples; skipping tail filter.")
+        return None
+
+    return tail_mask
 
 
 def plot_cluster_overlay(
@@ -104,8 +182,18 @@ def main() -> None:
         LOGGER.error("Analysis directory not found: %s", args.analysis_dir)
         return
 
-    suffix = "_dp" if args.dp_alignment else ""
-    title_suffix = " (DP aligned)" if args.dp_alignment else ""
+    suffix_parts = []
+    title_parts = []
+    if args.dp_alignment:
+        suffix_parts.append("dp")
+        title_parts.append("DP aligned")
+    if args.dp_tail_k > 0:
+        suffix_parts.append(f"tail{args.dp_tail_k}")
+        title_parts.append(f"DP tail k={args.dp_tail_k}")
+    suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
+    title_suffix = f" ({', '.join(title_parts)})" if title_parts else ""
+
+    tail_mask_cache: np.ndarray | None = None
 
     # Load PCA data
     pca_data_path = args.analysis_dir / f"layer{layer}_pca_data.npz"
@@ -116,7 +204,17 @@ def main() -> None:
         pca_labels = pca_data["labels"]
 
         if args.dp_alignment:
-            if "dp_used_alignment" in pca_data.files:
+            if args.dp_tail_k > 0 and "dp_tail_used" in pca_data.files:
+                dp_mask = pca_data["dp_tail_used"].astype(bool)
+                retained = int(dp_mask.sum())
+                LOGGER.info("PCA DP-tail filter retained %d samples", retained)
+                if retained == 0:
+                    LOGGER.warning("No PCA samples remain after DP filtering; skipping PCA plot.")
+                    pca_transformed = None
+                else:
+                    pca_transformed = pca_transformed[dp_mask]
+                    pca_labels = pca_labels[dp_mask]
+            elif "dp_used_alignment" in pca_data.files:
                 dp_mask = pca_data["dp_used_alignment"].astype(bool)
                 if "dp_used_fallback" in pca_data.files:
                     dp_mask &= ~pca_data["dp_used_fallback"].astype(bool)
@@ -130,7 +228,23 @@ def main() -> None:
                     pca_labels = pca_labels[dp_mask]
             else:
                 LOGGER.warning("PCA data missing 'dp_used_alignment'; skipping DP filter.")
-        
+
+        if (
+            args.dp_tail_k == 0
+            and pca_transformed is not None
+            and pca_transformed.shape[0] > 0
+        ):
+            tail_mask_cache = _load_dp_tail_mask(args.analysis_dir, layer, pca_transformed.shape[0])
+            if tail_mask_cache is not None:
+                retained_tail = int(tail_mask_cache.sum())
+                LOGGER.info("Applying DP tail filter to PCA data (retained %d samples).", retained_tail)
+                if retained_tail == 0:
+                    LOGGER.warning("DP tail filter removed all PCA samples; skipping PCA plot.")
+                    pca_transformed = None
+                else:
+                    pca_transformed = pca_transformed[tail_mask_cache]
+                    pca_labels = pca_labels[tail_mask_cache]
+
         if pca_transformed is not None and pca_transformed.shape[0] > 0:
             overlay_dir = args.output_dir / f"cluster_overlays{suffix}"
             pca_cluster_path = overlay_dir / f"layer{layer}_pca_clusters{suffix}.png"
@@ -152,7 +266,17 @@ def main() -> None:
         umap_labels = umap_data["labels"]
 
         if args.dp_alignment:
-            if "dp_used_alignment" in umap_data.files:
+            if args.dp_tail_k > 0 and "dp_tail_used" in umap_data.files:
+                dp_mask = umap_data["dp_tail_used"].astype(bool)
+                retained = int(dp_mask.sum())
+                LOGGER.info("UMAP DP-tail filter retained %d samples", retained)
+                if retained == 0:
+                    LOGGER.warning("No UMAP samples remain after DP filtering; skipping UMAP plot.")
+                    umap_transformed = None
+                else:
+                    umap_transformed = umap_transformed[dp_mask]
+                    umap_labels = umap_labels[dp_mask]
+            elif "dp_used_alignment" in umap_data.files:
                 dp_mask = umap_data["dp_used_alignment"].astype(bool)
                 if "dp_used_fallback" in umap_data.files:
                     dp_mask &= ~umap_data["dp_used_fallback"].astype(bool)
@@ -166,7 +290,24 @@ def main() -> None:
                     umap_labels = umap_labels[dp_mask]
             else:
                 LOGGER.warning("UMAP data missing 'dp_used_alignment'; skipping DP filter.")
-        
+
+        if (
+            args.dp_tail_k == 0
+            and umap_transformed is not None
+            and umap_transformed.shape[0] > 0
+        ):
+            if tail_mask_cache is None or tail_mask_cache.shape[0] != umap_transformed.shape[0]:
+                tail_mask_cache = _load_dp_tail_mask(args.analysis_dir, layer, umap_transformed.shape[0])
+            if tail_mask_cache is not None:
+                retained_tail = int(tail_mask_cache.sum())
+                LOGGER.info("Applying DP tail filter to UMAP data (retained %d samples).", retained_tail)
+                if retained_tail == 0:
+                    LOGGER.warning("DP tail filter removed all UMAP samples; skipping UMAP plot.")
+                    umap_transformed = None
+                else:
+                    umap_transformed = umap_transformed[tail_mask_cache]
+                    umap_labels = umap_labels[tail_mask_cache]
+
         if umap_transformed is not None and umap_transformed.shape[0] > 0:
             overlay_dir = args.output_dir / f"cluster_overlays{suffix}"
             umap_cluster_path = overlay_dir / f"layer{layer}_umap_clusters{suffix}.png"

@@ -7,9 +7,10 @@ import argparse
 import json
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+import torch
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
@@ -51,7 +52,205 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Restrict analysis to tokens that passed DP alignment (requires metadata in probe data).",
     )
+    parser.add_argument(
+        "--dp-tail-k",
+        type=int,
+        default=0,
+        help="If > 0, rebuild features using the last k DP-aligned token pairs per sample (fallback to last token when unavailable).",
+    )
+    parser.add_argument(
+        "--alignments-dir",
+        type=Path,
+        default=Path("artifacts/alignments"),
+        help="Directory containing alignment JSON files (used for DP tail sampling).",
+    )
+    parser.add_argument(
+        "--hidden-states-dir",
+        type=Path,
+        default=Path("artifacts/hidden_states"),
+        help="Directory containing cached hidden state tensors (used for DP tail sampling).",
+    )
     return parser.parse_args()
+
+
+def load_alignment_payload(sample_id: str, alignments_dir: Path) -> Tuple[List[Tuple[int, int]], Dict]:
+    """Load DP alignment matches and metadata for a sample."""
+    path = alignments_dir / f"{sample_id}.json"
+    if not path.exists():
+        return [], {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        LOGGER.warning("Failed to read alignment file for sample %s: %s", sample_id, exc)
+        return [], {}
+
+    matches: List[Tuple[int, int]] = []
+    for entry in payload.get("matches", []):
+        if not isinstance(entry, dict):
+            continue
+        try:
+            wrong_idx = int(entry["wrong_index"])
+            right_idx = int(entry["right_index"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        matches.append((wrong_idx, right_idx))
+
+    metadata = payload.get("metadata", {})
+    return matches, metadata
+
+
+def load_hidden_states_for_layer(
+    sample_id: str,
+    layer: int,
+    hidden_states_dir: Path,
+) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+    """Load wrong/right hidden state tensors for a sample and layer."""
+    sample_dir = hidden_states_dir / sample_id
+    wrong_path = sample_dir / f"wrong_layer{layer}.pt"
+    right_path = sample_dir / f"right_layer{layer}.pt"
+
+    if not wrong_path.exists() or not right_path.exists():
+        LOGGER.warning(
+            "Hidden state files missing for sample %s layer %d (expected %s / %s)",
+            sample_id,
+            layer,
+            wrong_path,
+            right_path,
+        )
+        return None, None
+
+    try:
+        wrong_tensor = torch.load(wrong_path, map_location="cpu").to(torch.float32)
+        right_tensor = torch.load(right_path, map_location="cpu").to(torch.float32)
+    except Exception as exc:
+        LOGGER.warning("Failed to load hidden states for sample %s layer %d: %s", sample_id, layer, exc)
+        return None, None
+
+    return wrong_tensor, right_tensor
+
+
+def build_dp_tail_dataset(
+    layer: int,
+    sample_ids: np.ndarray,
+    dp_tail_k: int,
+    alignments_dir: Path,
+    hidden_states_dir: Path,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, Dict[str, int]]:
+    """Reconstruct features using the last-k DP-aligned token pairs (fallback to last token)."""
+    unique_samples: List[str] = []
+    seen = set()
+    for sid in sample_ids:
+        sid_str = str(sid)
+        if sid_str not in seen:
+            unique_samples.append(sid_str)
+            seen.add(sid_str)
+
+    features: List[np.ndarray] = []
+    labels: List[int] = []
+    token_positions: List[int] = []
+    sample_list: List[str] = []
+    dp_tail_flags: List[bool] = []
+    pair_indices: List[int] = []
+
+    samples_with_dp = 0
+    fallback_samples = 0
+    pairs_used = 0
+    processed_samples = 0
+
+    for sample_id in unique_samples:
+        matches, metadata = load_alignment_payload(sample_id, alignments_dir)
+        wrong_tensor, right_tensor = load_hidden_states_for_layer(sample_id, layer, hidden_states_dir)
+        if wrong_tensor is None or right_tensor is None:
+            fallback_samples += 1
+            continue
+
+        tail_pairs: List[Tuple[int, int]] = []
+        if matches and metadata.get("strategy") == "hidden_dp" and not metadata.get("used_fallback", False):
+            matches_sorted = sorted(matches, key=lambda pair: pair[0])
+            tail_pairs = matches_sorted[-dp_tail_k:] if dp_tail_k > 0 else matches_sorted
+
+        processed_samples += 1
+
+        if tail_pairs:
+            samples_with_dp += 1
+        else:
+            fallback_samples += 1
+            tail_pairs = []
+
+        if tail_pairs:
+            for pair_idx, (wrong_idx, right_idx) in enumerate(tail_pairs):
+                if wrong_idx >= wrong_tensor.shape[0] or right_idx >= right_tensor.shape[0]:
+                    continue
+                wrong_vec = wrong_tensor[wrong_idx].cpu().numpy()
+                right_vec = right_tensor[right_idx].cpu().numpy()
+
+                features.append(wrong_vec)
+                labels.append(0)
+                token_positions.append(int(wrong_idx))
+                sample_list.append(sample_id)
+                dp_tail_flags.append(True)
+                pair_indices.append(pair_idx)
+
+                features.append(right_vec)
+                labels.append(1)
+                token_positions.append(int(right_idx))
+                sample_list.append(sample_id)
+                dp_tail_flags.append(True)
+                pair_indices.append(pair_idx)
+                pairs_used += 1
+        else:
+            wrong_idx = max(0, wrong_tensor.shape[0] - 1)
+            right_idx = max(0, min(right_tensor.shape[0] - 1, wrong_idx))
+
+            features.append(wrong_tensor[wrong_idx].cpu().numpy())
+            labels.append(0)
+            token_positions.append(int(wrong_idx))
+            sample_list.append(sample_id)
+            dp_tail_flags.append(False)
+            pair_indices.append(-1)
+
+            features.append(right_tensor[right_idx].cpu().numpy())
+            labels.append(1)
+            token_positions.append(int(right_idx))
+            sample_list.append(sample_id)
+            dp_tail_flags.append(False)
+            pair_indices.append(-1)
+
+    stats = {
+        "total_samples": len(unique_samples),
+        "processed_samples": processed_samples,
+        "samples_with_dp": samples_with_dp,
+        "fallback_samples": fallback_samples,
+        "pairs_used": pairs_used,
+    }
+
+    if not features:
+        return (
+            np.empty((0,), dtype=np.float32),
+            np.empty((0,), dtype=np.int64),
+            np.empty((0,), dtype=np.int32),
+            np.empty((0,), dtype=object),
+            np.empty((0,), dtype=bool),
+            np.empty((0,), dtype=np.int32),
+            stats,
+        )
+
+    features_np = np.stack(features)
+    labels_np = np.array(labels, dtype=np.int64)
+    token_positions_np = np.array(token_positions, dtype=np.int32)
+    sample_ids_np = np.array(sample_list, dtype=object)
+    dp_tail_flags_np = np.array(dp_tail_flags, dtype=bool)
+    pair_indices_np = np.array(pair_indices, dtype=np.int32)
+
+    return (
+        features_np,
+        labels_np,
+        token_positions_np,
+        sample_ids_np,
+        dp_tail_flags_np,
+        pair_indices_np,
+        stats,
+    )
 
 
 def fit_linear_probe(features: np.ndarray, labels: np.ndarray, seed: int = 0) -> Dict:
@@ -209,54 +408,136 @@ def main() -> None:
         return
 
     LOGGER.info("Loading probe data from %s", args.probe_data_path)
-    data = np.load(args.probe_data_path)
+    data = np.load(args.probe_data_path, allow_pickle=True)
     features = data["features"]
     labels = data["labels"]
     layer = int(data["layer"])
+    token_positions = data.get("token_positions")
+    sample_ids = data.get("sample_ids")
+    if token_positions is not None:
+        token_positions = np.array(token_positions, dtype=np.int32)
+    if sample_ids is not None:
+        sample_ids = np.array(sample_ids, dtype=object)
 
     total_samples = features.shape[0]
     LOGGER.info("Loaded %d samples from layer %d", total_samples, layer)
 
-    mask = np.ones(total_samples, dtype=bool)
+    dp_tail_flags: Optional[np.ndarray] = None
+    dp_pair_indices: Optional[np.ndarray] = None
+    dp_tail_stats: Dict[str, int] = {"k": 0}
 
-    valid_mask = None
-    if "valid" in data:
-        valid_mask = data["valid"].astype(bool)
-        LOGGER.info(
-            "Validity flag found: %d valid, %d invalid",
-            int(valid_mask.sum()),
-            int((~valid_mask).sum()),
+    if args.dp_tail_k > 0:
+        if sample_ids is None:
+            LOGGER.error("--dp-tail-k requires 'sample_ids' in probe data; aborting.")
+            return
+        (
+            features,
+            labels,
+            token_positions,
+            sample_ids,
+            dp_tail_flags,
+            dp_pair_indices,
+            stats,
+        ) = build_dp_tail_dataset(
+            layer=layer,
+            sample_ids=sample_ids,
+            dp_tail_k=args.dp_tail_k,
+            alignments_dir=args.alignments_dir,
+            hidden_states_dir=args.hidden_states_dir,
         )
-        mask &= valid_mask
-    else:
-        LOGGER.info("No validity flag found; treating all samples as valid.")
-
-    dp_used_alignment = data["dp_used_alignment"].astype(bool) if "dp_used_alignment" in data else None
-    dp_used_fallback = data["dp_used_fallback"].astype(bool) if "dp_used_fallback" in data else None
-
-    if args.dp_alignment:
-        if dp_used_alignment is None:
-            LOGGER.warning(
-                "--dp-alignment requested, but probe data lacks 'dp_used_alignment'. Skipping DP filtering."
+        if features.size == 0:
+            LOGGER.error(
+                "DP tail mode requested (k=%d) but no usable token pairs were found.",
+                args.dp_tail_k,
             )
-        else:
-            mask &= dp_used_alignment
-            if dp_used_fallback is not None:
-                mask &= ~dp_used_fallback
+            return
+        dp_tail_stats = {"k": args.dp_tail_k, **stats}
+        LOGGER.info(
+            "DP tail sampling applied: %d samples processed, %d with DP matches, %d fallbacks, %d pairs used.",
+            stats["processed_samples"],
+            stats["samples_with_dp"],
+            stats["fallback_samples"],
+            stats["pairs_used"],
+        )
+
+    valid_mask = data["valid"].astype(bool) if "valid" in data and args.dp_tail_k == 0 else None
+    dp_used_alignment = (
+        data["dp_used_alignment"].astype(bool)
+        if "dp_used_alignment" in data and args.dp_tail_k == 0
+        else None
+    )
+    dp_used_fallback = (
+        data["dp_used_fallback"].astype(bool)
+        if "dp_used_fallback" in data and args.dp_tail_k == 0
+        else None
+    )
+
+    if args.dp_tail_k == 0:
+        mask = np.ones(features.shape[0], dtype=bool)
+        if valid_mask is not None:
             LOGGER.info(
-                "DP alignment filter applied: %d of %d samples retained",
-                int(mask.sum()),
-                total_samples,
+                "Validity flag found: %d valid, %d invalid",
+                int(valid_mask.sum()),
+                int((~valid_mask).sum()),
             )
+            mask &= valid_mask
+        else:
+            LOGGER.info("No validity flag found; treating all samples as valid.")
 
-    if mask.sum() == 0:
-        LOGGER.error("No samples remain after filtering; nothing to analyze.")
-        return
+        if args.dp_alignment:
+            if dp_used_alignment is None:
+                LOGGER.warning(
+                    "--dp-alignment requested, but probe data lacks 'dp_used_alignment'. Skipping DP filtering."
+                )
+            else:
+                mask &= dp_used_alignment
+                if dp_used_fallback is not None:
+                    mask &= ~dp_used_fallback
+                LOGGER.info(
+                    "DP alignment filter applied: %d of %d samples retained",
+                    int(mask.sum()),
+                    total_samples,
+                )
 
-    features = features[mask]
-    labels = labels[mask]
-    dp_used_alignment_subset = dp_used_alignment[mask] if dp_used_alignment is not None else None
-    dp_used_fallback_subset = dp_used_fallback[mask] if dp_used_fallback is not None else None
+        if mask.sum() == 0:
+            LOGGER.error("No samples remain after filtering; nothing to analyze.")
+            return
+
+        features = features[mask]
+        labels = labels[mask]
+        if token_positions is not None:
+            token_positions = token_positions[mask]
+        if sample_ids is not None:
+            sample_ids = sample_ids[mask]
+        if dp_used_alignment is not None:
+            dp_used_alignment = dp_used_alignment[mask]
+        if dp_used_fallback is not None:
+            dp_used_fallback = dp_used_fallback[mask]
+    else:
+        if args.dp_alignment:
+            if dp_tail_flags is None:
+                LOGGER.warning(
+                    "--dp-alignment requested, but DP tail flags are unavailable; skipping DP filtering."
+                )
+            else:
+                dp_mask = dp_tail_flags.astype(bool)
+                if dp_mask.sum() == 0:
+                    LOGGER.error("DP alignment filter removed all samples; aborting.")
+                    return
+                features = features[dp_mask]
+                labels = labels[dp_mask]
+                if token_positions is not None:
+                    token_positions = token_positions[dp_mask]
+                if sample_ids is not None:
+                    sample_ids = sample_ids[dp_mask]
+                dp_tail_flags = dp_tail_flags[dp_mask]
+                if dp_pair_indices is not None:
+                    dp_pair_indices = dp_pair_indices[dp_mask]
+                LOGGER.info(
+                    "DP alignment filter in tail mode retained %d of %d tokens.",
+                    int(dp_mask.sum()),
+                    dp_mask.size,
+                )
 
     LOGGER.info("Feature dimension: %d", features.shape[1])
     LOGGER.info(
@@ -276,20 +557,33 @@ def main() -> None:
         "num_wrong": int((labels == 0).sum()),
         "num_right": int((labels == 1).sum()),
     }
-    if dp_used_alignment_subset is not None:
-        results["dp_alignment"] = {
-            "requested": bool(args.dp_alignment),
-            "available": True,
-            "num_aligned_samples": int(dp_used_alignment_subset.sum()),
-            "num_after_filter": int(features.shape[0]),
-        }
-    elif args.dp_alignment:
-        results["dp_alignment"] = {
-            "requested": True,
-            "available": False,
-            "num_aligned_samples": 0,
-            "num_after_filter": int(features.shape[0]),
-        }
+    if args.dp_tail_k > 0:
+        results["dp_tail"] = dp_tail_stats
+    else:
+        results["dp_tail"] = {"k": 0}
+    if args.dp_tail_k == 0:
+        if dp_used_alignment is not None:
+            results["dp_alignment"] = {
+                "requested": bool(args.dp_alignment),
+                "available": True,
+                "num_aligned_samples": int(dp_used_alignment.sum()),
+                "num_after_filter": int(features.shape[0]),
+            }
+        elif args.dp_alignment:
+            results["dp_alignment"] = {
+                "requested": True,
+                "available": False,
+                "num_aligned_samples": 0,
+                "num_after_filter": int(features.shape[0]),
+            }
+    else:
+        if args.dp_alignment and dp_tail_flags is not None:
+            results["dp_alignment"] = {
+                "requested": True,
+                "available": True,
+                "num_aligned_samples": int(dp_tail_flags.sum()),
+                "num_after_filter": int(features.shape[0]),
+            }
 
     # Skip linear probe, just visualize
     LOGGER.info("Skipping linear probe training, computing visualizations only...")
@@ -308,10 +602,18 @@ def main() -> None:
         "labels": labels,
         "explained_variance_ratio": np.array(pca_result["explained_variance_ratio"]),
     }
-    if dp_used_alignment_subset is not None:
-        pca_payload["dp_used_alignment"] = dp_used_alignment_subset
-    if dp_used_fallback_subset is not None:
-        pca_payload["dp_used_fallback"] = dp_used_fallback_subset
+    if token_positions is not None:
+        pca_payload["token_positions"] = token_positions
+    if sample_ids is not None:
+        pca_payload["sample_ids"] = sample_ids
+    if dp_tail_flags is not None:
+        pca_payload["dp_tail_used"] = dp_tail_flags
+    if dp_pair_indices is not None:
+        pca_payload["dp_tail_pair_index"] = dp_pair_indices
+    if args.dp_tail_k == 0 and dp_used_alignment is not None:
+        pca_payload["dp_used_alignment"] = dp_used_alignment
+    if args.dp_tail_k == 0 and dp_used_fallback is not None:
+        pca_payload["dp_used_fallback"] = dp_used_fallback
     np.savez(pca_data_path, **pca_payload)
     LOGGER.info("Saved PCA data to %s", pca_data_path)
 
@@ -324,14 +626,19 @@ def main() -> None:
         
         # Save UMAP data
         umap_data_path = args.output_dir / f"layer{layer}_umap_data.npz"
-        umap_payload = {
-            "transformed": umap_transformed,
-            "labels": labels,
-        }
-        if dp_used_alignment_subset is not None:
-            umap_payload["dp_used_alignment"] = dp_used_alignment_subset
-        if dp_used_fallback_subset is not None:
-            umap_payload["dp_used_fallback"] = dp_used_fallback_subset
+        umap_payload = {"transformed": umap_transformed, "labels": labels}
+        if token_positions is not None:
+            umap_payload["token_positions"] = token_positions
+        if sample_ids is not None:
+            umap_payload["sample_ids"] = sample_ids
+        if dp_tail_flags is not None:
+            umap_payload["dp_tail_used"] = dp_tail_flags
+        if dp_pair_indices is not None:
+            umap_payload["dp_tail_pair_index"] = dp_pair_indices
+        if args.dp_tail_k == 0 and dp_used_alignment is not None:
+            umap_payload["dp_used_alignment"] = dp_used_alignment
+        if args.dp_tail_k == 0 and dp_used_fallback is not None:
+            umap_payload["dp_used_fallback"] = dp_used_fallback
         np.savez(umap_data_path, **umap_payload)
         LOGGER.info("Saved UMAP data to %s", umap_data_path)
     else:

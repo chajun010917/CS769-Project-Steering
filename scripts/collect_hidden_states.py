@@ -103,15 +103,15 @@ def parse_args() -> argparse.Namespace:
         "--pooling-method",
         type=str,
         default="mean",
-        choices=["mean", "last_token", "per_token", "before_final_answer"],
-        help="Pooling method: 'mean' (average all tokens), 'last_token' (final token), 'per_token' (each matched token), 'before_final_answer' (token before 'Final answer').",
+        choices=["mean", "last_token", "per_token"],
+        help="Pooling method: 'mean' (average all tokens), 'last_token' (final token), 'per_token' (each matched token).",
     )
     parser.add_argument(
         "--alignment-method",
         type=str,
         default="text",
         choices=["text", "hidden_dp"],
-        help="Token alignment strategy. 'text' uses exact token matches; 'hidden_dp' uses hidden-state dynamic programming with fallback. (Deprecated: prefer --dp-alignment for per-token DP.)",
+        help="Token alignment strategy. 'text' uses exact token matches; 'hidden_dp' uses hidden-state dynamic programming with fallback.",
     )
     parser.add_argument(
         "--alignment-layer",
@@ -140,7 +140,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dp-alignment",
         action="store_true",
-        help="Enable hidden-state dynamic programming alignment when using per_token pooling.",
+        help="Use hidden-state DP alignments for token feature sampling (affects per_token pooling).",
     )
     parser.add_argument(
         "--system-prompt",
