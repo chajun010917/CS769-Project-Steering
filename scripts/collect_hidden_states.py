@@ -111,7 +111,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="text",
         choices=["text", "hidden_dp"],
-        help="Token alignment strategy. 'text' uses exact token matches; 'hidden_dp' uses hidden-state dynamic programming with fallback.",
+        help="Token alignment strategy. 'text' uses exact token matches; 'hidden_dp' uses hidden-state dynamic programming with fallback. (Deprecated: prefer --dp-alignment for per-token DP.)",
     )
     parser.add_argument(
         "--alignment-layer",
@@ -136,6 +136,11 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         help="Distance threshold for accepting matches in hidden_dp alignment (defaults to mean + std of distances).",
+    )
+    parser.add_argument(
+        "--dp-alignment",
+        action="store_true",
+        help="Enable hidden-state dynamic programming alignment when using per_token pooling.",
     )
     parser.add_argument(
         "--system-prompt",
@@ -501,6 +506,15 @@ def main() -> None:
     args = parse_args()
     rng = random.Random(args.seed)
 
+    dp_alignment_requested = bool(args.dp_alignment)
+    dp_alignment_active = dp_alignment_requested and args.pooling_method == "per_token"
+    if dp_alignment_requested and args.pooling_method != "per_token":
+        LOGGER.info(
+            "Ignoring --dp-alignment because pooling method '%s' does not use token-level features.",
+            args.pooling_method,
+        )
+    alignment_method = "hidden_dp" if dp_alignment_active else "text"
+
     # Load triples
     triples = load_triples(args.triples_path)
     if not triples:
@@ -512,12 +526,17 @@ def main() -> None:
     LOGGER.info("Target layers for hidden state capture: %s", target_layers)
 
     alignment_layer = args.alignment_layer if args.alignment_layer is not None else target_layers[0]
-    if args.alignment_method == "hidden_dp" and alignment_layer not in target_layers:
+    if alignment_method == "hidden_dp" and alignment_layer not in target_layers:
         LOGGER.info(
             "Alignment layer %s not in --layers; adding for hidden-state capture.",
             alignment_layer,
         )
-    capture_layers = sorted(set(target_layers + [alignment_layer]))
+    capture_layers = sorted(
+        set(target_layers + ([alignment_layer] if alignment_method == "hidden_dp" else []))
+    )
+
+    if dp_alignment_active:
+        LOGGER.info("Dynamic programming alignment enabled for per-token pooling.")
 
     # Load model
     model = ModelWrapper(args.model_name, device=args.device)
@@ -560,7 +579,18 @@ def main() -> None:
 
     # Probe data collection - track per layer
     probe_data_per_layer = {
-        layer: {"features": [], "labels": [], "token_positions": [], "sample_ids": [], "valid": []}
+        layer: {
+            "features": [],
+            "labels": [],
+            "token_positions": [],
+            "sample_ids": [],
+            "valid": [],
+            "dp_used_alignment": [],
+            "dp_used_fallback": [],
+            "dp_pair_index": [],
+            "dp_gap_ratio": [],
+            "dp_avg_distance": [],
+        }
         for layer in target_layers
     }
 
@@ -613,14 +643,18 @@ def main() -> None:
         # Get tokens and align
         wrong_tokens = model.token_strings(wrong_inputs["input_ids"].squeeze(0))
         right_tokens = model.token_strings(right_inputs["input_ids"].squeeze(0))
-        alignment_hidden_wrong = wrong_hidden.get(alignment_layer)
-        alignment_hidden_right = right_hidden.get(alignment_layer)
+        alignment_hidden_wrong = (
+            wrong_hidden.get(alignment_layer) if alignment_method == "hidden_dp" else None
+        )
+        alignment_hidden_right = (
+            right_hidden.get(alignment_layer) if alignment_method == "hidden_dp" else None
+        )
         matches, alignment_metadata = align_tokens(
             wrong_tokens,
             right_tokens,
             alignment_hidden_wrong,
             alignment_hidden_right,
-            method=args.alignment_method,
+            method=alignment_method,
             max_shift=args.dp_max_shift,
             gap_penalty=args.dp_gap_penalty,
             distance_threshold=args.dp_distance_threshold,
@@ -637,6 +671,22 @@ def main() -> None:
         # Save alignment
         alignment_path = args.alignment_dir / f"{triple.sample_id}.json"
         save_alignment(alignment_path, wrong_tokens, right_tokens, matches, alignment_metadata)
+
+        alignment_metadata = alignment_metadata or {}
+        alignment_strategy = alignment_metadata.get("strategy", "text")
+        dp_used_alignment_flag = (
+            alignment_strategy == "hidden_dp" and not alignment_metadata.get("used_fallback", False)
+        )
+        dp_used_fallback_flag = alignment_metadata.get("used_fallback", False)
+        dp_metrics = alignment_metadata.get("dp_metrics") if isinstance(alignment_metadata, dict) else None
+        dp_gap_ratio = alignment_metadata.get("gap_ratio")
+        if dp_gap_ratio is None and isinstance(dp_metrics, dict):
+            dp_gap_ratio = dp_metrics.get("gap_ratio")
+        dp_avg_distance = alignment_metadata.get("avg_distance")
+        if dp_avg_distance is None and isinstance(dp_metrics, dict):
+            dp_avg_distance = dp_metrics.get("avg_distance")
+        dp_gap_ratio_value = float(dp_gap_ratio) if dp_gap_ratio is not None else float("nan")
+        dp_avg_distance_value = float(dp_avg_distance) if dp_avg_distance is not None else float("nan")
 
         # Collect probe data for all layers using specified pooling method
         for layer_id in target_layers:
@@ -658,12 +708,22 @@ def main() -> None:
                     layer_data["token_positions"].append(-1)  # -1 indicates pooled
                     layer_data["sample_ids"].append(triple.sample_id)
                     layer_data["valid"].append(True)
+                    layer_data["dp_used_alignment"].append(False)
+                    layer_data["dp_used_fallback"].append(False)
+                    layer_data["dp_pair_index"].append(-1)
+                    layer_data["dp_gap_ratio"].append(float("nan"))
+                    layer_data["dp_avg_distance"].append(float("nan"))
 
                     layer_data["features"].append(right_pooled)
                     layer_data["labels"].append(1)  # 1 = right
                     layer_data["token_positions"].append(-1)
                     layer_data["sample_ids"].append(triple.sample_id)
                     layer_data["valid"].append(True)
+                    layer_data["dp_used_alignment"].append(False)
+                    layer_data["dp_used_fallback"].append(False)
+                    layer_data["dp_pair_index"].append(-1)
+                    layer_data["dp_gap_ratio"].append(float("nan"))
+                    layer_data["dp_avg_distance"].append(float("nan"))
             
             elif args.pooling_method == "last_token":
                 # Last token (typically where the answer is generated)
@@ -676,12 +736,22 @@ def main() -> None:
                     layer_data["token_positions"].append(len(layer_tensor_wrong) - 1)
                     layer_data["sample_ids"].append(triple.sample_id)
                     layer_data["valid"].append(True)
+                    layer_data["dp_used_alignment"].append(False)
+                    layer_data["dp_used_fallback"].append(False)
+                    layer_data["dp_pair_index"].append(-1)
+                    layer_data["dp_gap_ratio"].append(float("nan"))
+                    layer_data["dp_avg_distance"].append(float("nan"))
 
                     layer_data["features"].append(right_last)
                     layer_data["labels"].append(1)
                     layer_data["token_positions"].append(len(layer_tensor_right) - 1)
                     layer_data["sample_ids"].append(triple.sample_id)
                     layer_data["valid"].append(True)
+                    layer_data["dp_used_alignment"].append(False)
+                    layer_data["dp_used_fallback"].append(False)
+                    layer_data["dp_pair_index"].append(-1)
+                    layer_data["dp_gap_ratio"].append(float("nan"))
+                    layer_data["dp_avg_distance"].append(float("nan"))
             
             elif args.pooling_method == "per_token":
                 # Per-token: use matched token positions
@@ -691,13 +761,18 @@ def main() -> None:
                         matches, args.probe_max_samples - len(layer_data["features"]), rng
                     )
                     
-                    for wrong_idx, right_idx in selected_matches:
+                    for pair_idx, (wrong_idx, right_idx) in enumerate(selected_matches):
                         # Add wrong token representation
                         layer_data["features"].append(layer_tensor_wrong[wrong_idx].numpy())
                         layer_data["labels"].append(0)  # 0 = wrong
                         layer_data["token_positions"].append(wrong_idx)
                         layer_data["sample_ids"].append(triple.sample_id)
                         layer_data["valid"].append(True)
+                        layer_data["dp_used_alignment"].append(dp_used_alignment_flag)
+                        layer_data["dp_used_fallback"].append(dp_used_fallback_flag)
+                        layer_data["dp_pair_index"].append(pair_idx if dp_used_alignment_flag else -1)
+                        layer_data["dp_gap_ratio"].append(dp_gap_ratio_value)
+                        layer_data["dp_avg_distance"].append(dp_avg_distance_value)
 
                         # Add right token representation
                         layer_data["features"].append(layer_tensor_right[right_idx].numpy())
@@ -705,6 +780,11 @@ def main() -> None:
                         layer_data["token_positions"].append(right_idx)
                         layer_data["sample_ids"].append(triple.sample_id)
                         layer_data["valid"].append(True)
+                        layer_data["dp_used_alignment"].append(dp_used_alignment_flag)
+                        layer_data["dp_used_fallback"].append(dp_used_fallback_flag)
+                        layer_data["dp_pair_index"].append(pair_idx if dp_used_alignment_flag else -1)
+                        layer_data["dp_gap_ratio"].append(dp_gap_ratio_value)
+                        layer_data["dp_avg_distance"].append(dp_avg_distance_value)
 
             elif args.pooling_method == "before_final_answer":
                 # Token just before "Final answer" appears
@@ -734,12 +814,22 @@ def main() -> None:
                     layer_data["token_positions"].append(wrong_pos)
                     layer_data["sample_ids"].append(triple.sample_id)
                     layer_data["valid"].append(sample_valid)
+                    layer_data["dp_used_alignment"].append(False)
+                    layer_data["dp_used_fallback"].append(False)
+                    layer_data["dp_pair_index"].append(-1)
+                    layer_data["dp_gap_ratio"].append(float("nan"))
+                    layer_data["dp_avg_distance"].append(float("nan"))
 
                     layer_data["features"].append(right_before_answer)
                     layer_data["labels"].append(1)  # 1 = right
                     layer_data["token_positions"].append(right_pos)
                     layer_data["sample_ids"].append(triple.sample_id)
                     layer_data["valid"].append(sample_valid)
+                    layer_data["dp_used_alignment"].append(False)
+                    layer_data["dp_used_fallback"].append(False)
+                    layer_data["dp_pair_index"].append(-1)
+                    layer_data["dp_gap_ratio"].append(float("nan"))
+                    layer_data["dp_avg_distance"].append(float("nan"))
 
         # Clean up memory after processing each sample
         del wrong_hidden
@@ -763,6 +853,11 @@ def main() -> None:
             position_array = np.array(layer_data["token_positions"])
             sample_id_array = np.array(layer_data["sample_ids"])
             valid_array = np.array(layer_data["valid"])
+            dp_used_alignment_array = np.array(layer_data["dp_used_alignment"], dtype=bool)
+            dp_used_fallback_array = np.array(layer_data["dp_used_fallback"], dtype=bool)
+            dp_pair_index_array = np.array(layer_data["dp_pair_index"], dtype=np.int32)
+            dp_gap_ratio_array = np.array(layer_data["dp_gap_ratio"], dtype=np.float32)
+            dp_avg_distance_array = np.array(layer_data["dp_avg_distance"], dtype=np.float32)
 
             probe_data_path = args.probe_data_dir / f"layer{layer_id}_probe_data.npz"
             np.savez(
@@ -773,6 +868,11 @@ def main() -> None:
                 sample_ids=sample_id_array,
                 valid=valid_array,
                 layer=layer_id,
+                dp_used_alignment=dp_used_alignment_array,
+                dp_used_fallback=dp_used_fallback_array,
+                dp_pair_index=dp_pair_index_array,
+                dp_gap_ratio=dp_gap_ratio_array,
+                dp_avg_distance=dp_avg_distance_array,
             )
 
             num_valid = np.sum(valid_array)

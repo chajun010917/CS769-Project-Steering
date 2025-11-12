@@ -46,6 +46,11 @@ def parse_args() -> argparse.Namespace:
         default=42,
         help="Random seed for train/test split and dimensionality reduction.",
     )
+    parser.add_argument(
+        "--dp-alignment",
+        action="store_true",
+        help="Restrict analysis to tokens that passed DP alignment (requires metadata in probe data).",
+    )
     return parser.parse_args()
 
 
@@ -209,23 +214,56 @@ def main() -> None:
     labels = data["labels"]
     layer = int(data["layer"])
 
-    # Load valid flag if it exists, otherwise assume all samples are valid
-    if "valid" in data:
-        valid = data["valid"]
-        LOGGER.info("Loaded %d samples from layer %d (%d valid, %d invalid)",
-                   features.shape[0], layer, valid.sum(), (~valid).sum())
+    total_samples = features.shape[0]
+    LOGGER.info("Loaded %d samples from layer %d", total_samples, layer)
 
-        # Filter to only valid samples
-        features = features[valid]
-        labels = labels[valid]
-        LOGGER.info("Using only valid samples: %d samples", features.shape[0])
+    mask = np.ones(total_samples, dtype=bool)
+
+    valid_mask = None
+    if "valid" in data:
+        valid_mask = data["valid"].astype(bool)
+        LOGGER.info(
+            "Validity flag found: %d valid, %d invalid",
+            int(valid_mask.sum()),
+            int((~valid_mask).sum()),
+        )
+        mask &= valid_mask
     else:
-        LOGGER.info("Loaded %d samples from layer %d (no validity flag found, assuming all valid)",
-                   features.shape[0], layer)
+        LOGGER.info("No validity flag found; treating all samples as valid.")
+
+    dp_used_alignment = data["dp_used_alignment"].astype(bool) if "dp_used_alignment" in data else None
+    dp_used_fallback = data["dp_used_fallback"].astype(bool) if "dp_used_fallback" in data else None
+
+    if args.dp_alignment:
+        if dp_used_alignment is None:
+            LOGGER.warning(
+                "--dp-alignment requested, but probe data lacks 'dp_used_alignment'. Skipping DP filtering."
+            )
+        else:
+            mask &= dp_used_alignment
+            if dp_used_fallback is not None:
+                mask &= ~dp_used_fallback
+            LOGGER.info(
+                "DP alignment filter applied: %d of %d samples retained",
+                int(mask.sum()),
+                total_samples,
+            )
+
+    if mask.sum() == 0:
+        LOGGER.error("No samples remain after filtering; nothing to analyze.")
+        return
+
+    features = features[mask]
+    labels = labels[mask]
+    dp_used_alignment_subset = dp_used_alignment[mask] if dp_used_alignment is not None else None
+    dp_used_fallback_subset = dp_used_fallback[mask] if dp_used_fallback is not None else None
 
     LOGGER.info("Feature dimension: %d", features.shape[1])
-    LOGGER.info("Label distribution: %d wrong, %d right",
-                (labels == 0).sum(), (labels == 1).sum())
+    LOGGER.info(
+        "Label distribution: %d wrong, %d right",
+        int((labels == 0).sum()),
+        int((labels == 1).sum()),
+    )
 
     # Create output directory
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -238,6 +276,20 @@ def main() -> None:
         "num_wrong": int((labels == 0).sum()),
         "num_right": int((labels == 1).sum()),
     }
+    if dp_used_alignment_subset is not None:
+        results["dp_alignment"] = {
+            "requested": bool(args.dp_alignment),
+            "available": True,
+            "num_aligned_samples": int(dp_used_alignment_subset.sum()),
+            "num_after_filter": int(features.shape[0]),
+        }
+    elif args.dp_alignment:
+        results["dp_alignment"] = {
+            "requested": True,
+            "available": False,
+            "num_aligned_samples": 0,
+            "num_after_filter": int(features.shape[0]),
+        }
 
     # Skip linear probe, just visualize
     LOGGER.info("Skipping linear probe training, computing visualizations only...")
@@ -251,12 +303,16 @@ def main() -> None:
     
     # Save PCA data
     pca_data_path = args.output_dir / f"layer{layer}_pca_data.npz"
-    np.savez(
-        pca_data_path,
-        transformed=pca_transformed,
-        labels=labels,
-        explained_variance_ratio=np.array(pca_result["explained_variance_ratio"]),
-    )
+    pca_payload = {
+        "transformed": pca_transformed,
+        "labels": labels,
+        "explained_variance_ratio": np.array(pca_result["explained_variance_ratio"]),
+    }
+    if dp_used_alignment_subset is not None:
+        pca_payload["dp_used_alignment"] = dp_used_alignment_subset
+    if dp_used_fallback_subset is not None:
+        pca_payload["dp_used_fallback"] = dp_used_fallback_subset
+    np.savez(pca_data_path, **pca_payload)
     LOGGER.info("Saved PCA data to %s", pca_data_path)
 
     # 5. Compute UMAP
@@ -268,11 +324,15 @@ def main() -> None:
         
         # Save UMAP data
         umap_data_path = args.output_dir / f"layer{layer}_umap_data.npz"
-        np.savez(
-            umap_data_path,
-            transformed=umap_transformed,
-            labels=labels,
-        )
+        umap_payload = {
+            "transformed": umap_transformed,
+            "labels": labels,
+        }
+        if dp_used_alignment_subset is not None:
+            umap_payload["dp_used_alignment"] = dp_used_alignment_subset
+        if dp_used_fallback_subset is not None:
+            umap_payload["dp_used_fallback"] = dp_used_fallback_subset
+        np.savez(umap_data_path, **umap_payload)
         LOGGER.info("Saved UMAP data to %s", umap_data_path)
     else:
         results["umap"] = umap_result

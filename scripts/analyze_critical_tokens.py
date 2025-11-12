@@ -51,6 +51,11 @@ def parse_args() -> argparse.Namespace:
         default=42,
         help="Random seed for PCA.",
     )
+    parser.add_argument(
+        "--dp-alignment",
+        action="store_true",
+        help="Restrict analysis to tokens that passed DP alignment (requires metadata).",
+    )
     return parser.parse_args()
 
 
@@ -163,23 +168,52 @@ def main() -> None:
     sample_ids = data.get("sample_ids", None)
     layer = int(data["layer"])
 
-    # Load valid flag if it exists, otherwise assume all samples are valid
-    if "valid" in data:
-        valid = data["valid"]
-        LOGGER.info("Loaded %d tokens from layer %d (%d valid, %d invalid)",
-                   len(features), layer, valid.sum(), (~valid).sum())
+    total_tokens = len(features)
+    LOGGER.info("Loaded %d tokens from layer %d", total_tokens, layer)
 
-        # Filter to only valid samples
-        features = features[valid]
-        labels = labels[valid]
-        if token_positions is not None:
-            token_positions = token_positions[valid]
-        if sample_ids is not None:
-            sample_ids = sample_ids[valid]
-        LOGGER.info("Using only valid samples: %d tokens", len(features))
+    mask = np.ones(total_tokens, dtype=bool)
+
+    if "valid" in data:
+        valid = data["valid"].astype(bool)
+        LOGGER.info(
+            "Validity flag found: %d valid, %d invalid",
+            int(valid.sum()),
+            int((~valid).sum()),
+        )
+        mask &= valid
     else:
-        LOGGER.info("Loaded %d tokens from layer %d (no validity flag found, assuming all valid)",
-                   len(features), layer)
+        LOGGER.info("No validity flag found; treating all tokens as valid.")
+
+    dp_used_alignment = data["dp_used_alignment"].astype(bool) if "dp_used_alignment" in data else None
+    dp_used_fallback = data["dp_used_fallback"].astype(bool) if "dp_used_fallback" in data else None
+
+    if args.dp_alignment:
+        if dp_used_alignment is None:
+            LOGGER.warning(
+                "--dp-alignment requested, but probe data lacks 'dp_used_alignment'. Skipping DP filter."
+            )
+        else:
+            mask &= dp_used_alignment
+            if dp_used_fallback is not None:
+                mask &= ~dp_used_fallback
+            LOGGER.info(
+                "DP alignment filter applied: %d of %d tokens retained",
+                int(mask.sum()),
+                total_tokens,
+            )
+
+    retained_tokens = int(mask.sum())
+    if retained_tokens == 0:
+        LOGGER.error("No tokens remain after filtering; aborting critical token analysis.")
+        return
+
+    features = features[mask]
+    labels = labels[mask]
+    if token_positions is not None:
+        token_positions = token_positions[mask]
+    if sample_ids is not None:
+        sample_ids = sample_ids[mask]
+    LOGGER.info("Using %d tokens after filtering.", retained_tokens)
 
     if token_positions is None:
         LOGGER.error("Probe data does not contain token positions. Re-run collect_hidden_states.py")
@@ -190,6 +224,12 @@ def main() -> None:
     results = analyze_critical_tokens(
         features, labels, token_positions, sample_ids, args.alignments_dir, seed=args.seed
     )
+    results["filter_summary"] = {
+        "total_tokens": int(total_tokens),
+        "tokens_retained": retained_tokens,
+        "dp_alignment_requested": bool(args.dp_alignment),
+        "dp_alignment_available": dp_used_alignment is not None,
+    }
     
     explained_var = results['explained_variance']
     LOGGER.info("PCA explained variance: PC1=%.3f, PC2=%.3f", *explained_var)

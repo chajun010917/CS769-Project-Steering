@@ -36,6 +36,11 @@ def parse_args() -> argparse.Namespace:
         default=Path("reports/hidden_state_viz"),
         help="Directory for saving plots.",
     )
+    parser.add_argument(
+        "--dp-alignment",
+        action="store_true",
+        help="Plot only the points that passed DP alignment filtering (if metadata is available).",
+    )
     return parser.parse_args()
 
 
@@ -99,6 +104,9 @@ def main() -> None:
         LOGGER.error("Analysis directory not found: %s", args.analysis_dir)
         return
 
+    suffix = "_dp" if args.dp_alignment else ""
+    title_suffix = " (DP aligned)" if args.dp_alignment else ""
+
     # Load PCA data
     pca_data_path = args.analysis_dir / f"layer{layer}_pca_data.npz"
     if pca_data_path.exists():
@@ -106,11 +114,32 @@ def main() -> None:
         pca_data = np.load(pca_data_path)
         pca_transformed = pca_data["transformed"]
         pca_labels = pca_data["labels"]
+
+        if args.dp_alignment:
+            if "dp_used_alignment" in pca_data.files:
+                dp_mask = pca_data["dp_used_alignment"].astype(bool)
+                if "dp_used_fallback" in pca_data.files:
+                    dp_mask &= ~pca_data["dp_used_fallback"].astype(bool)
+                retained = int(dp_mask.sum())
+                LOGGER.info("PCA DP filter retained %d samples", retained)
+                if retained == 0:
+                    LOGGER.warning("No PCA samples remain after DP filtering; skipping PCA plot.")
+                    pca_transformed = None
+                else:
+                    pca_transformed = pca_transformed[dp_mask]
+                    pca_labels = pca_labels[dp_mask]
+            else:
+                LOGGER.warning("PCA data missing 'dp_used_alignment'; skipping DP filter.")
         
-        # Plot PCA cluster overlay
-        overlay_dir = args.output_dir / "cluster_overlays"
-        pca_cluster_path = overlay_dir / f"layer{layer}_pca_clusters.png"
-        plot_cluster_overlay(pca_transformed, pca_labels, pca_cluster_path, "PCA Separation")
+        if pca_transformed is not None and pca_transformed.shape[0] > 0:
+            overlay_dir = args.output_dir / f"cluster_overlays{suffix}"
+            pca_cluster_path = overlay_dir / f"layer{layer}_pca_clusters{suffix}.png"
+            plot_cluster_overlay(
+                pca_transformed,
+                pca_labels,
+                pca_cluster_path,
+                f"PCA Separation{title_suffix}",
+            )
     else:
         LOGGER.warning("PCA data not found: %s", pca_data_path)
 
@@ -121,11 +150,32 @@ def main() -> None:
         umap_data = np.load(umap_data_path)
         umap_transformed = umap_data["transformed"]
         umap_labels = umap_data["labels"]
+
+        if args.dp_alignment:
+            if "dp_used_alignment" in umap_data.files:
+                dp_mask = umap_data["dp_used_alignment"].astype(bool)
+                if "dp_used_fallback" in umap_data.files:
+                    dp_mask &= ~umap_data["dp_used_fallback"].astype(bool)
+                retained = int(dp_mask.sum())
+                LOGGER.info("UMAP DP filter retained %d samples", retained)
+                if retained == 0:
+                    LOGGER.warning("No UMAP samples remain after DP filtering; skipping UMAP plot.")
+                    umap_transformed = None
+                else:
+                    umap_transformed = umap_transformed[dp_mask]
+                    umap_labels = umap_labels[dp_mask]
+            else:
+                LOGGER.warning("UMAP data missing 'dp_used_alignment'; skipping DP filter.")
         
-        # Plot UMAP cluster overlay
-        overlay_dir = args.output_dir / "cluster_overlays"
-        umap_cluster_path = overlay_dir / f"layer{layer}_umap_clusters.png"
-        plot_cluster_overlay(umap_transformed, umap_labels, umap_cluster_path, "UMAP Separation")
+        if umap_transformed is not None and umap_transformed.shape[0] > 0:
+            overlay_dir = args.output_dir / f"cluster_overlays{suffix}"
+            umap_cluster_path = overlay_dir / f"layer{layer}_umap_clusters{suffix}.png"
+            plot_cluster_overlay(
+                umap_transformed,
+                umap_labels,
+                umap_cluster_path,
+                f"UMAP Separation{title_suffix}",
+            )
     else:
         LOGGER.warning("UMAP data not found: %s", umap_data_path)
 

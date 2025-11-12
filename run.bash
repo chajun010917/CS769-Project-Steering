@@ -24,7 +24,7 @@ MAX_SAMPLES=100
 MAX_NEW_TOKENS=1024
 
 # Pooling method: mean, last_token, or per_token
-POOLING_METHOD="last_token"
+POOLING_METHOD="per_token"
 
 # Layers to analyze (space-separated list)
 # For Llama-3.1-8B: layers 0-31 available
@@ -38,6 +38,8 @@ DATASET_CONFIG="ALL"
 # Derived artifact locations
 ANALYSIS_OUTPUT="artifacts/probe_analysis"
 PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
+
+DP_ALIGNMENT_ARGS=(--dp-alignment)
 
 # ---- setup ----
 
@@ -100,67 +102,75 @@ fi
 #   --probe-max-samples "${PROBE_MAX}" \
 #   --max-samples "${MAX_SAMPLES}" \
 #   --pooling-method "${POOLING_METHOD}" \
-#   --alignment-method hidden_dp \
 #   --alignment-layer 28 \
 #   --dp-max-shift 40 \
-#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+#   "${DP_ALIGNMENT_ARGS[@]}"
 
-# # echo "Generated probe data for layers: ${LAYERS}"
-
----- step 3: compute probes and vectors for multiple layers ----
+# ---- step 3: compute probes and vectors for multiple layers ----
 echo "=== Step 3: Computing probes and vectors ==="
 ANALYSIS_OUTPUT="artifacts/probe_analysis"
 
-# Process each layer from the LAYERS variable
 for layer in ${LAYERS}; do
   PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
-  
+
   if [ -f "${PROBE_DATA}" ]; then
     echo "  Computing probes for layer ${layer}..."
-    python scripts/compute_probes.py \
-      --probe-data-path "${PROBE_DATA}" \
-      --output-dir "${ANALYSIS_OUTPUT}" \
+    cmd=(
+      python scripts/compute_probes.py
+      --probe-data-path "${PROBE_DATA}"
+      --output-dir "${ANALYSIS_OUTPUT}"
       --seed 42
+    )
+    cmd+=("${DP_ALIGNMENT_ARGS[@]}")
+    "${cmd[@]}"
   else
     echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
   fi
 done
 
-# # ---- step 4: generate visualizations for multiple layers ----
-# echo "=== Step 4: Generating visualizations ==="
-# for layer in ${LAYERS}; do
-#   METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
-  
-  if [ -f "${METRICS_FILE}" ]; then
-    echo "  Plotting layer ${layer}..."
-    python scripts/plot_probes.py \
-      --analysis-dir "${ANALYSIS_OUTPUT}" \
-      --layer ${layer} \
-      --output-dir "${PLOT_OUTPUT}"
-  else
-    echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
-  fi
-done
+# ---- step 4: generate visualizations for multiple layers ----
+if [ -d "${ANALYSIS_OUTPUT}" ]; then
+  echo "=== Step 4: Generating visualizations ==="
+  for layer in ${LAYERS}; do
+    METRICS_FILE="${ANALYSIS_OUTPUT}/layer${layer}_metrics.json"
+    if [ -f "${METRICS_FILE}" ]; then
+      echo "  Plotting layer ${layer}..."
+      cmd=(
+        python scripts/plot_probes.py
+        --analysis-dir "${ANALYSIS_OUTPUT}"
+        --layer ${layer}
+        --output-dir "${PLOT_OUTPUT}"
+      )
+      cmd+=("${DP_ALIGNMENT_ARGS[@]}")
+      "${cmd[@]}"
+    else
+      echo "  Warning: Metrics not found for layer ${layer}, skipping plots"
+    fi
+  done
+else
+  echo "=== Step 4: Skipping visualizations (analysis directory missing) ==="
+fi
 
 # ---- step 5: analyze critical tokens (only for per_token pooling) ----
-# if [ "${POOLING_METHOD}" = "per_token" ]; then
-#   echo "=== Step 5: Analyzing critical token positions ==="
-#   CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
-# # ---- step 5: analyze critical tokens (only for per_token pooling) ----
-# if [ "${POOLING_METHOD}" = "per_token" ]; then
-#   echo "=== Step 5: Analyzing critical token positions ==="
-#   CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
+if [ "${POOLING_METHOD}" = "per_token" ]; then
+  echo "=== Step 5: Analyzing critical token positions ==="
+  CRITICAL_TOKENS_OUTPUT="reports/critical_tokens_${POOLING_METHOD}"
 
   for layer in ${LAYERS}; do
     PROBE_DATA="artifacts/probe_data/layer${layer}_probe_data.npz"
-    
+
     if [ -f "${PROBE_DATA}" ]; then
       echo "  Analyzing critical tokens for layer ${layer}..."
-      python scripts/analyze_critical_tokens.py \
-        --probe-data-path "${PROBE_DATA}" \
-        --alignments-dir "artifacts/alignments" \
-        --output-dir "${CRITICAL_TOKENS_OUTPUT}" \
+      cmd=(
+        python scripts/analyze_critical_tokens.py
+        --probe-data-path "${PROBE_DATA}"
+        --alignments-dir "artifacts/alignments"
+        --output-dir "${CRITICAL_TOKENS_OUTPUT}"
         --top-k 20
+      )
+      cmd+=("${DP_ALIGNMENT_ARGS[@]}")
+      "${cmd[@]}"
     else
       echo "  Warning: Probe data not found for layer ${layer}"
     fi
@@ -173,14 +183,15 @@ fi
 #echo "=== Step 6: Computing steering vectors from last_token representations ==="
 STEERING_VECTORS_DIR="artifacts/steering_vectors"
  
-# python scripts/compute_steering_vectors.py \
-#   --triples-path "${TRIPLES_PATH}" \
-#   --model-name "${MODEL_ID}" \
-#   --layers ${LAYERS} \
-#   --output-dir "${STEERING_VECTORS_DIR}" \
-#   --max-samples "${MAX_SAMPLES}" \
-#   --token-selection-method gradient \
-#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+python scripts/compute_steering_vectors.py \
+  --triples-path "${TRIPLES_PATH}" \
+  --model-name "${MODEL_ID}" \
+  --layers ${LAYERS} \
+  --output-dir "${STEERING_VECTORS_DIR}" \
+  --max-samples "${MAX_SAMPLES}" \
+  --token-selection-method dp_gradient \
+  --alignments-dir "artifacts/alignments" \
+  --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
 
 # ---- step 7: evaluate steering ----
 echo "=== Step 7: Evaluating steering vectors ==="

@@ -71,9 +71,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--token-selection-method",
-        choices=["last_token", "gradient"],
+        choices=["last_token", "gradient", "dp_gradient", "dp_average"],
         default="last_token",
         help="How to choose the token position for computing steering vectors.",
+    )
+    parser.add_argument(
+        "--alignments-dir",
+        type=Path,
+        default=Path("artifacts/alignments"),
+        help="Directory containing DP alignment JSON files (required for dp_* token selection).",
     )
     parser.add_argument(
         "--device",
@@ -167,6 +173,35 @@ def compute_prompt_token_length(model: ModelWrapper, prompt_text: str) -> int:
     """Return the number of tokens corresponding to the prompt (used to mask gradients)."""
     encoded = model.tokenize(prompt_text)
     return int(encoded["input_ids"].shape[1])
+
+
+def load_alignment_payload(
+    sample_id: str,
+    alignments_dir: Path,
+) -> Tuple[List[Tuple[int, int]], Dict[str, Any]]:
+    """Load precomputed alignment matches for a sample."""
+    path = alignments_dir / f"{sample_id}.json"
+    if not path.exists():
+        return [], {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        LOGGER.warning("Failed to read alignment file %s: %s", path, exc)
+        return [], {}
+
+    matches: List[Tuple[int, int]] = []
+    for item in payload.get("matches", []):
+        if not isinstance(item, dict):
+            continue
+        try:
+            wrong_idx = int(item["wrong_index"])
+            right_idx = int(item["right_index"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        matches.append((wrong_idx, right_idx))
+
+    metadata = payload.get("metadata", {})
+    return matches, metadata
 
 
 def select_tokens_via_gradient(
@@ -282,7 +317,26 @@ def main() -> None:
     skipped = 0
     gradient_fallbacks = 0
 
-    use_gradient = args.token_selection_method == "gradient"
+    method = args.token_selection_method
+    use_gradient = method in {"gradient", "dp_gradient"}
+    use_dp_alignment = method in {"dp_gradient", "dp_average"}
+    if use_dp_alignment and not args.alignments_dir.exists():
+        LOGGER.warning(
+            "Alignments directory %s not found; DP-based token selection will fall back to default behavior.",
+            args.alignments_dir,
+        )
+
+    dp_alignment_missing_files = 0
+    dp_alignment_fallbacks = 0
+    dp_alignment_unavailable = 0
+    dp_alignment_attempts = 0
+    dp_alignment_successes = 0
+    dp_lookup_misses = 0
+    dp_average_fallbacks = 0
+    dp_pairs_used_total = 0
+    dp_average_pair_counts_per_layer = (
+        {layer: [] for layer in target_layers} if method == "dp_average" else None
+    )
 
     for triple in tqdm(triples, desc="Computing steering vectors"):
         if not triple.correct_chain.strip():
@@ -314,6 +368,27 @@ def main() -> None:
             system_prompt=args.system_prompt,
         )
 
+        matches: List[Tuple[int, int]] = []
+        alignment_metadata: Dict[str, Any] = {}
+        match_lookup: Dict[int, int] = {}
+        dp_alignment_available = False
+
+        if use_dp_alignment:
+            matches, alignment_metadata = load_alignment_payload(triple.sample_id, args.alignments_dir)
+            if not matches and not alignment_metadata:
+                dp_alignment_missing_files += 1
+            else:
+                strategy = alignment_metadata.get("strategy")
+                used_fallback = alignment_metadata.get("used_fallback", False)
+                if strategy == "hidden_dp" and not used_fallback and len(matches) > 0:
+                    dp_alignment_available = True
+                    match_lookup = {wrong: right for wrong, right in matches}
+                else:
+                    if used_fallback:
+                        dp_alignment_fallbacks += 1
+                    else:
+                        dp_alignment_unavailable += 1
+
         selected_positions: Dict[int, int] = {}
         gradient_norms: Dict[int, float] = {}
         gradient_used = False
@@ -342,40 +417,103 @@ def main() -> None:
                 gradient_used = False
                 model.model.zero_grad(set_to_none=True)
 
-        # Fallback or last token selection
-        for layer_id in target_layers:
-            layer_states = wrong_forward["hidden_states"][layer_id]
-            seq_len = layer_states.shape[0]
-            default_idx = max(0, seq_len - 1)
-            selected_positions.setdefault(layer_id, default_idx)
+        if method != "dp_average":
+            # Fallback or last token selection
+            for layer_id in target_layers:
+                layer_states = wrong_forward["hidden_states"][layer_id]
+                seq_len = layer_states.shape[0]
+                default_idx = max(0, seq_len - 1)
+                selected_positions.setdefault(layer_id, default_idx)
 
-        # Compute differences using selected tokens
-        for layer_id in target_layers:
-            wrong_states = wrong_forward["hidden_states"][layer_id].squeeze(0)
-            right_states = right_forward["hidden_states"][layer_id].squeeze(0)
+        if method == "dp_average":
+            for layer_id in target_layers:
+                wrong_states = wrong_forward["hidden_states"][layer_id].squeeze(0)
+                right_states = right_forward["hidden_states"][layer_id].squeeze(0)
 
-            token_idx = selected_positions[layer_id]
-            token_idx = max(0, min(token_idx, wrong_states.shape[0] - 1))
-            right_idx = max(0, min(token_idx, right_states.shape[0] - 1))
+                pair_count = 0
+                if dp_alignment_available:
+                    dp_alignment_attempts += 1
+                    pair_diffs: List[np.ndarray] = []
+                    for wrong_idx, right_idx in matches:
+                        if (
+                            0 <= wrong_idx < wrong_states.shape[0]
+                            and 0 <= right_idx < right_states.shape[0]
+                        ):
+                            wrong_vec = wrong_states[wrong_idx].detach().float().cpu().numpy()
+                            right_vec = right_states[right_idx].detach().float().cpu().numpy()
+                            pair_diffs.append(right_vec - wrong_vec)
+                    pair_count = len(pair_diffs)
+                    if dp_average_pair_counts_per_layer is not None:
+                        dp_average_pair_counts_per_layer[layer_id].append(pair_count)
+                    if pair_count > 0:
+                        dp_alignment_successes += 1
+                        dp_pairs_used_total += pair_count
+                        diff = np.mean(pair_diffs, axis=0)
+                        difference_vectors_per_layer[layer_id].append(diff)
+                        token_positions_per_layer[layer_id].append(-1)
+                        continue
+                    dp_average_fallbacks += 1
 
-            wrong_vec = wrong_states[token_idx].detach().float().cpu().numpy()
-            right_vec = right_states[right_idx].detach().float().cpu().numpy()
+                fallback_idx = max(0, wrong_states.shape[0] - 1)
+                fallback_right_idx = max(0, min(fallback_idx, right_states.shape[0] - 1))
+                wrong_vec = wrong_states[fallback_idx].detach().float().cpu().numpy()
+                right_vec = right_states[fallback_right_idx].detach().float().cpu().numpy()
+                difference_vectors_per_layer[layer_id].append(right_vec - wrong_vec)
+                token_positions_per_layer[layer_id].append(fallback_idx)
 
-            diff = right_vec - wrong_vec
-            difference_vectors_per_layer[layer_id].append(diff)
-            token_positions_per_layer[layer_id].append(token_idx)
+        else:
+            # Compute differences using selected tokens (with optional DP mapping)
+            for layer_id in target_layers:
+                wrong_states = wrong_forward["hidden_states"][layer_id].squeeze(0)
+                right_states = right_forward["hidden_states"][layer_id].squeeze(0)
 
-            if gradient_used and layer_id in gradient_norms:
-                gradient_norms_per_layer[layer_id].append(gradient_norms[layer_id])
+                token_idx = selected_positions[layer_id]
+                token_idx = max(0, min(token_idx, wrong_states.shape[0] - 1))
+                right_idx = max(0, min(token_idx, right_states.shape[0] - 1))
+
+                if method == "dp_gradient" and dp_alignment_available:
+                    dp_alignment_attempts += 1
+                    mapped_idx = match_lookup.get(token_idx)
+                    if mapped_idx is not None and 0 <= mapped_idx < right_states.shape[0]:
+                        right_idx = mapped_idx
+                        dp_alignment_successes += 1
+                        dp_pairs_used_total += 1
+                    else:
+                        dp_lookup_misses += 1
+
+                wrong_vec = wrong_states[token_idx].detach().float().cpu().numpy()
+                right_vec = right_states[right_idx].detach().float().cpu().numpy()
+
+                diff = right_vec - wrong_vec
+                difference_vectors_per_layer[layer_id].append(diff)
+                token_positions_per_layer[layer_id].append(token_idx)
+
+                if gradient_used and layer_id in gradient_norms:
+                    gradient_norms_per_layer[layer_id].append(gradient_norms[layer_id])
 
         processed += 1
 
-    LOGGER.info(
-        "Processed %d triples (skipped %d, gradient fallbacks %d)",
-        processed,
-        skipped,
-        gradient_fallbacks,
-    )
+    if use_dp_alignment:
+        dp_fallback_count = dp_average_fallbacks if method == "dp_average" else dp_alignment_fallbacks
+        LOGGER.info(
+            "Processed %d triples (skipped %d, gradient fallbacks %d, DP attempts %d, successes %d, lookup misses %d, DP fallbacks %d, unavailable %d, missing files %d)",
+            processed,
+            skipped,
+            gradient_fallbacks,
+            dp_alignment_attempts,
+            dp_alignment_successes,
+            dp_lookup_misses,
+            dp_fallback_count,
+            dp_alignment_unavailable,
+            dp_alignment_missing_files,
+        )
+    else:
+        LOGGER.info(
+            "Processed %d triples (skipped %d, gradient fallbacks %d)",
+            processed,
+            skipped,
+            gradient_fallbacks,
+        )
 
     # Compute steering vectors by averaging differences
     steering_vectors: Dict[int, np.ndarray] = {}
@@ -423,11 +561,28 @@ def main() -> None:
         },
         "gradient_fallbacks": gradient_fallbacks,
     }
-    if args.token_selection_method == "gradient":
+    if use_gradient:
         metadata["gradient_norm_summary"] = {
             layer_id: summarize_numeric(gradient_norms_per_layer[layer_id])
             for layer_id in target_layers
         }
+    if use_dp_alignment:
+        metadata["dp_alignment_stats"] = {
+            "missing_files": dp_alignment_missing_files,
+            "fallback_samples": dp_alignment_fallbacks,
+            "unavailable_samples": dp_alignment_unavailable,
+            "attempts": dp_alignment_attempts,
+            "successes": dp_alignment_successes,
+            "lookup_misses": dp_lookup_misses,
+            "pairs_used_total": dp_pairs_used_total,
+        }
+        if method == "dp_average":
+            metadata["dp_alignment_stats"]["average_fallbacks"] = dp_average_fallbacks
+            if dp_average_pair_counts_per_layer is not None:
+                metadata["dp_average_pair_counts"] = {
+                    layer_id: summarize_numeric(dp_average_pair_counts_per_layer[layer_id])
+                    for layer_id in target_layers
+                }
     metadata_path = args.output_dir / "steering_vectors_metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     LOGGER.info("Saved metadata to %s", metadata_path)
