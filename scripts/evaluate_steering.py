@@ -14,6 +14,8 @@ import torch
 from tqdm import tqdm
 
 from model_wrapper import ModelWrapper
+from modules.layer_features import build_layer_feature_dict, load_steering_metadata
+from modules.layer_selector import LayerSelectorMLP
 from setup import (
     configure_hf_caches,
     setup_logging,
@@ -58,6 +60,24 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=1.0,
         help="Multiplier for steering vectors (default: 1.0).",
+    )
+    parser.add_argument(
+        "--layer-selection-method",
+        choices=["fixed", "mlp"],
+        default="fixed",
+        help="How to choose layers during steering evaluation.",
+    )
+    parser.add_argument(
+        "--layer-selection-mlp-path",
+        type=Path,
+        default=None,
+        help="Checkpoint for the layer selector (required when method=mlp).",
+    )
+    parser.add_argument(
+        "--layer-selection-topk",
+        type=int,
+        default=1,
+        help="Number of top layers to keep when using layer selector (default: 1).",
     )
     parser.add_argument(
         "--skip-baseline",
@@ -128,6 +148,18 @@ def parse_args() -> argparse.Namespace:
         default="last_token",
         help="Method to pool hidden states when saving steered embeddings: last_token or mean.",
     )
+    parser.add_argument(
+        "--steering-metadata-path",
+        type=Path,
+        default=Path("artifacts/steering_vectors/steering_vectors_metadata.json"),
+        help="Metadata file produced during steering vector computation.",
+    )
+    parser.add_argument(
+        "--probe-metrics-dir",
+        type=Path,
+        default=Path("artifacts/probe_analysis"),
+        help="Directory with per-layer probe metrics (used for layer selection features).",
+    )
     return parser.parse_args()
 
 
@@ -191,6 +223,40 @@ def load_steering_vectors(steering_dir: Path, layers: List[int]) -> Dict[int, np
             np.linalg.norm(steering_vector),
         )
     return steering_vectors
+
+
+def select_layers_via_mlp(
+    args: argparse.Namespace,
+    steering_vectors: Dict[int, np.ndarray],
+) -> List[int]:
+    model, norm_stats = LayerSelectorMLP.load(args.layer_selection_mlp_path, map_location="cpu")
+    feature_keys = (norm_stats.get("feature_keys") if norm_stats else None) or model.config.feature_keys
+    if not feature_keys:
+        raise ValueError("Layer selector checkpoint is missing feature key metadata.")
+    steering_metadata = load_steering_metadata(args.steering_metadata_path)
+
+    mean = torch.tensor(norm_stats["mean"], dtype=torch.float32) if norm_stats else None
+    std = torch.tensor(norm_stats["std"], dtype=torch.float32) if norm_stats else None
+
+    scores: List[Tuple[int, float]] = []
+    for layer_id in sorted(steering_vectors.keys()):
+        feature_dict = build_layer_feature_dict(layer_id, steering_metadata, args.probe_metrics_dir)
+        feature_vector = torch.tensor(
+            [float(feature_dict.get(key, 0.0)) for key in feature_keys],
+            dtype=torch.float32,
+        )
+        if mean is not None and std is not None:
+            feature_vector = (feature_vector - mean) / std
+        with torch.no_grad():
+            score = model.score(feature_vector.unsqueeze(0)).item()
+        scores.append((layer_id, score))
+
+    scores.sort(key=lambda item: item[1], reverse=True)
+    topk = max(1, args.layer_selection_topk)
+    selected_layers = [layer for layer, _ in scores[:topk]]
+    LOGGER.info("Layer selector scores: %s", scores)
+    LOGGER.info("Selected top-%d layers via MLP: %s", topk, selected_layers)
+    return selected_layers
 
 
 def get_sample_ids_from_triples(triples: List[Dict]) -> List[str]:
@@ -320,6 +386,23 @@ def main() -> None:
     if not steering_vectors:
         LOGGER.error("No steering vectors loaded. Exiting.")
         return
+
+    selected_layers = list(args.layers)
+    if args.layer_selection_method == "mlp":
+        if not args.layer_selection_mlp_path:
+            LOGGER.error("--layer-selection-mlp-path is required when using layer-selection-method=mlp.")
+            return
+        try:
+            selected_layers = select_layers_via_mlp(args, steering_vectors)
+        except Exception as exc:
+            LOGGER.error("Layer selection failed: %s", exc)
+            return
+        steering_vectors = {layer: steering_vectors[layer] for layer in selected_layers if layer in steering_vectors}
+        if not steering_vectors:
+            LOGGER.error("Layer selector chose layers with no available steering vectors.")
+            return
+
+    args.layers = selected_layers
 
     # Create output directory
     args.output_dir.mkdir(parents=True, exist_ok=True)

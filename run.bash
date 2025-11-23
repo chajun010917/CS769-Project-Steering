@@ -39,6 +39,12 @@ DATASET_CONFIG="ALL"
 ANALYSIS_OUTPUT="artifacts/probe_analysis"
 PLOT_OUTPUT="reports/hidden_state_viz_${POOLING_METHOD}"
 
+TOKEN_SELECTION_METHOD="last_token"  # last_token | gradient | dp_gradient | dp_average | token_mlp
+TOKEN_SELECTOR_MLP_PATH="artifacts/mlp_models/token_selector.pt"
+LAYER_SELECTION_METHOD="fixed"  # fixed | mlp
+LAYER_SELECTOR_MLP_PATH="artifacts/mlp_models/layer_selector.pt"
+LAYER_SELECTOR_TOPK=1
+
 DP_ALIGNMENT_ARGS=(--dp-alignment)
 
 # ---- setup ----
@@ -182,16 +188,22 @@ fi
 # ---- step 6: compute steering vectors ----
 #echo "=== Step 6: Computing steering vectors from last_token representations ==="
 STEERING_VECTORS_DIR="artifacts/steering_vectors"
- 
+
+TOKEN_SELECTOR_ARGS=()
+if [ "${TOKEN_SELECTION_METHOD}" = "token_mlp" ]; then
+  TOKEN_SELECTOR_ARGS+=(--token-selection-mlp-path "${TOKEN_SELECTOR_MLP_PATH}")
+fi
+
 python scripts/compute_steering_vectors.py \
   --triples-path "${TRIPLES_PATH}" \
   --model-name "${MODEL_ID}" \
   --layers ${LAYERS} \
   --output-dir "${STEERING_VECTORS_DIR}" \
   --max-samples "${MAX_SAMPLES}" \
-  --token-selection-method dp_gradient \
+  --token-selection-method "${TOKEN_SELECTION_METHOD}" \
   --alignments-dir "artifacts/alignments" \
-  --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+  --system-prompt "${SYSTEM_PROMPT}" \
+  "${TOKEN_SELECTOR_ARGS[@]}"
 
 # ---- step 7: evaluate steering ----
 echo "=== Step 7: Evaluating steering vectors ==="
@@ -204,6 +216,12 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
   # For now, evaluate with the best layer (typically layer 28)
   # To test a specific layer (e.g., layer 26), change BEST_LAYER="26"
   BEST_LAYER="29"  # Can be changed based on visualization results  # can add a list of layers here
+  EVAL_LAYERS="${BEST_LAYER}"
+  LAYER_SELECTOR_ARGS=()
+  if [ "${LAYER_SELECTION_METHOD}" = "mlp" ]; then
+    EVAL_LAYERS="${LAYERS}"
+    LAYER_SELECTOR_ARGS+=(--layer-selection-mlp-path "${LAYER_SELECTOR_MLP_PATH}")
+  fi
   
   # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
   # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
@@ -227,28 +245,34 @@ if [ "${POOLING_METHOD}" = "last_token" ] && [ -d "${STEERING_VECTORS_DIR}" ]; t
       --triples-path "${TRIPLES_PATH}" \
       --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
       --model-name "${MODEL_ID}" \
-      --layers ${BEST_LAYER} \
+      --layers ${EVAL_LAYERS} \
       --steering-coefficient 1.0 \
       --output-dir "${STEERING_EVAL_DIR_IN}" \
       --max-samples "${MAX_SAMPLES}" \
       --max-new-tokens "${MAX_NEW_TOKENS}" \
-      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+      --system-prompt "${SYSTEM_PROMPT}" \
       --sample-offset "${TRAIN_OFFSET}" \
-      "${SKIP_ARGS[@]}"
+      --layer-selection-method "${LAYER_SELECTION_METHOD}" \
+      --layer-selection-topk "${LAYER_SELECTOR_TOPK}" \
+      "${SKIP_ARGS[@]}" \
+      "${LAYER_SELECTOR_ARGS[@]}"
 
     echo "Evaluating out-of-sample steering performance..."
     python scripts/evaluate_steering.py \
       --triples-path "${TRIPLES_PATH}" \
       --steering-vectors-dir "${STEERING_VECTORS_DIR}" \
       --model-name "${MODEL_ID}" \
-      --layers ${BEST_LAYER} \
+      --layers ${EVAL_LAYERS} \
       --steering-coefficient 1.0 \
       --output-dir "${STEERING_EVAL_DIR_OUT}" \
       --max-samples "${MAX_SAMPLES}" \
       --max-new-tokens "${MAX_NEW_TOKENS}" \
-      --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+      --system-prompt "${SYSTEM_PROMPT}" \
       --sample-offset "${EVAL_OFFSET}" \
-      "${SKIP_ARGS[@]}"
+      --layer-selection-method "${LAYER_SELECTION_METHOD}" \
+      --layer-selection-topk "${LAYER_SELECTOR_TOPK}" \
+      "${SKIP_ARGS[@]}" \
+      "${LAYER_SELECTOR_ARGS[@]}"
     
     echo "Steering evaluation complete. Results saved to ${STEERING_EVAL_DIR_IN} and ${STEERING_EVAL_DIR_OUT}"
   else

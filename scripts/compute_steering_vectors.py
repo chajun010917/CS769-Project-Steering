@@ -15,6 +15,7 @@ import torch
 from tqdm import tqdm
 
 from model_wrapper import ModelWrapper
+from modules.token_selector import TokenSelectorMLP
 from setup import (
     configure_hf_caches,
     setup_logging,
@@ -71,9 +72,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--token-selection-method",
-        choices=["last_token", "gradient", "dp_gradient", "dp_average"],
+        choices=["last_token", "gradient", "dp_gradient", "dp_average", "token_mlp"],
         default="last_token",
         help="How to choose the token position for computing steering vectors.",
+    )
+    parser.add_argument(
+        "--token-selection-mlp-path",
+        type=Path,
+        default=None,
+        help="Checkpoint for token selector MLP (required when method=token_mlp).",
     )
     parser.add_argument(
         "--alignments-dir",
@@ -320,6 +327,14 @@ def main() -> None:
     method = args.token_selection_method
     use_gradient = method in {"gradient", "dp_gradient"}
     use_dp_alignment = method in {"dp_gradient", "dp_average"}
+    use_token_mlp = method == "token_mlp"
+    token_selector: TokenSelectorMLP | None = None
+    if use_token_mlp:
+        if not args.token_selection_mlp_path:
+            LOGGER.error("--token-selection-mlp-path is required when method=token_mlp.")
+            return
+        token_selector = TokenSelectorMLP.load(args.token_selection_mlp_path, map_location="cpu")
+        LOGGER.info("Loaded token selector MLP from %s", args.token_selection_mlp_path)
     if use_dp_alignment and not args.alignments_dir.exists():
         LOGGER.warning(
             "Alignments directory %s not found; DP-based token selection will fall back to default behavior.",
@@ -416,6 +431,18 @@ def main() -> None:
                 selected_positions = {}
                 gradient_used = False
                 model.model.zero_grad(set_to_none=True)
+
+        if method == "token_mlp" and token_selector is not None:
+            for layer_id in target_layers:
+                hidden_states = wrong_forward["hidden_states"][layer_id].detach().squeeze(0).cpu()
+                seq_len = hidden_states.shape[0]
+                rel_positions = torch.linspace(0, 1, steps=seq_len, dtype=torch.float32).unsqueeze(-1)
+                with torch.no_grad():
+                    scores = token_selector.score_tokens(hidden_states, rel_positions)
+                if prompt_token_count > 0:
+                    scores[:prompt_token_count] = -float("inf")
+                token_idx = int(torch.argmax(scores).item())
+                selected_positions[layer_id] = token_idx
 
         if method != "dp_average":
             # Fallback or last token selection
@@ -566,6 +593,8 @@ def main() -> None:
             layer_id: summarize_numeric(gradient_norms_per_layer[layer_id])
             for layer_id in target_layers
         }
+    if use_token_mlp and args.token_selection_mlp_path:
+        metadata["token_selector_checkpoint"] = str(args.token_selection_mlp_path)
     if use_dp_alignment:
         metadata["dp_alignment_stats"] = {
             "missing_files": dp_alignment_missing_files,
