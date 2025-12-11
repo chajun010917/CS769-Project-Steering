@@ -1,0 +1,33 @@
+{
+  "steering_shift": {
+    "mean_l2_shift": 19.010255813598633,
+    "std_l2_shift": 0.0,
+    "mean_cosine_similarity": 0.8586371541023254
+  },
+  "advanced_metrics": {
+    "mean_projected_shift": 0.149977445602417,
+    "mean_orthogonal_shift": 19.009662628173828,
+    "mean_shift_ratio": 0.007889289408922195,
+    "mean_recovery_score": -0.5621305704116821,
+    "positive_recovery_pct": 0.0
+  },
+  "distance_to_correct_before_steering": {
+    "mean_l2": 16.578125,
+    "mean_cosine_similarity": 0.8603515625
+  },
+  "distance_to_correct_after_steering": {
+    "mean_l2": 25.27692413330078,
+    "mean_cosine_similarity": 0.7370492815971375
+  },
+  "improvement": {
+    "mean_l2_reduction": -8.699970245361328,
+    "mean_cosine_improvement": -0.12308748066425323
+  },
+  "collect_config": {
+    "layer": 29,
+    "steering_coefficient": 1.0,
+    "pooling_method": "last_token",
+    "max_samples": 100,
+    "sample_offset": 0
+  }
+}
