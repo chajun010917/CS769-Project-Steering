@@ -144,9 +144,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pooling-method",
         type=str,
-        choices=["last_token", "mean"],
+        choices=["last_token", "mean", "per_token"],
         default="last_token",
-        help="Method to pool hidden states when saving steered embeddings: last_token or mean.",
+        help="Method to pool hidden states when saving steered embeddings: last_token, mean, or per_token (per_token uses mean pooling for saving).",
     )
     parser.add_argument(
         "--steering-metadata-path",

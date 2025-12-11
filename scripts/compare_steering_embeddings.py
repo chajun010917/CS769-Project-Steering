@@ -387,33 +387,29 @@ def plot_overlay_comparison(
     method: str,
     output_path: Path,
     layer: int,
-    steering_coefficient: float,
 ) -> None:
     """
-    Plot overlay comparison showing correct, wrong without steering, and wrong with steering in the same space.
-    
-    Args:
-        embeddings_correct: Correct embeddings [n_samples, hidden_dim]
-        embeddings_wrong_no_steering: Wrong embeddings without steering [n_samples, hidden_dim]
-        embeddings_wrong_with_steering: Wrong embeddings with steering [n_samples, hidden_dim]
-        method: Visualization method ('pca' or 'umap')
-        output_path: Path to save plot
-        layer: Layer ID
-        steering_coefficient: Steering coefficient used
+    Plot overlay comparison showing correct, wrong without steering, and wrong with steering
+    in the same space.
+
+    PCA/UMAP is fit only on the pre-steering space (correct + wrong_no_steering),
+    and steered embeddings are then transformed into this fixed basis.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Combine embeddings for fitting
-    combined_embeddings = np.vstack([
+
+    n_samples = len(embeddings_correct)
+
+    # Base space = correct + wrong (no steering)
+    base_embeddings = np.vstack([
         embeddings_correct,
         embeddings_wrong_no_steering,
-        embeddings_wrong_with_steering
     ])
-    
-    # Apply dimensionality reduction
+
+    # Fit dimensionality reduction on base space only
     if method == "pca":
         reducer = PCA(n_components=2, random_state=42)
-        transformed = reducer.fit_transform(combined_embeddings)
+        base_transformed = reducer.fit_transform(base_embeddings)
+        steered_transformed = reducer.transform(embeddings_wrong_with_steering)
         explained_var = reducer.explained_variance_ratio_
         xlabel = f"PC1 ({explained_var[0]:.1%} variance)"
         ylabel = f"PC2 ({explained_var[1]:.1%} variance)"
@@ -422,21 +418,21 @@ def plot_overlay_comparison(
             LOGGER.error("UMAP not available. Install umap-learn to use UMAP visualization.")
             return
         reducer = umap.UMAP(n_components=2, random_state=42)
-        transformed = reducer.fit_transform(combined_embeddings)
+        base_transformed = reducer.fit_transform(base_embeddings)
+        steered_transformed = reducer.transform(embeddings_wrong_with_steering)
         xlabel = "UMAP Component 1"
         ylabel = "UMAP Component 2"
     else:
         raise ValueError(f"Unknown method: {method}")
-    
-    # Split back into correct, wrong no steering, wrong with steering
-    n_samples = len(embeddings_correct)
-    transformed_correct = transformed[:n_samples]
-    transformed_wrong_no_steering = transformed[n_samples:2*n_samples]
-    transformed_wrong_with_steering = transformed[2*n_samples:]
-    
+
+    # Split base_transformed back into correct and wrong_no_steering
+    transformed_correct = base_transformed[:n_samples]
+    transformed_wrong_no_steering = base_transformed[n_samples:]
+    transformed_wrong_with_steering = steered_transformed
+
     # Create overlay plot
     plt.figure(figsize=(12, 10))
-    
+
     # Plot correct embeddings (green)
     plt.scatter(
         transformed_correct[:, 0],
@@ -449,7 +445,7 @@ def plot_overlay_comparison(
         edgecolors='darkgreen',
         linewidths=0.5,
     )
-    
+
     # Plot wrong embeddings without steering (blue)
     plt.scatter(
         transformed_wrong_no_steering[:, 0],
@@ -462,19 +458,19 @@ def plot_overlay_comparison(
         edgecolors='darkblue',
         linewidths=0.5,
     )
-    
-    # Plot wrong embeddings with steering (red)
+
+    # Plot wrong embeddings with steering (red, in same basis)
     plt.scatter(
         transformed_wrong_with_steering[:, 0],
         transformed_wrong_with_steering[:, 1],
         alpha=0.5,
         s=40,
         c='red',
-        label=f'Wrong (After Steering, coeff={steering_coefficient})',
+        label='Wrong (After Steering)',
         marker='x',
         linewidths=1.5,
     )
-    
+
     # Draw arrows from wrong no-steering to wrong with-steering for a few samples
     n_arrows = min(20, n_samples)  # Show arrows for up to 20 samples
     indices = np.linspace(0, n_samples - 1, n_arrows, dtype=int)
@@ -492,8 +488,8 @@ def plot_overlay_comparison(
             length_includes_head=True,
             linestyle='--',
         )
-    
-    plt.title(f'Embedding Space Overlay: {method.upper()} (Layer {layer})', 
+
+    plt.title(f'Embedding Space Overlay: {method.upper()} (Layer {layer})',
               fontsize=14, fontweight='bold')
     plt.xlabel(xlabel, fontsize=12)
     plt.ylabel(ylabel, fontsize=12)
@@ -502,7 +498,7 @@ def plot_overlay_comparison(
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.close()
-    
+
     LOGGER.info("Saved overlay plot to %s", output_path)
 
 
@@ -513,6 +509,7 @@ def compute_shift_statistics(
 ) -> Dict:
     """
     Compute statistics about how much embeddings shift with steering and distances to correct.
+    Includes advanced metrics: Projected Shift, Orthogonal Shift, and Recovery Score.
     
     Args:
         embeddings_correct: Correct embeddings [n_samples, hidden_dim]
@@ -522,63 +519,81 @@ def compute_shift_statistics(
     Returns:
         Dictionary with shift statistics
     """
-    # Compute per-sample L2 distances from wrong (no steering) to wrong (with steering)
+    # 1. Basic L2 Distances
     shifts = embeddings_wrong_with_steering - embeddings_wrong_no_steering
-    l2_distances_steering = np.linalg.norm(shifts, axis=1)
+    l2_distances_steering = np.linalg.norm(shifts, axis=1)  # Magnitude of steering shift
     
-    # Compute distances from wrong (no steering) to correct
     wrong_to_correct_before = embeddings_correct - embeddings_wrong_no_steering
-    l2_distances_to_correct_before = np.linalg.norm(wrong_to_correct_before, axis=1)
+    dist_before = np.linalg.norm(wrong_to_correct_before, axis=1)
     
-    # Compute distances from wrong (with steering) to correct
     wrong_to_correct_after = embeddings_correct - embeddings_wrong_with_steering
-    l2_distances_to_correct_after = np.linalg.norm(wrong_to_correct_after, axis=1)
+    dist_after = np.linalg.norm(wrong_to_correct_after, axis=1)
     
-    # Compute cosine similarities
-    def cosine_similarity(a, b):
-        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8)
+    # 2. Cosine Similarities
+    def cosine_similarity_batch(a, b):
+        norm_a = np.linalg.norm(a, axis=1, keepdims=True)
+        norm_b = np.linalg.norm(b, axis=1, keepdims=True)
+        return np.sum(a * b, axis=1) / (norm_a * norm_b + 1e-8).flatten()
+
+    cosine_sims_steering = cosine_similarity_batch(embeddings_wrong_no_steering, embeddings_wrong_with_steering)
+    cosine_sims_to_correct_before = cosine_similarity_batch(embeddings_wrong_no_steering, embeddings_correct)
+    cosine_sims_to_correct_after = cosine_similarity_batch(embeddings_wrong_with_steering, embeddings_correct)
     
-    cosine_sims_steering = np.array([
-        cosine_similarity(embeddings_wrong_no_steering[i], embeddings_wrong_with_steering[i])
-        for i in range(len(embeddings_wrong_no_steering))
-    ])
+    # 3. Advanced Metrics: Projected vs Orthogonal Shift
+    # Goal: See if the shift is moving towards the "mean correct" direction even if it overshoots.
     
-    cosine_sims_to_correct_before = np.array([
-        cosine_similarity(embeddings_wrong_no_steering[i], embeddings_correct[i])
-        for i in range(len(embeddings_wrong_no_steering))
-    ])
+    # Compute global "ideal" direction (mean correct - mean wrong)
+    mean_correct = np.mean(embeddings_correct, axis=0)
+    mean_wrong = np.mean(embeddings_wrong_no_steering, axis=0)
+    global_ideal_vector = mean_correct - mean_wrong
+    global_ideal_unit = global_ideal_vector / (np.linalg.norm(global_ideal_vector) + 1e-8)
     
-    cosine_sims_to_correct_after = np.array([
-        cosine_similarity(embeddings_wrong_with_steering[i], embeddings_correct[i])
-        for i in range(len(embeddings_wrong_with_steering))
-    ])
+    # Project each sample's shift onto the global ideal vector
+    # projection = (shift . ideal_unit)
+    projected_shifts = np.dot(shifts, global_ideal_unit)  # Scalar: how much we moved in ideal direction
+    
+    # The vector part of the shift that is in the ideal direction
+    projected_shift_vectors = np.outer(projected_shifts, global_ideal_unit)
+    
+    # The vector part that is orthogonal (useless/side-effect)
+    orthogonal_shift_vectors = shifts - projected_shift_vectors
+    orthogonal_shifts = np.linalg.norm(orthogonal_shift_vectors, axis=1)
+    
+    # Ratio of useful motion
+    # High ratio (>0.5) means we are mostly moving in the right direction. 
+    # Low ratio (<0.1) means we are moving randomly/orthogonally.
+    shift_ratios = np.abs(projected_shifts) / (l2_distances_steering + 1e-8)
+    
+    # 4. Recovery Score
+    # (Dist_Before - Dist_After) / Dist_Before
+    # 1.0 = Perfect recovery to correct point
+    # 0.0 = No improvement
+    # <0 = Moved further away
+    recovery_scores = (dist_before - dist_after) / (dist_before + 1e-8)
     
     return {
         "steering_shift": {
             "mean_l2_shift": float(np.mean(l2_distances_steering)),
             "std_l2_shift": float(np.std(l2_distances_steering)),
-            "median_l2_shift": float(np.median(l2_distances_steering)),
-            "max_l2_shift": float(np.max(l2_distances_steering)),
             "mean_cosine_similarity": float(np.mean(cosine_sims_steering)),
-            "std_cosine_similarity": float(np.std(cosine_sims_steering)),
-            "min_cosine_similarity": float(np.min(cosine_sims_steering)),
+        },
+        "advanced_metrics": {
+            "mean_projected_shift": float(np.mean(projected_shifts)),
+            "mean_orthogonal_shift": float(np.mean(orthogonal_shifts)),
+            "mean_shift_ratio": float(np.mean(shift_ratios)),
+            "mean_recovery_score": float(np.mean(recovery_scores)),
+            "positive_recovery_pct": float(np.mean(recovery_scores > 0)),
         },
         "distance_to_correct_before_steering": {
-            "mean_l2": float(np.mean(l2_distances_to_correct_before)),
-            "std_l2": float(np.std(l2_distances_to_correct_before)),
-            "median_l2": float(np.median(l2_distances_to_correct_before)),
+            "mean_l2": float(np.mean(dist_before)),
             "mean_cosine_similarity": float(np.mean(cosine_sims_to_correct_before)),
-            "std_cosine_similarity": float(np.std(cosine_sims_to_correct_before)),
         },
         "distance_to_correct_after_steering": {
-            "mean_l2": float(np.mean(l2_distances_to_correct_after)),
-            "std_l2": float(np.std(l2_distances_to_correct_after)),
-            "median_l2": float(np.median(l2_distances_to_correct_after)),
+            "mean_l2": float(np.mean(dist_after)),
             "mean_cosine_similarity": float(np.mean(cosine_sims_to_correct_after)),
-            "std_cosine_similarity": float(np.std(cosine_sims_to_correct_after)),
         },
         "improvement": {
-            "mean_l2_reduction": float(np.mean(l2_distances_to_correct_before - l2_distances_to_correct_after)),
+            "mean_l2_reduction": float(np.mean(dist_before - dist_after)),
             "mean_cosine_improvement": float(np.mean(cosine_sims_to_correct_after - cosine_sims_to_correct_before)),
         },
     }
@@ -676,19 +691,21 @@ def main() -> None:
         "sample_offset": args.sample_offset,
     }
     LOGGER.info("Shift statistics:")
-    LOGGER.info("  Steering shift - Mean L2: %.4f ± %.4f", 
-                stats["steering_shift"]["mean_l2_shift"], 
-                stats["steering_shift"]["std_l2_shift"])
-    LOGGER.info("  Distance to correct (before) - Mean L2: %.4f ± %.4f", 
-                stats["distance_to_correct_before_steering"]["mean_l2"],
-                stats["distance_to_correct_before_steering"]["std_l2"])
-    LOGGER.info("  Distance to correct (after) - Mean L2: %.4f ± %.4f", 
-                stats["distance_to_correct_after_steering"]["mean_l2"],
-                stats["distance_to_correct_after_steering"]["std_l2"])
+    LOGGER.info("  Steering shift - Mean L2: %.4f", 
+                stats["steering_shift"]["mean_l2_shift"])
+    LOGGER.info("  Distance to correct (before) - Mean L2: %.4f", 
+                stats["distance_to_correct_before_steering"]["mean_l2"])
+    LOGGER.info("  Distance to correct (after) - Mean L2: %.4f", 
+                stats["distance_to_correct_after_steering"]["mean_l2"])
     LOGGER.info("  Improvement - Mean L2 reduction: %.4f", 
                 stats["improvement"]["mean_l2_reduction"])
-    LOGGER.info("  Improvement - Mean cosine improvement: %.4f", 
-                stats["improvement"]["mean_cosine_improvement"])
+    
+    LOGGER.info("Advanced Metrics:")
+    LOGGER.info("  Projected Shift (Useful):   %.4f", stats["advanced_metrics"]["mean_projected_shift"])
+    LOGGER.info("  Orthogonal Shift (Useless): %.4f", stats["advanced_metrics"]["mean_orthogonal_shift"])
+    LOGGER.info("  Shift Ratio (Proj/Total):   %.4f", stats["advanced_metrics"]["mean_shift_ratio"])
+    LOGGER.info("  Recovery Score:             %.4f (1.0 = perfect, 0.0 = no change)", stats["advanced_metrics"]["mean_recovery_score"])
+    LOGGER.info("  Positive Recovery %%:        %.1f%%", stats["advanced_metrics"]["positive_recovery_pct"] * 100)
     
     # Save statistics
     split_suffix = f"offset{args.sample_offset}" if args.sample_offset else "offset0"
