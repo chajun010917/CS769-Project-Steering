@@ -46,17 +46,17 @@ ANALYSIS_OUTPUT="${HF_HOME}/artifacts/probe_analysis"
 PLOT_OUTPUT="${HF_HOME}/reports/hidden_state_viz_${POOLING_METHOD}"
 
 # Step skip controls (set to 1 to skip)
-SKIP_HIDDEN="${SKIP_HIDDEN:-0}"
-SKIP_PROBES="${SKIP_PROBES:-0}"
-SKIP_PLOTS="${SKIP_PLOTS:-0}"
-SKIP_CRITICAL="${SKIP_CRITICAL:-0}"
-SKIP_STEERING="${SKIP_STEERING:-0}"
-SKIP_EVAL="${SKIP_EVAL:-0}"
-SKIP_EMBED="${SKIP_EMBED:-0}"
+SKIP_HIDDEN="1"
+SKIP_PROBES="1"
+SKIP_PLOTS="0"
+SKIP_CRITICAL="1"
+SKIP_STEERING="0"
+SKIP_EVAL="0"
+SKIP_EMBED=0
 
-TOKEN_SELECTION_METHOD="last_token"  # last_token | gradient | dp_gradient | dp_average | token_mlp
+TOKEN_SELECTION_METHOD="gradient"
 TOKEN_SELECTOR_MLP_PATH="${HF_HOME}/artifacts/mlp_models/token_selector.pt"
-LAYER_SELECTION_METHOD="fixed"  # fixed | mlp
+LAYER_SELECTION_METHOD="fixed"
 LAYER_SELECTOR_MLP_PATH="${HF_HOME}/artifacts/mlp_models/layer_selector.pt"
 LAYER_SELECTOR_TOPK=1
 

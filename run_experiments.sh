@@ -67,16 +67,18 @@ fi
 declare -a EXPERIMENTS=(
 
     # Test different token selection methods with per_token pooling
-    "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=0 SKIP_PROBES=0 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
+    # "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=0 SKIP_PROBES=0 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
+    "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
+    # "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=1 SKIP_STEERING=1 SKIP_EVAL=0"
     "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=1 SKIP_STEERING=0 SKIP_EVAL=0"
     "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=dp_gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=1 SKIP_STEERING=0 SKIP_EVAL=0"
     "POOLING_METHOD=per_token TOKEN_SELECTION_METHOD=dp_average LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=1 SKIP_STEERING=0 SKIP_EVAL=0"
     
     # Test different pooling methods with mean & last_token selection
-    "POOLING_METHOD=last_token TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=0 SKIP_PROBES=0 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"    
-    "POOLING_METHOD=mean TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=0 SKIP_PROBES=0 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
-    "POOLING_METHOD=mean TOKEN_SELECTION_METHOD=gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
-    "POOLING_METHOD=mean TOKEN_SELECTION_METHOD=dp_gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
+    # "POOLING_METHOD=last_token TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=0 SKIP_PROBES=0 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"    
+    # "POOLING_METHOD=mean TOKEN_SELECTION_METHOD=last_token LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=0 SKIP_PROBES=0 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
+    # "POOLING_METHOD=mean TOKEN_SELECTION_METHOD=gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
+    # "POOLING_METHOD=mean TOKEN_SELECTION_METHOD=dp_gradient LAYER_SELECTION_METHOD=fixed SKIP_HIDDEN=1 SKIP_PROBES=1 SKIP_PLOTS=0 SKIP_CRITICAL=0 SKIP_STEERING=0 SKIP_EVAL=0"
     
     
     # Test with token_mlp if model exists (uncomment if you have the model)
@@ -237,6 +239,9 @@ run_experiment() {
     # Create experiment directory
     mkdir -p "${exp_dir}"
     
+    # Create images directory early so it exists during the experiment
+    mkdir -p "${exp_dir}/images"
+    
     # Create modified run script with parameter overrides
     local modified_script="${exp_dir}/run_modified.sh"
     create_modified_run_script "$exp_params" "$modified_script"
@@ -251,6 +256,9 @@ run_experiment() {
         done
         echo ""
         echo "Modified script: ${modified_script}"
+        echo ""
+        echo "Note: Images are generated during the experiment in HF_HOME/reports/ directories"
+        echo "      and will be copied to ${exp_dir}/images/ after the experiment completes."
         echo ""
     } > "${summary_file}"
     
@@ -294,7 +302,7 @@ run_experiment() {
         echo "✓ Experiment '${exp_name}' completed successfully"
         
         # Copy all generated images to experiment directory
-        copy_experiment_images "$exp_params" "$exp_dir" "$script_dir"
+        copy_experiment_images "$exp_params" "$exp_dir" "$script_dir" "$EXPERIMENT_BASE_DIR" "$exp_name"
     else
         local end_time=$(date +%s)
         local duration=$((end_time - start_time))
@@ -303,7 +311,7 @@ run_experiment() {
         echo "✗ Experiment '${exp_name}' failed (check ${log_file})"
         # Don't exit on failure, continue with other experiments
         # Still try to copy images even if experiment failed (might have partial results)
-        copy_experiment_images "$exp_params" "$exp_dir" "$script_dir"
+        copy_experiment_images "$exp_params" "$exp_dir" "$script_dir" "$EXPERIMENT_BASE_DIR" "$exp_name"
     fi
     
     # Keep the modified script for reference (comment out if you want to clean it up)
@@ -315,6 +323,9 @@ copy_experiment_images() {
     local exp_params="$1"
     local exp_dir="$2"
     local script_dir="$3"
+    local experiment_base_dir="$4"
+    local exp_name="$5"
+    local log_file="${exp_dir}/run.log"
     
     # Extract POOLING_METHOD from parameters or use default
     local pooling_method="per_token"
@@ -327,72 +338,262 @@ copy_experiment_images() {
         fi
     done
     
-    # Get HF_HOME from the modified script (it's set in run.bash)
-    # Default to the common path if we can't extract it
-    local hf_home="/nobackup/bdeka/huggingface_cache"
-    if [ -f "${script_dir}/run.bash" ]; then
-        local extracted_hf=$(grep "^export HF_HOME=" "${script_dir}/run.bash" | head -1 | sed 's/.*="\([^"]*\)".*/\1/' || echo "")
-        if [ -n "$extracted_hf" ]; then
-            hf_home="$extracted_hf"
+    # Get HF_HOME from multiple sources, in order of reliability:
+    # 1. Environment variable (most reliable if set)
+    # 2. Extract from experiment log file (shows what was actually used)
+    # 3. Extract from modified script
+    # 4. Extract from original script
+    # 5. Default fallback
+    
+    local hf_home="${HF_HOME:-}"
+    
+    # Try to extract from log file (most accurate - shows what was actually used during run)
+    if [ -z "$hf_home" ] && [ -f "${exp_dir}/run.log" ]; then
+        # Look for lines like "export HF_HOME=..." or "HF_HOME=..." in the log
+        local log_hf=$(grep -E "^(export )?HF_HOME=" "${exp_dir}/run.log" | head -1 | sed -E 's/.*HF_HOME=["'\'']?([^"'\'' ]+)["'\'']?.*/\1/' || echo "")
+        if [ -n "$log_hf" ] && [ "$log_hf" != "/nobackup/bdeka/huggingface_cache" ]; then
+            hf_home="$log_hf"
+            echo "    Found HF_HOME from log file: ${hf_home}" | tee -a "${log_file}"
+        else
+            # Try to extract from output paths in the log (e.g., "Visualizations: /path/to/reports/...")
+            local vis_path=$(grep -E "Visualizations:" "${exp_dir}/run.log" | head -1 | sed -E 's/.*Visualizations: ([^ ]+).*/\1/' | sed -E 's|/reports/.*||' || echo "")
+            if [ -n "$vis_path" ] && [ -d "$vis_path" ]; then
+                hf_home="$vis_path"
+                echo "    Extracted HF_HOME from log output path: ${hf_home}" | tee -a "${log_file}"
+            fi
         fi
     fi
     
-    # Create images directory in experiment folder
+    # Try to extract from modified script
+    if [ -z "$hf_home" ]; then
+        local modified_script="${exp_dir}/run_modified.sh"
+        if [ -f "${modified_script}" ]; then
+            # Try to extract HF_HOME from the script
+            # Handle both: export HF_HOME="value" and export HF_HOME="${HF_HOME:-default}"
+            local extracted_hf=$(grep "^export HF_HOME=" "${modified_script}" | head -1 | sed -E 's/.*HF_HOME="([^"]*)".*/\1/' | sed -E 's/\$\{HF_HOME:-([^}]*)\}/\1/' || echo "")
+            if [ -n "$extracted_hf" ] && [ "$extracted_hf" != "/nobackup/bdeka/huggingface_cache" ]; then
+                hf_home="$extracted_hf"
+                echo "    Found HF_HOME from modified script: ${hf_home}" | tee -a "${log_file}"
+            fi
+        fi
+    fi
+    
+    # Fallback to original script if still not found
+    if [ -z "$hf_home" ] && [ -f "${script_dir}/run.bash" ]; then
+        local extracted_hf=$(grep "^export HF_HOME=" "${script_dir}/run.bash" | head -1 | sed -E 's/.*HF_HOME="([^"]*)".*/\1/' | sed -E 's/\$\{HF_HOME:-([^}]*)\}/\1/' || echo "")
+        if [ -n "$extracted_hf" ] && [ "$extracted_hf" != "/nobackup/bdeka/huggingface_cache" ]; then
+                hf_home="$extracted_hf"
+                echo "    Found HF_HOME from original script: ${hf_home}" | tee -a "${log_file}"
+        fi
+    fi
+    
+    # Final fallback to default (Linux path)
+    if [ -z "$hf_home" ]; then
+        hf_home="/nobackup/bdeka/huggingface_cache"
+        echo "    Using default HF_HOME: ${hf_home}" | tee -a "${log_file}"
+    else
+        echo "    Using HF_HOME: ${hf_home}" | tee -a "${log_file}"
+    fi
+    
+    # Create images directory in experiment folder (local)
     local images_dir="${exp_dir}/images"
     mkdir -p "${images_dir}"
+    if [ ! -d "${images_dir}" ]; then
+        echo "    ✗ ERROR: Failed to create local images directory: ${images_dir}" | tee -a "${log_file}"
+        return 1
+    fi
     
-    echo "  Copying generated images to ${images_dir}..."
-    local images_copied=0
+    # Also create images directory in HF_HOME with same experiment structure
+    # Extract experiment name and timestamp from exp_dir path (format: experiments/timestamp/exp_name)
+    local exp_basename=$(basename "${exp_dir}")
+    local exp_timestamp_dir=$(dirname "${exp_dir}")
+    local exp_timestamp=$(basename "${exp_timestamp_dir}")
+    # Use passed parameters if available (more reliable), otherwise extract from path
+    if [ -n "$exp_name" ] && [ -n "$experiment_base_dir" ]; then
+        local exp_timestamp_from_base=$(basename "${experiment_base_dir}")
+        local hf_images_dir="${hf_home}/experiments/${exp_timestamp_from_base}/${exp_name}/images"
+    else
+        # Fallback: extract from exp_dir path
+        local hf_images_dir="${hf_home}/experiments/${exp_timestamp}/${exp_basename}/images"
+    fi
     
-    # Copy Step 4 images: probe visualizations
-    local plot_output="${script_dir}/reports/hidden_state_viz_${pooling_method}"
-    if [ -d "${plot_output}" ]; then
-        find "${plot_output}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) -exec cp {} "${images_dir}/" \; 2>/dev/null
-        local count=$(find "${plot_output}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null | wc -l)
-        if [ "$count" -gt 0 ]; then
-            images_copied=$((images_copied + count))
-            echo "    Copied ${count} image(s) from Step 4 (probe visualizations)"
+    # Ensure the parent experiments directory exists first
+    local hf_experiments_dir="${hf_home}/experiments"
+    HF_EXPERIMENTS_DIR="${hf_home}/experiments"
+    if [ ! -d "${hf_experiments_dir}" ]; then
+        echo "    Creating experiments directory: ${hf_experiments_dir}" | tee -a "${log_file}"
+        mkdir -p "${hf_experiments_dir}"
+        # mkdir -p "$HF_EXPERIMENTS_DIR"
+        if [ ! -d "${hf_experiments_dir}" ]; then
+            echo "    ✗ ERROR: Failed to create experiments directory: ${hf_experiments_dir}" | tee -a "${log_file}"
+            echo "    ✗ This may be due to permissions or the HF_HOME path being incorrect." | tee -a "${log_file}"
+            return 1
         fi
     fi
     
-    # Copy Step 5 images: critical token analysis
-    local critical_output="${script_dir}/reports/critical_tokens_${pooling_method}"
-    if [ -d "${critical_output}" ]; then
-        find "${critical_output}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) -exec cp {} "${images_dir}/" \; 2>/dev/null
-        local count=$(find "${critical_output}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null | wc -l)
+    # Create the full images directory path
+    echo "    Creating HF_HOME images directory: ${hf_images_dir}" | tee -a "${log_file}"
+    mkdir -p "${hf_images_dir}"
+    if [ ! -d "${hf_images_dir}" ]; then
+        echo "    ✗ ERROR: Failed to create HF_HOME images directory: ${hf_images_dir}" | tee -a "${log_file}"
+        echo "    ✗ Parent directory exists: $([ -d "${hf_experiments_dir}" ] && echo "yes" || echo "no")" | tee -a "${log_file}"
+        echo "    ✗ HF_HOME: ${hf_home}" | tee -a "${log_file}"
+        return 1
+    fi
+    echo "    ✓ Successfully created HF_HOME images directory: ${hf_images_dir}" | tee -a "${log_file}"
+    
+    {
+        echo ""
+        echo "=== Copying generated images to experiment directory ==="
+        echo "  Copying generated images to:"
+        echo "    Local: ${images_dir}"
+        echo "    HF_HOME: ${hf_images_dir}"
+        echo "    Source HF_HOME: ${hf_home}"
+    } | tee -a "${log_file}"
+    local images_copied=0
+    
+    # Verify HF_HOME directory exists
+    if [ ! -d "${hf_home}" ]; then
+        {
+            echo "    ⚠ WARNING: HF_HOME directory does not exist: ${hf_home}"
+            echo "    ⚠ This might be why images are not being copied."
+            echo "    ⚠ Please check the experiment log to see what HF_HOME was actually used."
+        } | tee -a "${log_file}"
+    fi
+    
+    # Copy Step 4 images: probe visualizations (use HF_HOME reports)
+    # Images are in subdirectories like cluster_overlays/ or cluster_overlays_dp/
+    local plot_output="${hf_home}/reports/hidden_state_viz_${pooling_method}"
+    echo "    Checking for Step 4 images in: ${plot_output}" | tee -a "${log_file}"
+    if [ -d "${plot_output}" ]; then
+        # Find all image files recursively (including in subdirectories)
+        local count=0
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                cp "$file" "${images_dir}/" 2>/dev/null && \
+                cp "$file" "${hf_images_dir}/" 2>/dev/null && \
+                count=$((count + 1))
+            fi
+        done < <(find "${plot_output}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null)
+        
         if [ "$count" -gt 0 ]; then
             images_copied=$((images_copied + count))
-            echo "    Copied ${count} image(s) from Step 5 (critical tokens)"
+            echo "    ✓ Copied ${count} image(s) from Step 4 (probe visualizations)" | tee -a "${log_file}"
+        else
+            {
+                echo "    ⚠ No images found in ${plot_output} (searched recursively)"
+                # List subdirectories for debugging
+                if [ -d "${plot_output}" ]; then
+                    local subdirs=$(find "${plot_output}" -type d -mindepth 1 -maxdepth 1 2>/dev/null | head -5 | xargs -n1 basename 2>/dev/null | tr '\n' ' ')
+                    if [ -n "$subdirs" ]; then
+                        echo "    Subdirectories found: ${subdirs}"
+                    fi
+                fi
+            } | tee -a "${log_file}"
         fi
+    else
+        echo "    ⚠ Directory not found: ${plot_output}" | tee -a "${log_file}"
+    fi
+    
+    # Copy Step 5 images: critical token analysis (use HF_HOME reports)
+    # Images are directly in the critical_tokens directory (not in subdirectories)
+    local critical_output="${hf_home}/reports/critical_tokens_${pooling_method}"
+    echo "    Checking for Step 5 images in: ${critical_output}" | tee -a "${log_file}"
+    if [ -d "${critical_output}" ]; then
+        # Find all image files recursively (in case there are subdirectories)
+        local count=0
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                cp "$file" "${images_dir}/" 2>/dev/null && \
+                cp "$file" "${hf_images_dir}/" 2>/dev/null && \
+                count=$((count + 1))
+            fi
+        done < <(find "${critical_output}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null)
+        
+        if [ "$count" -gt 0 ]; then
+            images_copied=$((images_copied + count))
+            echo "    ✓ Copied ${count} image(s) from Step 5 (critical tokens)" | tee -a "${log_file}"
+        else
+            echo "    ⚠ No images found in ${critical_output}" | tee -a "${log_file}"
+        fi
+    else
+        echo "    ⚠ Directory not found: ${critical_output}" | tee -a "${log_file}"
     fi
     
     # Copy Step 8 images: embedding comparisons (in-sample and out-of-sample)
     local embed_in="${hf_home}/reports/steering_embedding_comparison_in_sample"
     local embed_out="${hf_home}/reports/steering_embedding_comparison_out_of_sample"
     
+    {
+        echo "    Checking for Step 8 images in:"
+        echo "      HF_HOME: ${hf_home}"
+        echo "      In-sample dir: ${embed_in}"
+        echo "      Out-of-sample dir: ${embed_out}"
+    } | tee -a "${log_file}"
+    
     if [ -d "${embed_in}" ]; then
-        find "${embed_in}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) -exec cp {} "${images_dir}/" \; 2>/dev/null
-        local count=$(find "${embed_in}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null | wc -l)
+        local count=0
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                cp "$file" "${images_dir}/" 2>/dev/null && \
+                cp "$file" "${hf_images_dir}/" 2>/dev/null && \
+                count=$((count + 1))
+            fi
+        done < <(find "${embed_in}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null)
+        
         if [ "$count" -gt 0 ]; then
             images_copied=$((images_copied + count))
-            echo "    Copied ${count} image(s) from Step 8 (embedding comparison in-sample)"
+            echo "    ✓ Copied ${count} image(s) from Step 8 (embedding comparison in-sample)" | tee -a "${log_file}"
+        else
+            echo "    ⚠ No images found in ${embed_in}" | tee -a "${log_file}"
         fi
+    else
+        echo "    ⚠ Directory not found: ${embed_in}" | tee -a "${log_file}"
     fi
     
     if [ -d "${embed_out}" ]; then
-        find "${embed_out}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) -exec cp {} "${images_dir}/" \; 2>/dev/null
-        local count=$(find "${embed_out}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null | wc -l)
+        local count=0
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                cp "$file" "${images_dir}/" 2>/dev/null && \
+                cp "$file" "${hf_images_dir}/" 2>/dev/null && \
+                count=$((count + 1))
+            fi
+        done < <(find "${embed_out}" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) 2>/dev/null)
+        
         if [ "$count" -gt 0 ]; then
             images_copied=$((images_copied + count))
-            echo "    Copied ${count} image(s) from Step 8 (embedding comparison out-of-sample)"
+            echo "    ✓ Copied ${count} image(s) from Step 8 (embedding comparison out-of-sample)" | tee -a "${log_file}"
+        else
+            echo "    ⚠ No images found in ${embed_out}" | tee -a "${log_file}"
         fi
+    else
+        echo "    ⚠ Directory not found: ${embed_out}" | tee -a "${log_file}"
     fi
     
     if [ "$images_copied" -gt 0 ]; then
-        echo "  ✓ Copied ${images_copied} total image(s) to ${images_dir}/"
+        {
+            echo "  ✓ Copied ${images_copied} total image(s) to:"
+            echo "    - Local: ${images_dir}/"
+            echo "    - HF_HOME: ${hf_images_dir}/"
+        } | tee -a "${log_file}"
         echo "Images copied: ${images_copied}" >> "${exp_dir}/summary.txt"
     else
-        echo "  ⚠ No images found to copy"
+        {
+            echo "  ⚠ No images found to copy"
+            echo ""
+            echo "    Debugging info:"
+            echo "    - HF_HOME used: ${hf_home}"
+            echo "    - Checked directories:"
+            echo "      * ${hf_home}/reports/hidden_state_viz_${pooling_method}"
+            echo "      * ${hf_home}/reports/critical_tokens_${pooling_method}"
+            echo "      * ${hf_home}/reports/steering_embedding_comparison_in_sample"
+            echo "      * ${hf_home}/reports/steering_embedding_comparison_out_of_sample"
+            echo "    - Check experiment log (${exp_dir}/run.log) for actual output paths"
+            echo "    - Images may not have been generated if steps were skipped"
+            echo ""
+        } | tee -a "${log_file}"
+        echo "No images copied" >> "${exp_dir}/summary.txt"
     fi
 }
 

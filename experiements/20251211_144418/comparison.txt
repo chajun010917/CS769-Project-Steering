@@ -1,0 +1,119 @@
+Experiment Comparison Summary
+=============================
+Generated: Fri Dec 12 12:00:32 AM CST 2025
+
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_average__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0
+----------------------------------------
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_average__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0
+Timestamp: Thu Dec 11 08:53:17 PM CST 2025
+Parameters:
+  POOLING_METHOD=per_token
+  TOKEN_SELECTION_METHOD=dp_average
+  LAYER_SELECTION_METHOD=fixed
+  SKIP_HIDDEN=1
+  SKIP_PROBES=1
+  SKIP_PLOTS=0
+  SKIP_CRITICAL=1
+  SKIP_STEERING=0
+  SKIP_EVAL=0
+
+Modified script: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_average__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/run_modified.sh
+
+Note: Images are generated during the experiment in HF_HOME/reports/ directories
+      and will be copied to experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_average__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/ after the experiment completes.
+
+Experiment completed successfully in 11235 seconds
+Status: SUCCESS
+Images copied: 26
+
+Key outputs from log:
+  ✓ Pipeline completed
+  ✓ Steering evaluation completed
+
+
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0
+----------------------------------------
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0
+Timestamp: Thu Dec 11 05:31:58 PM CST 2025
+Parameters:
+  POOLING_METHOD=per_token
+  TOKEN_SELECTION_METHOD=dp_gradient
+  LAYER_SELECTION_METHOD=fixed
+  SKIP_HIDDEN=1
+  SKIP_PROBES=1
+  SKIP_PLOTS=0
+  SKIP_CRITICAL=1
+  SKIP_STEERING=0
+  SKIP_EVAL=0
+
+Modified script: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/run_modified.sh
+
+Note: Images are generated during the experiment in HF_HOME/reports/ directories
+      and will be copied to experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/ after the experiment completes.
+
+Experiment completed successfully in 12065 seconds
+Status: SUCCESS
+Images copied: 26
+
+Key outputs from log:
+  ✓ Pipeline completed
+  ✓ Steering evaluation completed
+
+
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0
+----------------------------------------
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0
+Timestamp: Thu Dec 11 05:31:18 PM CST 2025
+Parameters:
+  POOLING_METHOD=per_token
+  TOKEN_SELECTION_METHOD=gradient
+  LAYER_SELECTION_METHOD=fixed
+  SKIP_HIDDEN=1
+  SKIP_PROBES=1
+  SKIP_PLOTS=0
+  SKIP_CRITICAL=1
+  SKIP_STEERING=0
+  SKIP_EVAL=0
+
+Modified script: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/run_modified.sh
+
+Note: Images are generated during the experiment in HF_HOME/reports/ directories
+      and will be copied to experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/ after the experiment completes.
+
+Experiment failed after 39 seconds
+Status: FAILED
+Images copied: 26
+
+Key outputs from log:
+  ✗ Errors detected in log
+
+
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_last_token__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_0__SKIP_STEERING_0__SKIP_EVAL_0
+----------------------------------------
+Experiment: POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_last_token__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_0__SKIP_STEERING_0__SKIP_EVAL_0
+Timestamp: Thu Dec 11 02:44:18 PM CST 2025
+Parameters:
+  POOLING_METHOD=per_token
+  TOKEN_SELECTION_METHOD=last_token
+  LAYER_SELECTION_METHOD=fixed
+  SKIP_HIDDEN=1
+  SKIP_PROBES=1
+  SKIP_PLOTS=0
+  SKIP_CRITICAL=0
+  SKIP_STEERING=0
+  SKIP_EVAL=0
+
+Modified script: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_last_token__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_0__SKIP_STEERING_0__SKIP_EVAL_0/run_modified.sh
+
+Note: Images are generated during the experiment in HF_HOME/reports/ directories
+      and will be copied to experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_last_token__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_0__SKIP_STEERING_0__SKIP_EVAL_0/images/ after the experiment completes.
+
+Experiment completed successfully in 10019 seconds
+Status: SUCCESS
+Images copied: 26
+
+Key outputs from log:
+  ✓ Pipeline completed
+  ✓ Steering evaluation completed
+
+

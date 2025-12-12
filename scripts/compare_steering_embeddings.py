@@ -8,7 +8,7 @@ import ast
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -93,9 +93,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pooling-method",
         type=str,
-        choices=["last_token", "mean"],
+        choices=["last_token", "mean", "per_token"],
         default="last_token",
-        help="Method to pool hidden states: last_token or mean.",
+        help="Method to pool hidden states: last_token, mean, or per_token (averages all tokens).",
     )
     parser.add_argument(
         "--seed",
@@ -103,7 +103,42 @@ def parse_args() -> argparse.Namespace:
         default=42,
         help="Random seed for reproducibility.",
     )
+    parser.add_argument(
+        "--alignments-dir",
+        type=Path,
+        default=None,
+        help="Directory containing alignment JSON files (required for per_token pooling with alignments).",
+    )
     return parser.parse_args()
+
+
+def load_alignment_payload(
+    sample_id: str,
+    alignments_dir: Path,
+) -> tuple[list[tuple[int, int]], dict[str, Any]]:
+    """Load precomputed alignment matches for a sample."""
+    path = alignments_dir / f"{sample_id}.json"
+    if not path.exists():
+        return [], {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        LOGGER.warning("Failed to read alignment file %s: %s", path, exc)
+        return [], {}
+
+    matches: list[tuple[int, int]] = []
+    for item in payload.get("matches", []):
+        if not isinstance(item, dict):
+            continue
+        try:
+            wrong_idx = int(item["wrong_index"])
+            right_idx = int(item["right_index"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        matches.append((wrong_idx, right_idx))
+
+    metadata = payload.get("metadata", {})
+    return matches, metadata
 
 
 def load_triples(path: Path) -> List[Dict]:
@@ -175,6 +210,7 @@ def collect_hidden_states(
     pooling_method: str = "last_token",
     max_samples: Optional[int] = None,
     use_correct_chain: bool = False,
+    alignments_dir: Optional[Path] = None,
 ) -> np.ndarray:
     """
     Collect hidden states from the prompt's last token.
@@ -191,9 +227,10 @@ def collect_hidden_states(
         steering_vector: Optional steering vector to apply (added to hidden states)
         steering_coefficient: Multiplier for steering vector
         system_prompt: System prompt for chat template (used for formatting)
-        pooling_method: How to pool hidden states (last_token or mean)
+        pooling_method: How to pool hidden states (last_token, mean, or per_token)
         max_samples: Optional limit on number of samples
         use_correct_chain: If True, use prompt + correct_chain instead of just prompt
+        alignments_dir: Optional directory with alignment files (for per_token pooling)
     
     Returns:
         Array of hidden states [n_samples, hidden_dim]
@@ -254,6 +291,65 @@ def collect_hidden_states(
             pooled = hidden_state[-1].cpu().numpy()  # [hidden_dim]
         elif pooling_method == "mean":
             pooled = hidden_state.mean(dim=0).cpu().numpy()  # [hidden_dim]
+        elif pooling_method == "per_token":
+            # For per_token, use alignments if available, otherwise average all tokens
+            if alignments_dir is not None and alignments_dir.exists():
+                sample_id = triple.get("sample_id", "")
+                matches, alignment_metadata = load_alignment_payload(sample_id, alignments_dir)
+                
+                if matches and len(matches) > 0 and use_correct_chain:
+                    # Extract embeddings from matched token positions
+                    # Alignments are between wrong_chain and correct_chain
+                    # For use_correct_chain=True: use right_index (positions in correct_chain)
+                    # For use_correct_chain=False: we only have prompt (no wrong_chain), so fall back to mean
+                    
+                    # Tokenize prompt to get its length (needed to offset right_idx)
+                    prompt_only = reconstruct_prompt(metadata, prompt_text)
+                    if hasattr(model.tokenizer, "apply_chat_template") and system_prompt:
+                        prompt_messages = [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt_only},
+                        ]
+                        prompt_formatted = model.tokenizer.apply_chat_template(
+                            prompt_messages,
+                            tokenize=False,
+                            add_generation_prompt=True,
+                        )
+                    else:
+                        prompt_formatted = prompt_only
+                    
+                    # Tokenize the prompt to get its length
+                    prompt_tokens = model.tokenize(prompt_formatted, return_offsets_mapping=False)
+                    prompt_len = prompt_tokens["input_ids"].shape[1] if "input_ids" in prompt_tokens else 0
+                    
+                    # Collect embeddings from matched positions in correct_chain
+                    matched_embeddings = []
+                    for wrong_idx, right_idx in matches:
+                        # Use right_index, offset by prompt length
+                        # right_idx is relative to correct_chain start, so add prompt_len
+                        token_pos = prompt_len + right_idx
+                        
+                        # Check if position is valid
+                        if 0 <= token_pos < hidden_state.shape[0]:
+                            matched_embeddings.append(hidden_state[token_pos].cpu().numpy())
+                    
+                    if matched_embeddings:
+                        # Average the matched token embeddings
+                        pooled = np.mean(matched_embeddings, axis=0)  # [hidden_dim]
+                    else:
+                        # Fallback: average all tokens
+                        LOGGER.warning("No valid matched positions for sample %s, falling back to mean pooling", sample_id)
+                        pooled = hidden_state.mean(dim=0).cpu().numpy()  # [hidden_dim]
+                elif matches and len(matches) > 0 and not use_correct_chain:
+                    # For prompt-only case, we don't have wrong_chain in the sequence
+                    # So alignment indices don't apply - fall back to averaging all tokens
+                    pooled = hidden_state.mean(dim=0).cpu().numpy()  # [hidden_dim]
+                else:
+                    # No alignments available, fall back to averaging all tokens
+                    pooled = hidden_state.mean(dim=0).cpu().numpy()  # [hidden_dim]
+            else:
+                # No alignments directory provided, average all tokens
+                pooled = hidden_state.mean(dim=0).cpu().numpy()  # [hidden_dim]
         else:
             raise ValueError(f"Unknown pooling method: {pooling_method}")
         
@@ -642,6 +738,7 @@ def main() -> None:
         pooling_method=args.pooling_method,
         max_samples=args.max_samples,
         use_correct_chain=True,
+        alignments_dir=args.alignments_dir,
     )
     LOGGER.info("Collected %d correct embeddings (shape: %s)", 
                 len(embeddings_correct), embeddings_correct.shape)
@@ -657,6 +754,7 @@ def main() -> None:
         pooling_method=args.pooling_method,
         max_samples=args.max_samples,
         use_correct_chain=False,
+        alignments_dir=args.alignments_dir,
     )
     LOGGER.info("Collected %d wrong embeddings without steering (shape: %s)", 
                 len(embeddings_wrong_no_steering), embeddings_wrong_no_steering.shape)
@@ -673,6 +771,7 @@ def main() -> None:
         pooling_method=args.pooling_method,
         max_samples=args.max_samples,
         use_correct_chain=False,
+        alignments_dir=args.alignments_dir,
     )
     LOGGER.info("Collected %d wrong embeddings with steering (shape: %s)", 
                 len(embeddings_wrong_with_steering), embeddings_wrong_with_steering.shape)
@@ -739,7 +838,6 @@ def main() -> None:
         method="pca",
         output_path=pca_overlay_path,
         layer=args.layer,
-        steering_coefficient=args.steering_coefficient,
     )
     
     # UMAP comparison (if available)
@@ -764,7 +862,6 @@ def main() -> None:
             method="umap",
             output_path=umap_overlay_path,
             layer=args.layer,
-            steering_coefficient=args.steering_coefficient,
         )
     else:
         LOGGER.warning("UMAP not available, skipping UMAP visualizations")

@@ -1,0 +1,779 @@
+=== Step 1: Using manually reviewed triples: ./artifacts/manual_review/12062025_human_review.json ===
+=== Step 2: Skipping hidden state capture (SKIP_HIDDEN=1) ===
+=== Step 3: Skipping probe computation (SKIP_PROBES=1) ===
+=== Step 4: Generating visualizations ===
+  Plotting layer 26...
+2025-12-11 17:31:59,062 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer26_pca_data.npz
+2025-12-11 17:31:59,064 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:59,070 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:59,376 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer26_pca_clusters_dp.png
+2025-12-11 17:31:59,377 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer26_umap_data.npz
+2025-12-11 17:31:59,377 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:59,378 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:59,654 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer26_umap_clusters_dp.png
+2025-12-11 17:31:59,654 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 27...
+2025-12-11 17:32:00,310 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer27_pca_data.npz
+2025-12-11 17:32:00,312 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:32:00,318 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:32:00,631 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer27_pca_clusters_dp.png
+2025-12-11 17:32:00,631 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer27_umap_data.npz
+2025-12-11 17:32:00,632 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:32:00,632 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:32:00,900 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer27_umap_clusters_dp.png
+2025-12-11 17:32:00,901 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 28...
+2025-12-11 17:32:01,590 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer28_pca_data.npz
+2025-12-11 17:32:01,592 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:32:01,598 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:32:01,908 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer28_pca_clusters_dp.png
+2025-12-11 17:32:01,908 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer28_umap_data.npz
+2025-12-11 17:32:01,909 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:32:01,909 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:32:02,159 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer28_umap_clusters_dp.png
+2025-12-11 17:32:02,159 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 29...
+2025-12-11 17:32:02,864 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer29_pca_data.npz
+2025-12-11 17:32:02,867 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:32:02,872 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:32:03,171 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer29_pca_clusters_dp.png
+2025-12-11 17:32:03,171 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer29_umap_data.npz
+2025-12-11 17:32:03,172 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:32:03,172 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:32:03,425 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer29_umap_clusters_dp.png
+2025-12-11 17:32:03,425 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 30...
+2025-12-11 17:32:04,032 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer30_pca_data.npz
+2025-12-11 17:32:04,035 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:32:04,042 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:32:04,363 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer30_pca_clusters_dp.png
+2025-12-11 17:32:04,363 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer30_umap_data.npz
+2025-12-11 17:32:04,364 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:32:04,364 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:32:04,598 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer30_umap_clusters_dp.png
+2025-12-11 17:32:04,598 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 31...
+2025-12-11 17:32:05,220 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer31_pca_data.npz
+2025-12-11 17:32:05,222 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:32:05,227 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:32:05,529 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer31_pca_clusters_dp.png
+2025-12-11 17:32:05,529 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer31_umap_data.npz
+2025-12-11 17:32:05,530 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:32:05,530 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:32:05,809 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer31_umap_clusters_dp.png
+2025-12-11 17:32:05,809 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+=== Step 5: Skipping critical token analysis (SKIP_CRITICAL=1) ===
+=== Step 6: Computing steering vectors from last_token representations ===
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2025-12-11 17:32:08,063 | INFO | Loaded 100 triples
+2025-12-11 17:32:08,063 | INFO | Target layers for steering vector computation: [26, 27, 28, 29, 30, 31]
+2025-12-11 17:32:08,103 | INFO | Loading model meta-llama/Llama-3.1-8B-Instruct on cuda with dtype torch.float16
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards: 100%|██████████| 4/4 [00:00<00:00, 13819.78it/s]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.25s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:04<00:04,  2.29s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:06<00:02,  2.30s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.60s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.85s/it]
+Computing steering vectors:   0%|          | 0/100 [00:00<?, ?it/s]2025-12-11 17:32:19,926 | WARNING | Gradient-based token selection failed for sample 12192_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   1%|          | 1/100 [00:02<03:46,  2.28s/it]2025-12-11 17:32:21,637 | WARNING | Gradient-based token selection failed for sample 11127_mmlu_philosophy: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 240.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 3.52 GiB memory in use. Including non-PyTorch memory, this process has 3.04 GiB memory in use. Of the allocated memory 2.44 GiB is allocated by PyTorch, and 416.38 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   2%|▏         | 2/100 [00:03<02:56,  1.80s/it]2025-12-11 17:32:23,072 | WARNING | Gradient-based token selection failed for sample 10563_mmlu_computer science: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 478.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 3.52 GiB memory in use. Including non-PyTorch memory, this process has 2.81 GiB memory in use. Of the allocated memory 2.38 GiB is allocated by PyTorch, and 247.42 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   3%|▎         | 3/100 [00:05<02:38,  1.64s/it]2025-12-11 17:32:23,582 | WARNING | Gradient-based token selection failed for sample 5894_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   4%|▍         | 4/100 [00:06<02:06,  1.32s/it]2025-12-11 17:32:25,864 | WARNING | Gradient-based token selection failed for sample 1683_mmlu_law: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 328.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.53 GiB memory in use. Including non-PyTorch memory, this process has 3.95 GiB memory in use. Of the allocated memory 2.55 GiB is allocated by PyTorch, and 1.20 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   5%|▌         | 5/100 [00:07<02:27,  1.55s/it]2025-12-11 17:32:27,728 | WARNING | Gradient-based token selection failed for sample 4549_mmlu_chemistry: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 288.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.53 GiB memory in use. Including non-PyTorch memory, this process has 3.99 GiB memory in use. Of the allocated memory 2.92 GiB is allocated by PyTorch, and 890.56 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   6%|▌         | 6/100 [00:09<02:35,  1.66s/it]2025-12-11 17:32:28,904 | WARNING | Gradient-based token selection failed for sample 9631_mmlu_physics: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 950.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.53 GiB memory in use. Including non-PyTorch memory, this process has 3.34 GiB memory in use. Of the allocated memory 2.37 GiB is allocated by PyTorch, and 792.37 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   7%|▋         | 7/100 [00:11<02:19,  1.50s/it]2025-12-11 17:32:29,411 | WARNING | Gradient-based token selection failed for sample 2710_mmlu_psychology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   8%|▊         | 8/100 [00:11<02:01,  1.32s/it]2025-12-11 17:32:30,266 | WARNING | Gradient-based token selection failed for sample 11088_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   9%|▉         | 9/100 [00:12<01:41,  1.12s/it]2025-12-11 17:32:31,093 | WARNING | Gradient-based token selection failed for sample 11000_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  10%|█         | 10/100 [00:13<01:42,  1.14s/it]2025-12-11 17:32:32,138 | WARNING | Gradient-based token selection failed for sample 2809_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  11%|█         | 11/100 [00:15<01:44,  1.18s/it]2025-12-11 17:32:33,509 | WARNING | Gradient-based token selection failed for sample 3333_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  12%|█▏        | 12/100 [00:15<01:30,  1.03s/it]2025-12-11 17:32:34,480 | WARNING | Gradient-based token selection failed for sample 10153_mmlu_physics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  13%|█▎        | 13/100 [00:17<01:47,  1.23s/it]2025-12-11 17:32:36,655 | WARNING | Gradient-based token selection failed for sample 11728_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  14%|█▍        | 14/100 [00:19<02:13,  1.55s/it]2025-12-11 17:32:39,430 | WARNING | Gradient-based token selection failed for sample 11988_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  15%|█▌        | 15/100 [00:23<02:55,  2.07s/it]2025-12-11 17:32:42,640 | WARNING | Gradient-based token selection failed for sample 11746_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  16%|█▌        | 16/100 [00:26<03:24,  2.44s/it]2025-12-11 17:32:45,003 | WARNING | Gradient-based token selection failed for sample 1243_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  17%|█▋        | 17/100 [00:27<03:03,  2.21s/it]2025-12-11 17:32:46,403 | WARNING | Gradient-based token selection failed for sample 5469_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  18%|█▊        | 18/100 [00:29<02:31,  1.85s/it]2025-12-11 17:32:47,390 | WARNING | Gradient-based token selection failed for sample 5653_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  19%|█▉        | 19/100 [00:29<02:06,  1.56s/it]2025-12-11 17:32:49,141 | WARNING | Gradient-based token selection failed for sample 4299_mmlu_chemistry: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  20%|██        | 20/100 [00:32<02:21,  1.77s/it]2025-12-11 17:32:50,570 | WARNING | Gradient-based token selection failed for sample 3983_mmlu_chemistry: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  21%|██        | 21/100 [00:33<02:08,  1.63s/it]2025-12-11 17:32:52,063 | WARNING | Gradient-based token selection failed for sample 5862_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  22%|██▏       | 22/100 [00:34<01:58,  1.52s/it]2025-12-11 17:32:53,201 | WARNING | Gradient-based token selection failed for sample 227_mmlu_business: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  23%|██▎       | 23/100 [00:35<01:51,  1.45s/it]2025-12-11 17:32:54,358 | WARNING | Gradient-based token selection failed for sample 7582_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  24%|██▍       | 24/100 [00:36<01:37,  1.28s/it]2025-12-11 17:32:55,499 | WARNING | Gradient-based token selection failed for sample 1726_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  25%|██▌       | 25/100 [00:38<01:44,  1.39s/it]2025-12-11 17:32:57,000 | WARNING | Gradient-based token selection failed for sample 10365_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  26%|██▌       | 26/100 [00:39<01:36,  1.31s/it]2025-12-11 17:32:57,974 | WARNING | Gradient-based token selection failed for sample 5044_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  27%|██▋       | 27/100 [00:40<01:22,  1.14s/it]2025-12-11 17:32:58,995 | WARNING | Gradient-based token selection failed for sample 2785_mmlu_psychology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  28%|██▊       | 28/100 [00:41<01:31,  1.26s/it]2025-12-11 17:33:00,440 | WARNING | Gradient-based token selection failed for sample 5838_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  29%|██▉       | 29/100 [00:43<01:26,  1.22s/it]2025-12-11 17:33:01,548 | WARNING | Gradient-based token selection failed for sample 11259_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  30%|███       | 30/100 [00:44<01:24,  1.20s/it]2025-12-11 17:33:03,087 | WARNING | Gradient-based token selection failed for sample 11735_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  31%|███       | 31/100 [00:46<01:41,  1.47s/it]2025-12-11 17:33:05,381 | WARNING | Gradient-based token selection failed for sample 10724_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  32%|███▏      | 32/100 [00:47<01:38,  1.46s/it]2025-12-11 17:33:06,587 | WARNING | Gradient-based token selection failed for sample 3155_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  33%|███▎      | 33/100 [00:49<01:38,  1.48s/it]2025-12-11 17:33:07,766 | WARNING | Gradient-based token selection failed for sample 6208_mmlu_health: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  34%|███▍      | 34/100 [00:50<01:28,  1.34s/it]2025-12-11 17:33:08,811 | WARNING | Gradient-based token selection failed for sample 3393_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  35%|███▌      | 35/100 [00:51<01:23,  1.29s/it]2025-12-11 17:33:10,031 | WARNING | Gradient-based token selection failed for sample 4284_mmlu_chemistry: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  36%|███▌      | 36/100 [00:52<01:24,  1.32s/it]2025-12-11 17:33:11,970 | WARNING | Gradient-based token selection failed for sample 5049_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  37%|███▋      | 37/100 [00:54<01:35,  1.51s/it]2025-12-11 17:33:13,329 | WARNING | Gradient-based token selection failed for sample 473_mmlu_business: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  38%|███▊      | 38/100 [00:56<01:29,  1.45s/it]2025-12-11 17:33:14,625 | WARNING | Gradient-based token selection failed for sample 897_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  39%|███▉      | 39/100 [00:57<01:25,  1.39s/it]2025-12-11 17:33:16,183 | WARNING | Gradient-based token selection failed for sample 1782_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  40%|████      | 40/100 [00:59<01:29,  1.48s/it]2025-12-11 17:33:17,450 | WARNING | Gradient-based token selection failed for sample 11002_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  41%|████      | 41/100 [01:00<01:21,  1.38s/it]2025-12-11 17:33:18,783 | WARNING | Gradient-based token selection failed for sample 2879_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  42%|████▏     | 42/100 [01:01<01:16,  1.32s/it]2025-12-11 17:33:20,549 | WARNING | Gradient-based token selection failed for sample 8636_mmlu_math: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  43%|████▎     | 43/100 [01:03<01:27,  1.54s/it]2025-12-11 17:33:21,941 | WARNING | Gradient-based token selection failed for sample 11218_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  44%|████▍     | 44/100 [01:04<01:19,  1.42s/it]2025-12-11 17:33:23,358 | WARNING | Gradient-based token selection failed for sample 1655_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  45%|████▌     | 45/100 [01:06<01:22,  1.50s/it]2025-12-11 17:33:24,747 | WARNING | Gradient-based token selection failed for sample 2717_mmlu_psychology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  46%|████▌     | 46/100 [01:07<01:13,  1.37s/it]2025-12-11 17:33:25,723 | WARNING | Gradient-based token selection failed for sample 5414_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  47%|████▋     | 47/100 [01:08<01:05,  1.24s/it]2025-12-11 17:33:27,198 | WARNING | Gradient-based token selection failed for sample 1244_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  48%|████▊     | 48/100 [01:10<01:13,  1.42s/it]2025-12-11 17:33:28,633 | WARNING | Gradient-based token selection failed for sample 10883_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  49%|████▉     | 49/100 [01:11<01:09,  1.36s/it]2025-12-11 17:33:30,562 | WARNING | Gradient-based token selection failed for sample 118_mmlu_business: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  50%|█████     | 50/100 [01:13<01:23,  1.66s/it]2025-12-11 17:33:32,563 | WARNING | Gradient-based token selection failed for sample 8509_mmlu_math: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  51%|█████     | 51/100 [01:15<01:27,  1.78s/it]2025-12-11 17:33:35,126 | WARNING | Gradient-based token selection failed for sample 12243_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  52%|█████▏    | 52/100 [01:18<01:37,  2.04s/it]2025-12-11 17:33:37,838 | WARNING | Gradient-based token selection failed for sample 852_mmlu_business: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  53%|█████▎    | 53/100 [01:20<01:37,  2.07s/it]2025-12-11 17:33:39,111 | WARNING | Gradient-based token selection failed for sample 7538_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  54%|█████▍    | 54/100 [01:21<01:26,  1.88s/it]2025-12-11 17:33:40,493 | WARNING | Gradient-based token selection failed for sample 4956_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  55%|█████▌    | 55/100 [01:23<01:16,  1.71s/it]2025-12-11 17:33:41,780 | WARNING | Gradient-based token selection failed for sample 7435_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  56%|█████▌    | 56/100 [01:24<01:09,  1.57s/it]2025-12-11 17:33:44,210 | WARNING | Gradient-based token selection failed for sample 4230_mmlu_chemistry: CUDA out of memory. Tried to allocate 1.04 GiB. GPU 0 has a total capacity of 10.75 GiB of which 764.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Including non-PyTorch memory, this process has 6.05 GiB memory in use. Of the allocated memory 4.64 GiB is allocated by PyTorch, and 1.22 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:  57%|█████▋    | 57/100 [01:26<01:10,  1.64s/it]2025-12-11 17:33:45,888 | WARNING | Gradient-based token selection failed for sample 11781_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  58%|█████▊    | 58/100 [01:28<01:18,  1.87s/it]2025-12-11 17:33:47,083 | WARNING | Gradient-based token selection failed for sample 10606_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  59%|█████▉    | 59/100 [01:29<01:01,  1.50s/it]2025-12-11 17:33:47,769 | WARNING | Gradient-based token selection failed for sample 5751_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  60%|██████    | 60/100 [01:30<00:51,  1.30s/it]2025-12-11 17:33:48,742 | WARNING | Gradient-based token selection failed for sample 10040_mmlu_physics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  61%|██████    | 61/100 [01:32<01:00,  1.55s/it]2025-12-11 17:33:50,936 | WARNING | Gradient-based token selection failed for sample 3735_mmlu_chemistry: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  62%|██████▏   | 62/100 [01:33<00:54,  1.43s/it]2025-12-11 17:33:52,630 | WARNING | Gradient-based token selection failed for sample 964_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  63%|██████▎   | 63/100 [01:35<01:01,  1.66s/it]2025-12-11 17:33:54,199 | WARNING | Gradient-based token selection failed for sample 10450_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  64%|██████▍   | 64/100 [01:36<00:54,  1.51s/it]2025-12-11 17:33:55,714 | WARNING | Gradient-based token selection failed for sample 4182_mmlu_chemistry: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  65%|██████▌   | 65/100 [01:38<00:53,  1.52s/it]2025-12-11 17:33:56,869 | WARNING | Gradient-based token selection failed for sample 5200_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  66%|██████▌   | 66/100 [01:39<00:46,  1.37s/it]2025-12-11 17:33:58,592 | WARNING | Gradient-based token selection failed for sample 12038_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  67%|██████▋   | 67/100 [01:41<00:52,  1.60s/it]2025-12-11 17:34:00,388 | WARNING | Gradient-based token selection failed for sample 7365_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  68%|██████▊   | 68/100 [01:42<00:49,  1.54s/it]2025-12-11 17:34:02,133 | WARNING | Gradient-based token selection failed for sample 1248_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  69%|██████▉   | 69/100 [01:44<00:51,  1.67s/it]2025-12-11 17:34:03,453 | WARNING | Gradient-based token selection failed for sample 2052_mmlu_psychology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  70%|███████   | 70/100 [01:46<00:45,  1.51s/it]2025-12-11 17:34:05,639 | WARNING | Gradient-based token selection failed for sample 3691_mmlu_chemistry: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  71%|███████   | 71/100 [01:49<00:59,  2.07s/it]2025-12-11 17:34:09,068 | WARNING | Gradient-based token selection failed for sample 11899_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  72%|███████▏  | 72/100 [01:52<01:03,  2.26s/it]2025-12-11 17:34:10,599 | WARNING | Gradient-based token selection failed for sample 6229_mmlu_health: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  73%|███████▎  | 73/100 [01:53<00:50,  1.88s/it]2025-12-11 17:34:12,233 | WARNING | Gradient-based token selection failed for sample 4938_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  74%|███████▍  | 74/100 [01:55<00:50,  1.94s/it]2025-12-11 17:34:13,718 | WARNING | Gradient-based token selection failed for sample 10657_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  75%|███████▌  | 75/100 [01:56<00:43,  1.74s/it]2025-12-11 17:34:15,044 | WARNING | Gradient-based token selection failed for sample 7240_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  76%|███████▌  | 76/100 [01:57<00:38,  1.60s/it]2025-12-11 17:34:16,179 | WARNING | Gradient-based token selection failed for sample 172_mmlu_business: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  77%|███████▋  | 77/100 [01:58<00:32,  1.39s/it]2025-12-11 17:34:17,724 | WARNING | Gradient-based token selection failed for sample 11033_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  78%|███████▊  | 78/100 [02:00<00:34,  1.58s/it]2025-12-11 17:34:19,174 | WARNING | Gradient-based token selection failed for sample 7170_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  79%|███████▉  | 79/100 [02:01<00:29,  1.39s/it]2025-12-11 17:34:20,611 | WARNING | Gradient-based token selection failed for sample 4986_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  80%|████████  | 80/100 [02:03<00:30,  1.54s/it]2025-12-11 17:34:22,602 | WARNING | Gradient-based token selection failed for sample 10448_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  81%|████████  | 81/100 [02:06<00:34,  1.82s/it]2025-12-11 17:34:24,581 | WARNING | Gradient-based token selection failed for sample 6384_mmlu_health: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  82%|████████▏ | 82/100 [02:07<00:28,  1.59s/it]2025-12-11 17:34:25,595 | WARNING | Gradient-based token selection failed for sample 10800_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  83%|████████▎ | 83/100 [02:08<00:25,  1.48s/it]2025-12-11 17:34:26,804 | WARNING | Gradient-based token selection failed for sample 11476_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  84%|████████▍ | 84/100 [02:09<00:22,  1.41s/it]2025-12-11 17:34:27,935 | WARNING | Gradient-based token selection failed for sample 11256_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  85%|████████▌ | 85/100 [02:10<00:18,  1.27s/it]2025-12-11 17:34:29,268 | WARNING | Gradient-based token selection failed for sample 11420_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  86%|████████▌ | 86/100 [02:11<00:18,  1.32s/it]2025-12-11 17:34:30,423 | WARNING | Gradient-based token selection failed for sample 7642_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  87%|████████▋ | 87/100 [02:13<00:16,  1.30s/it]2025-12-11 17:34:32,962 | WARNING | Gradient-based token selection failed for sample 10538_mmlu_computer science: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  88%|████████▊ | 88/100 [02:16<00:23,  1.93s/it]2025-12-11 17:34:35,059 | WARNING | Gradient-based token selection failed for sample 8906_mmlu_math: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  89%|████████▉ | 89/100 [02:17<00:19,  1.74s/it]2025-12-11 17:34:36,729 | WARNING | Gradient-based token selection failed for sample 11474_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  90%|█████████ | 90/100 [02:19<00:17,  1.71s/it]2025-12-11 17:34:37,912 | WARNING | Gradient-based token selection failed for sample 4669_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  91%|█████████ | 91/100 [02:20<00:14,  1.60s/it]2025-12-11 17:34:39,327 | WARNING | Gradient-based token selection failed for sample 4707_mmlu_history: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  92%|█████████▏| 92/100 [02:21<00:11,  1.38s/it]2025-12-11 17:34:40,090 | WARNING | Gradient-based token selection failed for sample 9260_mmlu_physics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  93%|█████████▎| 93/100 [02:22<00:08,  1.25s/it]2025-12-11 17:34:41,319 | WARNING | Gradient-based token selection failed for sample 1432_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  94%|█████████▍| 94/100 [02:24<00:08,  1.38s/it]2025-12-11 17:34:42,868 | WARNING | Gradient-based token selection failed for sample 12184_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  95%|█████████▌| 95/100 [02:25<00:06,  1.35s/it]2025-12-11 17:34:44,244 | WARNING | Gradient-based token selection failed for sample 7034_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  96%|█████████▌| 96/100 [02:27<00:05,  1.44s/it]2025-12-11 17:34:45,917 | WARNING | Gradient-based token selection failed for sample 1653_mmlu_law: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  97%|█████████▋| 97/100 [02:28<00:04,  1.44s/it]2025-12-11 17:34:47,191 | WARNING | Gradient-based token selection failed for sample 6887_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  98%|█████████▊| 98/100 [02:29<00:02,  1.34s/it]2025-12-11 17:34:48,380 | WARNING | Gradient-based token selection failed for sample 7437_mmlu_economics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  99%|█████████▉| 99/100 [02:31<00:01,  1.37s/it]2025-12-11 17:34:49,684 | WARNING | Gradient-based token selection failed for sample 3205_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors: 100%|██████████| 100/100 [02:32<00:00,  1.23s/it]Computing steering vectors: 100%|██████████| 100/100 [02:32<00:00,  1.52s/it]
+2025-12-11 17:34:50,053 | INFO | Processed 100 triples (skipped 0, gradient fallbacks 100, DP attempts 522, successes 60, lookup misses 462, DP fallbacks 13, unavailable 0, missing files 0)
+2025-12-11 17:34:50,055 | INFO | Layer 26: Computed steering vector from 100 samples (shape: (4096,), norm: 15.2056)
+2025-12-11 17:34:50,056 | INFO | Saved steering vector for layer 26 to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/layer26_steering_vector.npy
+2025-12-11 17:34:50,058 | INFO | Layer 27: Computed steering vector from 100 samples (shape: (4096,), norm: 16.1761)
+2025-12-11 17:34:50,059 | INFO | Saved steering vector for layer 27 to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/layer27_steering_vector.npy
+2025-12-11 17:34:50,060 | INFO | Layer 28: Computed steering vector from 100 samples (shape: (4096,), norm: 17.4870)
+2025-12-11 17:34:50,061 | INFO | Saved steering vector for layer 28 to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/layer28_steering_vector.npy
+2025-12-11 17:34:50,062 | INFO | Layer 29: Computed steering vector from 100 samples (shape: (4096,), norm: 18.9452)
+2025-12-11 17:34:50,062 | INFO | Saved steering vector for layer 29 to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/layer29_steering_vector.npy
+2025-12-11 17:34:50,063 | INFO | Layer 30: Computed steering vector from 100 samples (shape: (4096,), norm: 20.5569)
+2025-12-11 17:34:50,063 | INFO | Saved steering vector for layer 30 to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/layer30_steering_vector.npy
+2025-12-11 17:34:50,064 | INFO | Layer 31: Computed steering vector from 100 samples (shape: (4096,), norm: 90.3913)
+2025-12-11 17:34:50,064 | INFO | Saved steering vector for layer 31 to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/layer31_steering_vector.npy
+2025-12-11 17:34:50,065 | INFO | Saved metadata to /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/steering_vectors_metadata.json
+2025-12-11 17:34:50,065 | INFO | Steering vector computation complete!
+=== Step 7: Evaluating steering vectors ===
+Evaluating steering for layer 29...
+Evaluating in-sample steering performance...
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2025-12-11 17:34:54,076 | INFO | Loaded 100 triples for evaluation
+2025-12-11 17:34:54,077 | INFO | Loaded steering vector for layer 29 (shape: (4096,), norm: 18.9452)
+2025-12-11 17:34:54,124 | INFO | Loading model meta-llama/Llama-3.1-8B-Instruct on cuda with dtype torch.float16
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards: 100%|██████████| 4/4 [00:00<00:00, 13888.42it/s]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.29s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:04<00:04,  2.34s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:06<00:02,  2.28s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.60s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.86s/it]
+Evaluating steering:   0%|          | 0/100 [00:00<?, ?it/s]/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:567: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+Evaluating steering:   1%|          | 1/100 [00:23<38:56, 23.60s/it]Evaluating steering:   2%|▏         | 2/100 [01:03<54:11, 33.18s/it]Evaluating steering:   3%|▎         | 3/100 [02:03<1:13:26, 45.42s/it]Evaluating steering:   4%|▍         | 4/100 [02:32<1:02:30, 39.06s/it]Evaluating steering:   5%|▌         | 5/100 [02:57<53:40, 33.90s/it]  Evaluating steering:   6%|▌         | 6/100 [04:15<1:16:24, 48.77s/it]Evaluating steering:   7%|▋         | 7/100 [05:20<1:23:55, 54.14s/it]Evaluating steering:   8%|▊         | 8/100 [05:54<1:13:12, 47.74s/it]Evaluating steering:   9%|▉         | 9/100 [06:35<1:09:22, 45.74s/it]Evaluating steering:  10%|█         | 10/100 [07:21<1:08:41, 45.80s/it]Evaluating steering:  11%|█         | 11/100 [07:53<1:01:37, 41.54s/it]Evaluating steering:  12%|█▏        | 12/100 [08:28<57:49, 39.43s/it]  Evaluating steering:  13%|█▎        | 13/100 [10:13<1:26:11, 59.44s/it]Evaluating steering:  14%|█▍        | 14/100 [11:48<1:40:27, 70.08s/it]Evaluating steering:  15%|█▌        | 15/100 [13:15<1:46:28, 75.16s/it]Evaluating steering:  16%|█▌        | 16/100 [15:00<1:57:51, 84.19s/it]Evaluating steering:  17%|█▋        | 17/100 [15:58<1:45:25, 76.21s/it]Evaluating steering:  18%|█▊        | 18/100 [16:42<1:31:16, 66.78s/it]Evaluating steering:  19%|█▉        | 19/100 [17:23<1:19:33, 58.93s/it]Evaluating steering:  20%|██        | 20/100 [19:03<1:34:57, 71.22s/it]Evaluating steering:  21%|██        | 21/100 [19:54<1:25:41, 65.08s/it]Evaluating steering:  22%|██▏       | 22/100 [20:32<1:14:04, 56.98s/it]Evaluating steering:  23%|██▎       | 23/100 [21:18<1:08:57, 53.73s/it]Evaluating steering:  24%|██▍       | 24/100 [21:39<55:37, 43.91s/it]  Evaluating steering:  25%|██▌       | 25/100 [22:20<53:53, 43.11s/it]Evaluating steering:  26%|██▌       | 26/100 [22:49<47:42, 38.68s/it]Evaluating steering:  27%|██▋       | 27/100 [23:20<44:22, 36.47s/it]Evaluating steering:  28%|██▊       | 28/100 [24:14<50:18, 41.92s/it]Evaluating steering:  29%|██▉       | 29/100 [24:58<50:17, 42.50s/it]Evaluating steering:  30%|███       | 30/100 [25:43<50:18, 43.12s/it]Evaluating steering:  31%|███       | 31/100 [26:53<59:02, 51.35s/it]Evaluating steering:  32%|███▏      | 32/100 [28:14<1:07:58, 59.98s/it]Evaluating steering:  33%|███▎      | 33/100 [29:12<1:06:35, 59.63s/it]Evaluating steering:  34%|███▍      | 34/100 [29:58<1:01:03, 55.50s/it]Evaluating steering:  35%|███▌      | 35/100 [30:44<56:53, 52.51s/it]  Evaluating steering:  36%|███▌      | 36/100 [31:41<57:29, 53.90s/it]Evaluating steering:  37%|███▋      | 37/100 [32:24<53:14, 50.71s/it]Evaluating steering:  38%|███▊      | 38/100 [33:46<1:02:08, 60.14s/it]Evaluating steering:  39%|███▉      | 39/100 [34:37<58:10, 57.21s/it]  Evaluating steering:  40%|████      | 40/100 [35:27<55:08, 55.14s/it]Evaluating steering:  41%|████      | 41/100 [36:01<48:07, 48.95s/it]Evaluating steering:  42%|████▏     | 42/100 [36:46<45:56, 47.52s/it]Evaluating steering:  43%|████▎     | 43/100 [38:13<56:21, 59.32s/it]Evaluating steering:  44%|████▍     | 44/100 [38:56<51:03, 54.71s/it]Evaluating steering:  45%|████▌     | 45/100 [40:04<53:47, 58.68s/it]Evaluating steering:  46%|████▌     | 46/100 [40:56<50:53, 56.55s/it]Evaluating steering:  47%|████▋     | 47/100 [41:25<42:41, 48.32s/it]Evaluating steering:  48%|████▊     | 48/100 [42:07<40:18, 46.50s/it]Evaluating steering:  49%|████▉     | 49/100 [43:08<43:00, 50.59s/it]Evaluating steering:  50%|█████     | 50/100 [44:30<50:00, 60.01s/it]Evaluating steering:  51%|█████     | 51/100 [46:03<57:19, 70.19s/it]Evaluating steering:  52%|█████▏    | 52/100 [47:47<1:04:11, 80.25s/it]Evaluating steering:  53%|█████▎    | 53/100 [49:13<1:04:03, 81.78s/it]Evaluating steering:  54%|█████▍    | 54/100 [49:46<51:31, 67.22s/it]  Evaluating steering:  55%|█████▌    | 55/100 [50:26<44:14, 59.00s/it]Evaluating steering:  56%|█████▌    | 56/100 [51:16<41:22, 56.42s/it]Evaluating steering:  57%|█████▋    | 57/100 [52:33<44:48, 62.52s/it]Evaluating steering:  58%|█████▊    | 58/100 [54:21<53:16, 76.11s/it]Evaluating steering:  59%|█████▉    | 59/100 [54:41<40:31, 59.29s/it]Evaluating steering:  60%|██████    | 60/100 [55:06<32:46, 49.16s/it]Evaluating steering:  61%|██████    | 61/100 [55:54<31:45, 48.85s/it]Evaluating steering:  62%|██████▏   | 62/100 [56:29<28:16, 44.64s/it]Evaluating steering:  63%|██████▎   | 63/100 [57:37<31:55, 51.78s/it]Evaluating steering:  64%|██████▍   | 64/100 [58:14<28:22, 47.30s/it]Evaluating steering:  65%|██████▌   | 65/100 [58:56<26:39, 45.70s/it]Evaluating steering:  66%|██████▌   | 66/100 [59:37<24:58, 44.06s/it]Evaluating steering:  67%|██████▋   | 67/100 [1:01:05<31:31, 57.31s/it]Evaluating steering:  68%|██████▊   | 68/100 [1:02:11<32:02, 60.07s/it]Evaluating steering:  69%|██████▉   | 69/100 [1:03:01<29:28, 57.06s/it]Evaluating steering:  70%|███████   | 70/100 [1:03:56<28:13, 56.44s/it]Evaluating steering:  71%|███████   | 71/100 [1:05:43<34:30, 71.40s/it]Evaluating steering:  72%|███████▏  | 72/100 [1:07:31<38:31, 82.55s/it]Evaluating steering:  73%|███████▎  | 73/100 [1:08:02<30:07, 66.94s/it]Evaluating steering:  74%|███████▍  | 74/100 [1:09:01<28:01, 64.67s/it]Evaluating steering:  75%|███████▌  | 75/100 [1:10:03<26:35, 63.82s/it]Evaluating steering:  76%|███████▌  | 76/100 [1:10:43<22:39, 56.63s/it]Evaluating steering:  77%|███████▋  | 77/100 [1:11:14<18:45, 48.91s/it]Evaluating steering:  78%|███████▊  | 78/100 [1:12:51<23:14, 63.41s/it]Evaluating steering:  79%|███████▉  | 79/100 [1:13:47<21:28, 61.34s/it]Evaluating steering:  80%|████████  | 80/100 [1:14:46<20:07, 60.37s/it]Evaluating steering:  81%|████████  | 81/100 [1:15:51<19:34, 61.82s/it]Evaluating steering:  82%|████████▏ | 82/100 [1:16:24<15:56, 53.16s/it]Evaluating steering:  83%|████████▎ | 83/100 [1:17:28<15:59, 56.42s/it]Evaluating steering:  84%|████████▍ | 84/100 [1:18:45<16:40, 62.55s/it]Evaluating steering:  85%|████████▌ | 85/100 [1:19:25<13:56, 55.78s/it]Evaluating steering:  86%|████████▌ | 86/100 [1:19:55<11:14, 48.18s/it]Evaluating steering:  87%|████████▋ | 87/100 [1:20:40<10:15, 47.37s/it]Evaluating steering:  88%|████████▊ | 88/100 [1:22:29<13:07, 65.61s/it]Evaluating steering:  89%|████████▉ | 89/100 [1:23:01<10:13, 55.75s/it]Evaluating steering:  90%|█████████ | 90/100 [1:24:05<09:42, 58.21s/it]Evaluating steering:  91%|█████████ | 91/100 [1:24:41<07:43, 51.51s/it]Evaluating steering:  92%|█████████▏| 92/100 [1:25:08<05:53, 44.19s/it]Evaluating steering:  93%|█████████▎| 93/100 [1:25:38<04:38, 39.83s/it]Evaluating steering:  94%|█████████▍| 94/100 [1:26:24<04:10, 41.76s/it]Evaluating steering:  95%|█████████▌| 95/100 [1:27:49<04:32, 54.53s/it]Evaluating steering:  96%|█████████▌| 96/100 [1:28:43<03:38, 54.58s/it]Evaluating steering:  97%|█████████▋| 97/100 [1:29:35<02:41, 53.82s/it]Evaluating steering:  98%|█████████▊| 98/100 [1:30:17<01:40, 50.04s/it]Evaluating steering:  99%|█████████▉| 99/100 [1:31:17<00:53, 53.15s/it]Evaluating steering: 100%|██████████| 100/100 [1:31:48<00:00, 46.67s/it]Evaluating steering: 100%|██████████| 100/100 [1:31:48<00:00, 55.09s/it]
+2025-12-11 19:06:53,352 | INFO | Saved evaluation results to /nobackup/bdeka/huggingface_cache/artifacts/steering_evaluation_in_sample/steering_evaluation_results_offset0.json
+2025-12-11 19:06:53,353 | INFO | ============================================================
+2025-12-11 19:06:53,353 | INFO | Steering Evaluation Results
+2025-12-11 19:06:53,353 | INFO | ============================================================
+2025-12-11 19:06:53,353 | INFO | Total triples evaluated: 100
+2025-12-11 19:06:53,353 | INFO | 
+2025-12-11 19:06:53,353 | INFO | Without steering:
+2025-12-11 19:06:53,353 | INFO |   Correct: 6
+2025-12-11 19:06:53,353 | INFO |   Incorrect: 94
+2025-12-11 19:06:53,353 | INFO |   Accuracy: 6.00%
+2025-12-11 19:06:53,353 | INFO | 
+2025-12-11 19:06:53,353 | INFO | With steering (coefficient=1.00):
+2025-12-11 19:06:53,353 | INFO |   Correct: 18
+2025-12-11 19:06:53,353 | INFO |   Incorrect: 82
+2025-12-11 19:06:53,353 | INFO |   Accuracy: 18.00%
+2025-12-11 19:06:53,353 | INFO | 
+2025-12-11 19:06:53,353 | INFO | Improvements (wrong -> correct): 16
+2025-12-11 19:06:53,353 | INFO | Degradations (correct -> wrong): 4
+2025-12-11 19:06:53,353 | INFO | 
+2025-12-11 19:06:53,353 | INFO | Accuracy change: +12.00%
+2025-12-11 19:06:53,353 | INFO | ============================================================
+With steering: C
+results['with_steering']['correct']: 1
+With steering: F
+results['with_steering']['correct']: 1
+With steering: E
+results['with_steering']['correct']: 1
+With steering: C
+results['with_steering']['correct']: 1
+With steering: B
+results['with_steering']['correct']: 1
+With steering: 3(0.2)^2 - 19(0.2) + 0.2 - 0.002 + 0.00192
+results['with_steering']['correct']: 1
+With steering: A
+results['with_steering']['correct']: 1
+With steering: D
+results['with_steering']['correct']: 1
+With steering: D
+results['with_steering']['correct']: 1
+With steering: G
+results['with_steering']['correct']: 1
+With steering: D
+results['with_steering']['correct']: 1
+With steering: B
+results['with_steering']['correct']: 2
+With steering: (9/10) ( 1 - 1/M ) (1/2) V2^2 = (1 / 2) (.01) V2^2
+results['with_steering']['correct']: 2
+With steering: B
+results['with_steering']['correct']: 2
+With steering: A
+results['with_steering']['correct']: 3
+With steering: E
+results['with_steering']['correct']: 3
+With steering: F
+results['with_steering']['correct']: 3
+With steering: B
+results['with_steering']['correct']: 3
+With steering: C
+results['with_steering']['correct']: 4
+With steering: i
+results['with_steering']['correct']: 4
+With steering: G
+results['with_steering']['correct']: 4
+With steering: C
+results['with_steering']['correct']: 5
+With steering: F
+results['with_steering']['correct']: 5
+With steering: B
+results['with_steering']['correct']: 5
+With steering: D
+results['with_steering']['correct']: 5
+With steering: F
+results['with_steering']['correct']: 5
+With steering: B
+results['with_steering']['correct']: 5
+With steering: D
+results['with_steering']['correct']: 5
+With steering: G
+results['with_steering']['correct']: 5
+With steering: i
+results['with_steering']['correct']: 5
+With steering: The correct option is D. t cos t,  (1 / sqrt ( pi)) * (1 / sqrt (t)).
+results['with_steering']['correct']: 5
+With steering: So, one possible generation of xz is A -> BC -> (B -> x)C -> x(C -> B -> x) -> x(xz), but this is not xz, however, we can generate x by using the first option of A and then the first options for B and C, and then we can generate z by using the last option for D, which is D -> y, but we need to generate Ey, and then we can use the last option for E to generate z, and then we get xyz, but we want xz not xyz, however, we can use the first option for B to generate x, and then the first option to generate C, and then the last option for D to generate y, and then the last options for E to generate zy, and then we
+results['with_steering']['correct']: 5
+With steering: A
+results['with_steering']['correct']: 5
+With steering: I
+results['with_steering']['correct']: 6
+With steering: D
+results['with_steering']['correct']: 6
+With steering: D
+results['with_steering']['correct']: 6
+With steering: J
+results['with_steering']['correct']: 6
+With steering: J
+results['with_steering']['correct']: 6
+With steering: C
+results['with_steering']['correct']: 6
+With steering: C
+results['with_steering']['correct']: 7
+With steering: B
+results['with_steering']['correct']: 7
+With steering: i
+results['with_steering']['correct']: 7
+With steering: k = (64)
+results['with_steering']['correct']: 7
+With steering: B
+results['with_steering']['correct']: 7
+With steering: I
+results['with_steering']['correct']: 7
+With steering: D
+results['with_steering']['correct']: 7
+With steering: D
+results['with_steering']['correct']: 8
+With steering: F
+results['with_steering']['correct']: 8
+With steering: E
+results['with_steering']['correct']: 8
+With steering: - Stock Turnover rate at cost = 750,000/60,000 = 12.5,
+results['with_steering']['correct']: 8
+With steering: However this is still not the correct answer, as we have not considered the fact that 3^20 is actually 99, which is equivalent to -1 modulo 100. Therefore, 3^20 is equivalent to -1, and 3^29 is equivalent to 3^9 * (-1), which is -17, or 83 modulo 100. However, we made an error in our previous response. We should have calculated 3^9 * -1 as -17, but then we need to add 100 to -17 to make it positive, which results in 83. However, we need to consider the actual value of 3^9 * (3^20), which is 3^29. Since 3^20 is -1, 3^29 is actually 3^9 *-1, which is -17. Adding 100 to -17 results in 83, however, we need to consider that 3^9 is actually 17, and 3^20 is indeed -1, so 3^29 is 3^9 *(-1) = -17, which is equivalent to 83 modulo 100, but we need to consider the correct calculation of 3^9, which is 17, and  3^20, which is -1, so  3^29 is indeed 3^9 *3^20, which equals 3^9 *1, which is 3^9, and 3^9 is 17, however, we need 3^9 * the negative of 3^20, so we need to use the negative of 3, which is -3, and 3^10 is 3^9*3, so 3^10 is -3, and we need to use 3^10, which is -3. So, 3^29 equals 3^9* 3^20, and 3^30 equals 3^9*(3^20), and 3^30 is 3^9*(1), and 3^9 equals 17, and 17
+results['with_steering']['correct']: 8
+With steering: \(\frac{\text{ΔP}}{L} = 2 \times 0.0476 \, \ text{psi/ft} = 0.0952 \, \text {psi/ft} \times 550 \, \text{psf/psi} = 52.57 \, \text{ psf/ft} \approx 52.6 \, \text {psf/ft} \times \frac {1 \, \text {ft}}{12 \, \text { in}} = 4.38 \, \text { psi/in} \times 12 \, \text{ psi
+results['with_steering']['correct']: 8
+With steering: - The present value is $1500 / [(1 + 0.08)^ (88/365) - 1]
+results['with_steering']['correct']: 8
+With steering: F
+results['with_steering']['correct']: 8
+With steering: C
+results['with_steering']['correct']: 9
+With steering: C
+results['with_steering']['correct']: 9
+With steering: i
+results['with_steering']['correct']: 9
+With steering: I
+results['with_steering']['correct']: 9
+With steering: F
+results['with_steering']['correct']: 9
+With steering: C
+results['with_steering']['correct']: 9
+With steering: i
+results['with_steering']['correct']: 9
+With steering: E
+results['with_steering']['correct']: 10
+With steering: H
+results['with_steering']['correct']: 11
+With steering: E
+results['with_steering']['correct']: 11
+With steering: I
+results['with_steering']['correct']: 11
+With steering: G
+results['with_steering']['correct']: 11
+With steering: i
+results['with_steering']['correct']: 11
+With steering: J
+results['with_steering']['correct']: 11
+With steering: D
+results['with_steering']['correct']: 12
+With steering: E
+results['with_steering']['correct']: 12
+With steering: J
+results['with_steering']['correct']: 12
+With steering: =
+results['with_steering']['correct']: 12
+With steering: E
+results['with_steering']['correct']: 13
+With steering: B
+results['with_steering']['correct']: 13
+With steering: E
+results['with_steering']['correct']: 14
+With steering: B
+results['with_steering']['correct']: 15
+With steering: G
+results['with_steering']['correct']: 15
+With steering: i
+results['with_steering']['correct']: 15
+With steering: D
+results['with_steering']['correct']: 15
+With steering: I
+results['with_steering']['correct']: 15
+With steering: i
+results['with_steering']['correct']: 15
+With steering: C
+results['with_steering']['correct']: 16
+With steering: F
+results['with_steering']['correct']: 16
+With steering: H
+results['with_steering']['correct']: 16
+With steering: B
+results['with_steering']['correct']: 16
+With steering: D
+results['with_steering']['correct']: 17
+With steering: G
+results['with_steering']['correct']: 17
+With steering: i
+results['with_steering']['correct']: 17
+With steering: C
+results['with_steering']['correct']: 17
+With steering: B
+results['with_steering']['correct']: 17
+With steering: C
+results['with_steering']['correct']: 17
+With steering: F
+results['with_steering']['correct']: 17
+With steering: G
+results['with_steering']['correct']: 17
+With steering: H
+results['with_steering']['correct']: 17
+With steering: This is not true, so we
+results['with_steering']['correct']: 17
+With steering: i
+results['with_steering']['correct']: 17
+With steering: H
+results['with_steering']['correct']: 17
+With steering: I
+results['with_steering']['correct']: 18
+With steering: J
+results['with_steering']['correct']: 18
+With steering: C
+results['with_steering']['correct']: 18
+Evaluating out-of-sample steering performance...
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2025-12-11 19:07:02,611 | INFO | Loaded 100 triples for evaluation
+2025-12-11 19:07:02,612 | INFO | Loaded steering vector for layer 29 (shape: (4096,), norm: 18.9452)
+2025-12-11 19:07:02,658 | INFO | Loading model meta-llama/Llama-3.1-8B-Instruct on cuda with dtype torch.float16
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards: 100%|██████████| 4/4 [00:00<00:00, 13923.00it/s]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.28s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:04<00:04,  2.26s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:06<00:02,  2.22s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.55s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.80s/it]
+Evaluating steering:   0%|          | 0/100 [00:00<?, ?it/s]/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:567: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+Evaluating steering:   1%|          | 1/100 [00:46<1:16:24, 46.31s/it]Evaluating steering:   2%|▏         | 2/100 [01:36<1:19:01, 48.38s/it]Evaluating steering:   3%|▎         | 3/100 [02:26<1:19:26, 49.14s/it]Evaluating steering:   4%|▍         | 4/100 [03:08<1:14:01, 46.27s/it]Evaluating steering:   5%|▌         | 5/100 [03:50<1:11:08, 44.93s/it]Evaluating steering:   6%|▌         | 6/100 [04:24<1:04:46, 41.35s/it]Evaluating steering:   7%|▋         | 7/100 [05:13<1:07:30, 43.55s/it]Evaluating steering:   8%|▊         | 8/100 [05:42<59:47, 39.00s/it]  Evaluating steering:   9%|▉         | 9/100 [07:19<1:26:36, 57.10s/it]Evaluating steering:  10%|█         | 10/100 [08:20<1:27:29, 58.33s/it]Evaluating steering:  11%|█         | 11/100 [09:23<1:28:55, 59.94s/it]Evaluating steering:  12%|█▏        | 12/100 [09:55<1:15:18, 51.35s/it]Evaluating steering:  13%|█▎        | 13/100 [11:08<1:24:02, 57.96s/it]Evaluating steering:  14%|█▍        | 14/100 [11:42<1:12:29, 50.58s/it]Evaluating steering:  15%|█▌        | 15/100 [12:07<1:00:45, 42.88s/it]Evaluating steering:  16%|█▌        | 16/100 [13:08<1:07:32, 48.25s/it]Evaluating steering:  17%|█▋        | 17/100 [14:38<1:24:25, 61.03s/it]Evaluating steering:  18%|█▊        | 18/100 [15:11<1:11:43, 52.49s/it]Evaluating steering:  19%|█▉        | 19/100 [15:27<56:11, 41.63s/it]  Evaluating steering:  20%|██        | 20/100 [16:24<1:01:36, 46.21s/it]Evaluating steering:  21%|██        | 21/100 [17:05<58:54, 44.74s/it]  Evaluating steering:  22%|██▏       | 22/100 [17:48<57:08, 43.95s/it]Evaluating steering:  23%|██▎       | 23/100 [18:12<48:41, 37.94s/it]Evaluating steering:  24%|██▍       | 24/100 [19:03<53:01, 41.87s/it]Evaluating steering:  25%|██▌       | 25/100 [19:41<50:54, 40.73s/it]Evaluating steering:  26%|██▌       | 26/100 [21:03<1:05:49, 53.37s/it]Evaluating steering:  27%|██▋       | 27/100 [21:40<58:39, 48.22s/it]  Evaluating steering:  28%|██▊       | 28/100 [22:35<1:00:18, 50.26s/it]Evaluating steering:  29%|██▉       | 29/100 [23:38<1:04:10, 54.23s/it]Evaluating steering:  30%|███       | 30/100 [24:21<59:22, 50.90s/it]  Evaluating steering:  31%|███       | 31/100 [25:20<1:01:21, 53.36s/it]Evaluating steering:  32%|███▏      | 32/100 [25:50<52:21, 46.20s/it]  Evaluating steering:  33%|███▎      | 33/100 [26:30<49:40, 44.48s/it]Evaluating steering:  34%|███▍      | 34/100 [27:34<55:23, 50.36s/it]Evaluating steering:  35%|███▌      | 35/100 [28:26<55:03, 50.82s/it]Evaluating steering:  36%|███▌      | 36/100 [29:46<1:03:29, 59.53s/it]Evaluating steering:  37%|███▋      | 37/100 [30:37<59:53, 57.04s/it]  Evaluating steering:  38%|███▊      | 38/100 [31:24<55:36, 53.81s/it]Evaluating steering:  39%|███▉      | 39/100 [33:08<1:09:59, 68.85s/it]Evaluating steering:  40%|████      | 40/100 [33:44<59:08, 59.14s/it]  Evaluating steering:  41%|████      | 41/100 [34:31<54:35, 55.51s/it]Evaluating steering:  42%|████▏     | 42/100 [35:22<52:10, 53.97s/it]Evaluating steering:  43%|████▎     | 43/100 [36:14<50:50, 53.52s/it]Evaluating steering:  44%|████▍     | 44/100 [38:07<1:06:30, 71.26s/it]Evaluating steering:  45%|████▌     | 45/100 [40:21<1:22:44, 90.26s/it]Evaluating steering:  46%|████▌     | 46/100 [41:41<1:18:18, 87.02s/it]Evaluating steering:  47%|████▋     | 47/100 [42:20<1:04:17, 72.78s/it]Evaluating steering:  48%|████▊     | 48/100 [43:21<59:53, 69.10s/it]  Evaluating steering:  49%|████▉     | 49/100 [44:19<56:02, 65.94s/it]Evaluating steering:  50%|█████     | 50/100 [45:08<50:32, 60.65s/it]Evaluating steering:  51%|█████     | 51/100 [47:09<1:04:19, 78.77s/it]Evaluating steering:  52%|█████▏    | 52/100 [47:40<51:36, 64.50s/it]  Evaluating steering:  53%|█████▎    | 53/100 [48:49<51:30, 65.75s/it]Evaluating steering:  54%|█████▍    | 54/100 [50:47<1:02:25, 81.43s/it]Evaluating steering:  55%|█████▌    | 55/100 [52:10<1:01:28, 81.98s/it]Evaluating steering:  56%|█████▌    | 56/100 [52:59<52:49, 72.04s/it]  Evaluating steering:  57%|█████▋    | 57/100 [53:52<47:38, 66.47s/it]Evaluating steering:  58%|█████▊    | 58/100 [55:50<57:15, 81.80s/it]Evaluating steering:  59%|█████▉    | 59/100 [56:50<51:28, 75.33s/it]Evaluating steering:  60%|██████    | 60/100 [57:41<45:22, 68.06s/it]Evaluating steering:  61%|██████    | 61/100 [58:27<39:58, 61.51s/it]Evaluating steering:  62%|██████▏   | 62/100 [59:30<39:10, 61.85s/it]Evaluating steering:  63%|██████▎   | 63/100 [1:00:21<36:07, 58.59s/it]Evaluating steering:  64%|██████▍   | 64/100 [1:02:22<46:19, 77.20s/it]Evaluating steering:  65%|██████▌   | 65/100 [1:03:21<41:55, 71.87s/it]Evaluating steering:  66%|██████▌   | 66/100 [1:04:14<37:32, 66.26s/it]Evaluating steering:  67%|██████▋   | 67/100 [1:05:09<34:36, 62.93s/it]Evaluating steering:  68%|██████▊   | 68/100 [1:06:07<32:45, 61.43s/it]Evaluating steering:  69%|██████▉   | 69/100 [1:06:46<28:09, 54.48s/it]Evaluating steering:  70%|███████   | 70/100 [1:07:34<26:17, 52.57s/it]Evaluating steering:  71%|███████   | 71/100 [1:09:07<31:21, 64.87s/it]Evaluating steering:  72%|███████▏  | 72/100 [1:10:13<30:26, 65.22s/it]Evaluating steering:  73%|███████▎  | 73/100 [1:11:02<27:04, 60.16s/it]Evaluating steering:  74%|███████▍  | 74/100 [1:12:27<29:23, 67.81s/it]Evaluating steering:  75%|███████▌  | 75/100 [1:14:13<33:02, 79.28s/it]Evaluating steering:  76%|███████▌  | 76/100 [1:14:59<27:39, 69.14s/it]Evaluating steering:  77%|███████▋  | 77/100 [1:16:41<30:18, 79.05s/it]Evaluating steering:  78%|███████▊  | 78/100 [1:17:30<25:40, 70.00s/it]Evaluating steering:  79%|███████▉  | 79/100 [1:17:57<20:02, 57.28s/it]Evaluating steering:  80%|████████  | 80/100 [1:18:30<16:39, 49.97s/it]Evaluating steering:  81%|████████  | 81/100 [1:19:25<16:17, 51.42s/it]Evaluating steering:  82%|████████▏ | 82/100 [1:20:34<16:59, 56.61s/it]Evaluating steering:  83%|████████▎ | 83/100 [1:21:24<15:30, 54.75s/it]Evaluating steering:  84%|████████▍ | 84/100 [1:22:12<14:03, 52.73s/it]Evaluating steering:  85%|████████▌ | 85/100 [1:22:24<10:08, 40.54s/it]Evaluating steering:  86%|████████▌ | 86/100 [1:23:03<09:17, 39.83s/it]Evaluating steering:  87%|████████▋ | 87/100 [1:24:26<11:26, 52.82s/it]Evaluating steering:  88%|████████▊ | 88/100 [1:25:09<09:58, 49.85s/it]Evaluating steering:  89%|████████▉ | 89/100 [1:25:48<08:33, 46.72s/it]Evaluating steering:  90%|█████████ | 90/100 [1:26:50<08:33, 51.38s/it]Evaluating steering:  91%|█████████ | 91/100 [1:28:30<09:51, 65.75s/it]Evaluating steering:  92%|█████████▏| 92/100 [1:29:14<07:53, 59.22s/it]Evaluating steering:  93%|█████████▎| 93/100 [1:30:11<06:50, 58.60s/it]Evaluating steering:  94%|█████████▍| 94/100 [1:30:43<05:04, 50.74s/it]Evaluating steering:  95%|█████████▌| 95/100 [1:31:23<03:57, 47.48s/it]Evaluating steering:  96%|█████████▌| 96/100 [1:32:01<02:58, 44.60s/it]Evaluating steering:  97%|█████████▋| 97/100 [1:33:36<02:59, 59.82s/it]Evaluating steering:  98%|█████████▊| 98/100 [1:34:17<01:47, 53.99s/it]Evaluating steering:  99%|█████████▉| 99/100 [1:35:11<00:54, 54.24s/it]Evaluating steering: 100%|██████████| 100/100 [1:36:10<00:00, 55.55s/it]Evaluating steering: 100%|██████████| 100/100 [1:36:10<00:00, 57.71s/it]
+2025-12-11 20:43:25,990 | INFO | Saved evaluation results to /nobackup/bdeka/huggingface_cache/artifacts/steering_evaluation_out_of_sample/steering_evaluation_results_offset100.json
+2025-12-11 20:43:25,990 | INFO | ============================================================
+2025-12-11 20:43:25,990 | INFO | Steering Evaluation Results
+2025-12-11 20:43:25,990 | INFO | ============================================================
+2025-12-11 20:43:25,990 | INFO | Total triples evaluated: 100
+2025-12-11 20:43:25,991 | INFO | 
+2025-12-11 20:43:25,991 | INFO | Without steering:
+2025-12-11 20:43:25,991 | INFO |   Correct: 7
+2025-12-11 20:43:25,991 | INFO |   Incorrect: 93
+2025-12-11 20:43:25,991 | INFO |   Accuracy: 7.00%
+2025-12-11 20:43:25,991 | INFO | 
+2025-12-11 20:43:25,991 | INFO | With steering (coefficient=1.00):
+2025-12-11 20:43:25,991 | INFO |   Correct: 22
+2025-12-11 20:43:25,991 | INFO |   Incorrect: 78
+2025-12-11 20:43:25,991 | INFO |   Accuracy: 22.00%
+2025-12-11 20:43:25,991 | INFO | 
+2025-12-11 20:43:25,991 | INFO | Improvements (wrong -> correct): 20
+2025-12-11 20:43:25,991 | INFO | Degradations (correct -> wrong): 5
+2025-12-11 20:43:25,991 | INFO | 
+2025-12-11 20:43:25,991 | INFO | Accuracy change: +15.00%
+2025-12-11 20:43:25,991 | INFO | ============================================================
+With steering: H
+results['with_steering']['correct']: 0
+With steering: C
+results['with_steering']['correct']: 0
+With steering: G
+results['with_steering']['correct']: 0
+With steering: A
+results['with_steering']['correct']: 0
+With steering: F
+results['with_steering']['correct']: 0
+With steering: H
+results['with_steering']['correct']: 0
+With steering: J
+results['with_steering']['correct']: 0
+With steering: C
+results['with_steering']['correct']: 1
+With steering: I
+results['with_steering']['correct']: 1
+With steering: G
+results['with_steering']['correct']: 1
+With steering: H
+results['with_steering']['correct']: 2
+With steering: E
+results['with_steering']['correct']: 2
+With steering: This can be written as (p_1  ∧ p_2  ∧ p_3)  ∨ (p_1  ∨ p_2  ∧  p_4)  ∨ ( p_1  ∧ p3  ∧  p_3)  or (p_1  p_2  p_4) ∨(p_2  p_3  p_4) or (p1  p_3  4). However, this simplifies to (p 1  p_2)  (p_3  p_3) ∨(p_1  p2  p_4  p_4) (p_2  p3  p_4  4) or (p 1  3  4). This simplifies to ( p_1  p_3) (p_2) (p_4)  (p_1  2  4) (p_1 3  4) ( p_2  3  3) (p_3  4  4). However this is not the most simple way to express it. A simpler way to express this is to use the fact the exactly three of the statements are false if and only if the statements "at least four of the statements are true" or "at most one of the statements is true" is true. The first part can be expressed as ( p_1  2) (p_3) (p4) and the second part can be expressed as  (p_1) (p_2)(p_3) ( p_4). Therefore, exactly three of the statements is true if and only if ( (p_1 2) (p3) (p4))  ( (p_1)  (p_2)  ( p_3) ( p4)). However, the most efficient way to write this is
+results['with_steering']['correct']: 2
+With steering: A
+results['with_steering']['correct']: 2
+With steering: B
+results['with_steering']['correct']: 2
+With steering: A
+results['with_steering']['correct']: 3
+With steering: H
+results['with_steering']['correct']: 4
+With steering: E
+results['with_steering']['correct']: 4
+With steering: I
+results['with_steering']['correct']: 4
+With steering: F
+results['with_steering']['correct']: 4
+With steering: F
+results['with_steering']['correct']: 4
+With steering: C
+results['with_steering']['correct']: 4
+With steering: H
+results['with_steering']['correct']: 4
+With steering: A
+results['with_steering']['correct']: 4
+With steering: E
+results['with_steering']['correct']: 4
+With steering: B
+results['with_steering']['correct']: 4
+With steering: B
+results['with_steering']['correct']: 5
+With steering: E
+results['with_steering']['correct']: 5
+With steering: H
+results['with_steering']['correct']: 5
+With steering: B
+results['with_steering']['correct']: 5
+With steering: A
+results['with_steering']['correct']: 6
+With steering: E
+results['with_steering']['correct']: 6
+With steering: D
+results['with_steering']['correct']: 6
+With steering: B
+results['with_steering']['correct']: 6
+With steering: J
+results['with_steering']['correct']: 6
+With steering: Evaluating the integrals, we get
+results['with_steering']['correct']: 6
+With steering: i
+results['with_steering']['correct']: 6
+With steering: F
+results['with_steering']['correct']: 7
+With steering: \[U_2 \text{total} =
+results['with_steering']['correct']: 7
+With steering: D
+results['with_steering']['correct']: 7
+With steering: G
+results['with_steering']['correct']: 7
+With steering: D
+results['with_steering']['correct']: 7
+With steering: i
+results['with_steering']['correct']: 7
+With steering: Since the bottle is 1 more than the boat when the boat starts, the boat will cover 1.5v in 1.5 more
+results['with_steering']['correct']: 7
+With steering: Option F:
+results['with_steering']['correct']: 7
+With steering: D
+results['with_steering']['correct']: 7
+With steering: i
+results['with_steering']['correct']: 7
+With steering: B
+results['with_steering']['correct']: 7
+With steering: C
+results['with_steering']['correct']: 8
+With steering: H
+results['with_steering']['correct']: 8
+With steering: We made another mistake in the previous calculations. The partial pressure of Na is actually proportional to
+results['with_steering']['correct']: 8
+With steering: D
+results['with_steering']['correct']: 8
+With steering: F
+results['with_steering']['correct']: 8
+With steering: Excess energy = (3.9
+results['with_steering']['correct']: 8
+With steering: C
+results['with_steering']['correct']: 8
+With steering: E
+results['with_steering']['correct']: 8
+With steering: D
+results['with_steering']['correct']: 8
+With steering: Final answer
+results['with_steering']['correct']: 8
+With steering: F
+results['with_steering']['correct']: 8
+With steering: A
+results['with_steering']['correct']: 9
+With steering: J
+results['with_steering']['correct']: 9
+With steering: E
+results['with_steering']['correct']: 9
+With steering: I
+results['with_steering']['correct']: 9
+With steering: 28.6 = (
+results['with_steering']['correct']: 9
+With steering: D
+results['with_steering']['correct']: 10
+With steering: F
+results['with_steering']['correct']: 10
+With steering: A
+results['with_steering']['correct']: 10
+With steering: C
+results['with_steering']['correct']: 10
+With steering: H
+results['with_steering']['correct']: 11
+With steering: J
+results['with_steering']['correct']: 12
+With steering: F
+results['with_steering']['correct']: 13
+With steering: D
+results['with_steering']['correct']: 13
+With steering: A
+results['with_steering']['correct']: 14
+With steering: E
+results['with_steering']['correct']: 14
+With steering: However, the question asks for the "radial position of point" which seems to
+results['with_steering']['correct']: 14
+With steering: D
+results['with_steering']['correct']: 14
+With steering: A
+results['with_steering']['correct']: 14
+With steering: E
+results['with_steering']['correct']: 15
+With steering: H
+results['with_steering']['correct']: 15
+With steering: D
+results['with_steering']['correct']: 15
+With steering: F
+results['with_steering']['correct']: 15
+With steering: G
+results['with_steering']['correct']: 16
+With steering: E
+results['with_steering']['correct']: 17
+With steering: F
+results['with_steering']['correct']: 17
+With steering: C
+results['with_steering']['correct']: 18
+With steering: I
+results['with_steering']['correct']: 18
+With steering: p_new = (original  population * original  frequency) + (new
+results['with_steering']['correct']: 18
+With steering: J
+results['with_steering']['correct']: 18
+With steering: A
+results['with_steering']['correct']: 19
+With steering: J
+results['with_steering']['correct']: 19
+With steering: (1/uo - 0) - (1/ub - 0)
+results['with_steering']['correct']: 19
+With steering: C
+results['with_steering']['correct']: 20
+With steering: B
+results['with_steering']['correct']: 20
+With steering: D
+results['with_steering']['correct']: 20
+With steering: C
+results['with_steering']['correct']: 20
+With steering: B
+results['with_steering']['correct']: 20
+With steering: was
+results['with_steering']['correct']: 20
+With steering: J
+results['with_steering']['correct']: 21
+With steering: E
+results['with_steering']['correct']: 21
+With steering: C
+results['with_steering']['correct']: 22
+Steering evaluation complete. Results saved to /nobackup/bdeka/huggingface_cache/artifacts/steering_evaluation_in_sample and /nobackup/bdeka/huggingface_cache/artifacts/steering_evaluation_out_of_sample
+=== Step 8: Comparing embeddings with and without steering ===
+Comparing embeddings for layer 29...
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2025-12-11 20:47:45,592 | INFO | Loaded 100 triples for comparison
+2025-12-11 20:47:45,594 | INFO | Loaded steering vector for layer 29 (shape: (4096,), norm: 18.9452)
+2025-12-11 20:47:45,649 | INFO | Loading model meta-llama/Llama-3.1-8B-Instruct on cuda with dtype torch.float16
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards: 100%|██████████| 4/4 [00:00<00:00, 3920.83it/s]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.25s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:04<00:04,  2.17s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:06<00:02,  2.13s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.53s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.77s/it]
+2025-12-11 20:48:42,896 | INFO | Collecting correct embeddings (prompt + correct_chain)... [offset=0, max=100]
+Collecting hidden states:   0%|          | 0/100 [00:00<?, ?it/s]Collecting hidden states:   1%|          | 1/100 [00:27<46:05, 27.94s/it]Collecting hidden states:   2%|▏         | 2/100 [00:28<19:09, 11.73s/it]Collecting hidden states:   3%|▎         | 3/100 [00:28<10:32,  6.52s/it]Collecting hidden states:   4%|▍         | 4/100 [00:28<06:28,  4.05s/it]Collecting hidden states:   5%|▌         | 5/100 [00:29<04:33,  2.88s/it]Collecting hidden states:   6%|▌         | 6/100 [00:30<03:36,  2.31s/it]Collecting hidden states:   7%|▋         | 7/100 [00:31<02:32,  1.64s/it]Collecting hidden states:   8%|▊         | 8/100 [00:31<01:47,  1.17s/it]Collecting hidden states:   9%|▉         | 9/100 [00:31<01:16,  1.18it/s]Collecting hidden states:  10%|█         | 10/100 [00:31<00:58,  1.55it/s]Collecting hidden states:  11%|█         | 11/100 [00:31<00:44,  1.98it/s]Collecting hidden states:  12%|█▏        | 12/100 [00:31<00:33,  2.60it/s]Collecting hidden states:  13%|█▎        | 13/100 [00:32<00:30,  2.88it/s]Collecting hidden states:  14%|█▍        | 14/100 [00:32<00:32,  2.68it/s]Collecting hidden states:  15%|█▌        | 15/100 [00:33<00:33,  2.52it/s]Collecting hidden states:  16%|█▌        | 16/100 [00:33<00:33,  2.53it/s]Collecting hidden states:  17%|█▋        | 17/100 [00:33<00:31,  2.63it/s]Collecting hidden states:  18%|█▊        | 18/100 [00:34<00:28,  2.91it/s]Collecting hidden states:  19%|█▉        | 19/100 [00:34<00:22,  3.56it/s]Collecting hidden states:  20%|██        | 20/100 [00:34<00:25,  3.17it/s]Collecting hidden states:  21%|██        | 21/100 [00:34<00:22,  3.49it/s]Collecting hidden states:  22%|██▏       | 22/100 [00:35<00:20,  3.73it/s]Collecting hidden states:  23%|██▎       | 23/100 [00:35<00:19,  3.92it/s]Collecting hidden states:  24%|██▍       | 24/100 [00:35<00:18,  4.15it/s]Collecting hidden states:  25%|██▌       | 25/100 [00:35<00:20,  3.59it/s]Collecting hidden states:  26%|██▌       | 26/100 [00:36<00:20,  3.59it/s]Collecting hidden states:  27%|██▋       | 27/100 [00:36<00:17,  4.16it/s]Collecting hidden states:  28%|██▊       | 28/100 [00:36<00:18,  3.97it/s]Collecting hidden states:  29%|██▉       | 29/100 [00:36<00:17,  4.07it/s]Collecting hidden states:  30%|███       | 30/100 [00:37<00:17,  3.89it/s]Collecting hidden states:  31%|███       | 31/100 [00:37<00:21,  3.28it/s]Collecting hidden states:  32%|███▏      | 32/100 [00:38<00:29,  2.34it/s]Collecting hidden states:  33%|███▎      | 33/100 [00:38<00:27,  2.44it/s]Collecting hidden states:  34%|███▍      | 34/100 [00:38<00:21,  3.04it/s]Collecting hidden states:  35%|███▌      | 35/100 [00:38<00:18,  3.51it/s]Collecting hidden states:  36%|███▌      | 36/100 [00:39<00:17,  3.67it/s]Collecting hidden states:  37%|███▋      | 37/100 [00:39<00:21,  2.97it/s]Collecting hidden states:  38%|███▊      | 38/100 [00:40<00:21,  2.93it/s]Collecting hidden states:  39%|███▉      | 39/100 [00:40<00:18,  3.25it/s]Collecting hidden states:  40%|████      | 40/100 [00:40<00:19,  3.12it/s]Collecting hidden states:  41%|████      | 41/100 [00:40<00:16,  3.51it/s]Collecting hidden states:  42%|████▏     | 42/100 [00:41<00:16,  3.50it/s]Collecting hidden states:  43%|████▎     | 43/100 [00:41<00:22,  2.50it/s]Collecting hidden states:  44%|████▍     | 44/100 [00:41<00:18,  3.00it/s]Collecting hidden states:  45%|████▌     | 45/100 [00:42<00:18,  2.97it/s]Collecting hidden states:  46%|████▌     | 46/100 [00:42<00:17,  3.11it/s]Collecting hidden states:  47%|████▋     | 47/100 [00:42<00:16,  3.21it/s]Collecting hidden states:  48%|████▊     | 48/100 [00:43<00:17,  3.00it/s]Collecting hidden states:  49%|████▉     | 49/100 [00:43<00:17,  2.99it/s]Collecting hidden states:  50%|█████     | 50/100 [00:43<00:17,  2.88it/s]Collecting hidden states:  51%|█████     | 51/100 [00:44<00:19,  2.54it/s]Collecting hidden states:  52%|█████▏    | 52/100 [00:44<00:18,  2.60it/s]Collecting hidden states:  53%|█████▎    | 53/100 [00:45<00:26,  1.77it/s]Collecting hidden states:  54%|█████▍    | 54/100 [00:46<00:22,  2.03it/s]Collecting hidden states:  55%|█████▌    | 55/100 [00:46<00:18,  2.38it/s]Collecting hidden states:  56%|█████▌    | 56/100 [00:46<00:16,  2.70it/s]Collecting hidden states:  57%|█████▋    | 57/100 [00:47<00:19,  2.25it/s]Collecting hidden states:  58%|█████▊    | 58/100 [00:47<00:22,  1.88it/s]Collecting hidden states:  59%|█████▉    | 59/100 [00:48<00:17,  2.38it/s]Collecting hidden states:  60%|██████    | 60/100 [00:48<00:14,  2.80it/s]Collecting hidden states:  61%|██████    | 61/100 [00:48<00:12,  3.05it/s]Collecting hidden states:  62%|██████▏   | 62/100 [00:48<00:12,  3.10it/s]Collecting hidden states:  63%|██████▎   | 63/100 [00:49<00:12,  2.99it/s]Collecting hidden states:  64%|██████▍   | 64/100 [00:49<00:11,  3.11it/s]Collecting hidden states:  65%|██████▌   | 65/100 [00:50<00:13,  2.67it/s]Collecting hidden states:  66%|██████▌   | 66/100 [00:50<00:11,  3.08it/s]Collecting hidden states:  67%|██████▋   | 67/100 [00:50<00:11,  2.85it/s]Collecting hidden states:  68%|██████▊   | 68/100 [00:51<00:12,  2.54it/s]Collecting hidden states:  69%|██████▉   | 69/100 [00:51<00:15,  2.01it/s]Collecting hidden states:  70%|███████   | 70/100 [00:52<00:13,  2.31it/s]Collecting hidden states:  71%|███████   | 71/100 [00:52<00:12,  2.23it/s]Collecting hidden states:  72%|███████▏  | 72/100 [00:53<00:14,  1.89it/s]Collecting hidden states:  73%|███████▎  | 73/100 [00:53<00:12,  2.19it/s]Collecting hidden states:  74%|███████▍  | 74/100 [00:54<00:12,  2.10it/s]Collecting hidden states:  75%|███████▌  | 75/100 [00:54<00:10,  2.37it/s]Collecting hidden states:  76%|███████▌  | 76/100 [00:54<00:08,  2.76it/s]Collecting hidden states:  77%|███████▋  | 77/100 [00:54<00:07,  3.12it/s]Collecting hidden states:  78%|███████▊  | 78/100 [00:55<00:06,  3.16it/s]Collecting hidden states:  79%|███████▉  | 79/100 [00:55<00:05,  3.54it/s]Collecting hidden states:  80%|████████  | 80/100 [00:55<00:06,  2.90it/s]Collecting hidden states:  81%|████████  | 81/100 [00:56<00:06,  2.85it/s]Collecting hidden states:  82%|████████▏ | 82/100 [00:56<00:06,  2.84it/s]Collecting hidden states:  83%|████████▎ | 83/100 [00:56<00:05,  3.09it/s]Collecting hidden states:  84%|████████▍ | 84/100 [00:57<00:04,  3.47it/s]Collecting hidden states:  85%|████████▌ | 85/100 [00:57<00:03,  3.76it/s]Collecting hidden states:  86%|████████▌ | 86/100 [00:57<00:05,  2.63it/s]Collecting hidden states:  87%|████████▋ | 87/100 [00:58<00:04,  2.69it/s]Collecting hidden states:  88%|████████▊ | 88/100 [00:58<00:04,  2.71it/s]Collecting hidden states:  89%|████████▉ | 89/100 [00:59<00:04,  2.67it/s]Collecting hidden states:  90%|█████████ | 90/100 [00:59<00:03,  2.64it/s]Collecting hidden states:  91%|█████████ | 91/100 [00:59<00:03,  2.69it/s]Collecting hidden states:  92%|█████████▏| 92/100 [01:00<00:02,  3.09it/s]Collecting hidden states:  93%|█████████▎| 93/100 [01:00<00:02,  3.21it/s]Collecting hidden states:  94%|█████████▍| 94/100 [01:00<00:01,  3.03it/s]Collecting hidden states:  95%|█████████▌| 95/100 [01:01<00:01,  3.11it/s]Collecting hidden states:  96%|█████████▌| 96/100 [01:01<00:01,  2.96it/s]Collecting hidden states:  97%|█████████▋| 97/100 [01:01<00:00,  3.03it/s]Collecting hidden states:  98%|█████████▊| 98/100 [01:02<00:00,  2.80it/s]Collecting hidden states:  99%|█████████▉| 99/100 [01:02<00:00,  3.09it/s]Collecting hidden states: 100%|██████████| 100/100 [01:02<00:00,  3.16it/s]Collecting hidden states: 100%|██████████| 100/100 [01:02<00:00,  1.60it/s]
+2025-12-11 20:49:45,554 | INFO | Collected 100 correct embeddings (shape: (100, 4096))
+2025-12-11 20:49:45,554 | INFO | Collecting wrong embeddings without steering (prompt only)...
+Collecting hidden states:   0%|          | 0/100 [00:00<?, ?it/s]Collecting hidden states:   2%|▏         | 2/100 [00:00<00:15,  6.27it/s]Collecting hidden states:   3%|▎         | 3/100 [00:00<00:14,  6.49it/s]Collecting hidden states:   5%|▌         | 5/100 [00:00<00:17,  5.31it/s]Collecting hidden states:   6%|▌         | 6/100 [00:01<00:16,  5.58it/s]Collecting hidden states:   7%|▋         | 7/100 [00:01<00:15,  6.04it/s]Collecting hidden states:   8%|▊         | 8/100 [00:01<00:14,  6.20it/s]Collecting hidden states:   9%|▉         | 9/100 [00:01<00:14,  6.50it/s]Collecting hidden states:  10%|█         | 10/100 [00:01<00:14,  6.40it/s]Collecting hidden states:  11%|█         | 11/100 [00:01<00:13,  6.60it/s]Collecting hidden states:  13%|█▎        | 13/100 [00:02<00:12,  7.10it/s]Collecting hidden states:  14%|█▍        | 14/100 [00:02<00:17,  4.87it/s]Collecting hidden states:  15%|█▌        | 15/100 [00:02<00:20,  4.11it/s]Collecting hidden states:  16%|█▌        | 16/100 [00:03<00:20,  4.02it/s]Collecting hidden states:  17%|█▋        | 17/100 [00:03<00:24,  3.41it/s]Collecting hidden states:  18%|█▊        | 18/100 [00:03<00:20,  4.04it/s]Collecting hidden states:  19%|█▉        | 19/100 [00:03<00:17,  4.51it/s]Collecting hidden states:  20%|██        | 20/100 [00:04<00:19,  4.10it/s]Collecting hidden states:  22%|██▏       | 22/100 [00:04<00:18,  4.16it/s]Collecting hidden states:  23%|██▎       | 23/100 [00:04<00:16,  4.70it/s]Collecting hidden states:  24%|██▍       | 24/100 [00:04<00:14,  5.19it/s]Collecting hidden states:  25%|██▌       | 25/100 [00:05<00:17,  4.26it/s]Collecting hidden states:  26%|██▌       | 26/100 [00:05<00:15,  4.65it/s]Collecting hidden states:  27%|██▋       | 27/100 [00:05<00:14,  5.14it/s]Collecting hidden states:  28%|██▊       | 28/100 [00:05<00:16,  4.49it/s]Collecting hidden states:  29%|██▉       | 29/100 [00:05<00:14,  4.78it/s]Collecting hidden states:  30%|███       | 30/100 [00:06<00:13,  5.37it/s]Collecting hidden states:  31%|███       | 31/100 [00:06<00:14,  4.92it/s]Collecting hidden states:  32%|███▏      | 32/100 [00:06<00:12,  5.48it/s]Collecting hidden states:  33%|███▎      | 33/100 [00:06<00:11,  5.71it/s]Collecting hidden states:  34%|███▍      | 34/100 [00:06<00:11,  5.68it/s]Collecting hidden states:  35%|███▌      | 35/100 [00:06<00:11,  5.62it/s]Collecting hidden states:  36%|███▌      | 36/100 [00:07<00:12,  5.26it/s]Collecting hidden states:  37%|███▋      | 37/100 [00:07<00:18,  3.35it/s]Collecting hidden states:  38%|███▊      | 38/100 [00:07<00:16,  3.84it/s]Collecting hidden states:  39%|███▉      | 39/100 [00:08<00:15,  4.06it/s]Collecting hidden states:  40%|████      | 40/100 [00:08<00:14,  4.13it/s]Collecting hidden states:  42%|████▏     | 42/100 [00:08<00:11,  5.09it/s]Collecting hidden states:  43%|████▎     | 43/100 [00:08<00:12,  4.55it/s]Collecting hidden states:  44%|████▍     | 44/100 [00:09<00:10,  5.10it/s]Collecting hidden states:  45%|████▌     | 45/100 [00:09<00:13,  4.17it/s]Collecting hidden states:  46%|████▌     | 46/100 [00:09<00:11,  4.79it/s]Collecting hidden states:  47%|████▋     | 47/100 [00:09<00:10,  5.19it/s]Collecting hidden states:  48%|████▊     | 48/100 [00:10<00:13,  3.99it/s]Collecting hidden states:  49%|████▉     | 49/100 [00:10<00:10,  4.64it/s]Collecting hidden states:  50%|█████     | 50/100 [00:10<00:11,  4.53it/s]Collecting hidden states:  51%|█████     | 51/100 [00:10<00:09,  5.13it/s]Collecting hidden states:  52%|█████▏    | 52/100 [00:10<00:09,  4.90it/s]Collecting hidden states:  53%|█████▎    | 53/100 [00:10<00:08,  5.47it/s]Collecting hidden states:  54%|█████▍    | 54/100 [00:11<00:09,  5.06it/s]Collecting hidden states:  55%|█████▌    | 55/100 [00:11<00:10,  4.40it/s]Collecting hidden states:  56%|█████▌    | 56/100 [00:11<00:09,  4.61it/s]Collecting hidden states:  57%|█████▋    | 57/100 [00:11<00:10,  4.06it/s]Collecting hidden states:  58%|█████▊    | 58/100 [00:12<00:12,  3.31it/s]Collecting hidden states:  60%|██████    | 60/100 [00:12<00:09,  4.35it/s]Collecting hidden states:  61%|██████    | 61/100 [00:12<00:08,  4.72it/s]Collecting hidden states:  62%|██████▏   | 62/100 [00:13<00:09,  3.99it/s]Collecting hidden states:  63%|██████▎   | 63/100 [00:13<00:12,  2.95it/s]Collecting hidden states:  64%|██████▍   | 64/100 [00:14<00:11,  3.22it/s]Collecting hidden states:  65%|██████▌   | 65/100 [00:14<00:11,  3.13it/s]Collecting hidden states:  66%|██████▌   | 66/100 [00:14<00:09,  3.63it/s]Collecting hidden states:  67%|██████▋   | 67/100 [00:14<00:08,  3.83it/s]Collecting hidden states:  68%|██████▊   | 68/100 [00:14<00:08,  3.98it/s]Collecting hidden states:  69%|██████▉   | 69/100 [00:15<00:09,  3.21it/s]Collecting hidden states:  70%|███████   | 70/100 [00:15<00:07,  3.79it/s]Collecting hidden states:  71%|███████   | 71/100 [00:15<00:07,  3.97it/s]Collecting hidden states:  72%|███████▏  | 72/100 [00:16<00:06,  4.08it/s]Collecting hidden states:  73%|███████▎  | 73/100 [00:16<00:06,  4.11it/s]Collecting hidden states:  74%|███████▍  | 74/100 [00:16<00:07,  3.69it/s]Collecting hidden states:  75%|███████▌  | 75/100 [00:16<00:05,  4.25it/s]Collecting hidden states:  76%|███████▌  | 76/100 [00:16<00:05,  4.78it/s]Collecting hidden states:  77%|███████▋  | 77/100 [00:17<00:04,  4.96it/s]Collecting hidden states:  78%|███████▊  | 78/100 [00:17<00:04,  4.82it/s]Collecting hidden states:  79%|███████▉  | 79/100 [00:17<00:04,  5.07it/s]Collecting hidden states:  80%|████████  | 80/100 [00:17<00:05,  3.54it/s]Collecting hidden states:  81%|████████  | 81/100 [00:18<00:05,  3.65it/s]Collecting hidden states:  82%|████████▏ | 82/100 [00:18<00:04,  3.80it/s]Collecting hidden states:  83%|████████▎ | 83/100 [00:18<00:03,  4.45it/s]Collecting hidden states:  84%|████████▍ | 84/100 [00:18<00:03,  4.90it/s]Collecting hidden states:  85%|████████▌ | 85/100 [00:18<00:02,  5.35it/s]Collecting hidden states:  86%|████████▌ | 86/100 [00:19<00:02,  4.92it/s]Collecting hidden states:  87%|████████▋ | 87/100 [00:19<00:02,  5.52it/s]Collecting hidden states:  88%|████████▊ | 88/100 [00:19<00:02,  4.65it/s]Collecting hidden states:  89%|████████▉ | 89/100 [00:19<00:02,  5.08it/s]Collecting hidden states:  90%|█████████ | 90/100 [00:19<00:02,  4.88it/s]Collecting hidden states:  91%|█████████ | 91/100 [00:20<00:01,  5.46it/s]Collecting hidden states:  92%|█████████▏| 92/100 [00:20<00:01,  5.73it/s]Collecting hidden states:  93%|█████████▎| 93/100 [00:20<00:01,  6.21it/s]Collecting hidden states:  94%|█████████▍| 94/100 [00:20<00:01,  5.00it/s]Collecting hidden states:  95%|█████████▌| 95/100 [00:20<00:00,  5.40it/s]Collecting hidden states:  96%|█████████▌| 96/100 [00:20<00:00,  5.70it/s]Collecting hidden states:  97%|█████████▋| 97/100 [00:21<00:00,  4.60it/s]Collecting hidden states:  98%|█████████▊| 98/100 [00:21<00:00,  5.22it/s]Collecting hidden states:  99%|█████████▉| 99/100 [00:21<00:00,  5.55it/s]Collecting hidden states: 100%|██████████| 100/100 [00:21<00:00,  5.98it/s]Collecting hidden states: 100%|██████████| 100/100 [00:21<00:00,  4.61it/s]
+2025-12-11 20:50:07,239 | INFO | Collected 100 wrong embeddings without steering (shape: (100, 4096))
+2025-12-11 20:50:07,239 | INFO | Collecting wrong embeddings with steering (simulated by adding steering vector)...
+Collecting hidden states:   0%|          | 0/100 [00:00<?, ?it/s]Collecting hidden states:   1%|          | 1/100 [00:00<00:10,  9.49it/s]Collecting hidden states:   2%|▏         | 2/100 [00:00<00:16,  5.84it/s]Collecting hidden states:   3%|▎         | 3/100 [00:00<00:14,  6.51it/s]Collecting hidden states:   5%|▌         | 5/100 [00:00<00:17,  5.39it/s]Collecting hidden states:   6%|▌         | 6/100 [00:01<00:16,  5.65it/s]Collecting hidden states:   7%|▋         | 7/100 [00:01<00:15,  6.11it/s]Collecting hidden states:   8%|▊         | 8/100 [00:01<00:14,  6.26it/s]Collecting hidden states:   9%|▉         | 9/100 [00:01<00:13,  6.56it/s]Collecting hidden states:  10%|█         | 10/100 [00:01<00:14,  6.15it/s]Collecting hidden states:  11%|█         | 11/100 [00:01<00:13,  6.45it/s]Collecting hidden states:  13%|█▎        | 13/100 [00:02<00:12,  7.14it/s]Collecting hidden states:  14%|█▍        | 14/100 [00:02<00:15,  5.58it/s]Collecting hidden states:  15%|█▌        | 15/100 [00:02<00:16,  5.29it/s]Collecting hidden states:  16%|█▌        | 16/100 [00:02<00:17,  4.89it/s]Collecting hidden states:  17%|█▋        | 17/100 [00:03<00:21,  3.92it/s]Collecting hidden states:  18%|█▊        | 18/100 [00:03<00:18,  4.37it/s]Collecting hidden states:  19%|█▉        | 19/100 [00:03<00:16,  4.99it/s]Collecting hidden states:  20%|██        | 20/100 [00:03<00:18,  4.41it/s]Collecting hidden states:  21%|██        | 21/100 [00:03<00:15,  5.09it/s]Collecting hidden states:  22%|██▏       | 22/100 [00:04<00:15,  4.89it/s]Collecting hidden states:  23%|██▎       | 23/100 [00:04<00:14,  5.49it/s]Collecting hidden states:  24%|██▍       | 24/100 [00:04<00:12,  5.94it/s]Collecting hidden states:  25%|██▌       | 25/100 [00:04<00:15,  4.80it/s]Collecting hidden states:  26%|██▌       | 26/100 [00:04<00:14,  5.14it/s]Collecting hidden states:  27%|██▋       | 27/100 [00:05<00:14,  4.90it/s]Collecting hidden states:  28%|██▊       | 28/100 [00:05<00:16,  4.46it/s]Collecting hidden states:  29%|██▉       | 29/100 [00:05<00:14,  4.91it/s]Collecting hidden states:  30%|███       | 30/100 [00:05<00:12,  5.50it/s]Collecting hidden states:  31%|███       | 31/100 [00:05<00:13,  5.05it/s]Collecting hidden states:  32%|███▏      | 32/100 [00:05<00:12,  5.61it/s]Collecting hidden states:  33%|███▎      | 33/100 [00:06<00:12,  5.37it/s]Collecting hidden states:  34%|███▍      | 34/100 [00:06<00:11,  5.58it/s]Collecting hidden states:  35%|███▌      | 35/100 [00:06<00:10,  6.08it/s]Collecting hidden states:  36%|███▌      | 36/100 [00:06<00:11,  5.34it/s]Collecting hidden states:  37%|███▋      | 37/100 [00:07<00:18,  3.42it/s]Collecting hidden states:  38%|███▊      | 38/100 [00:07<00:16,  3.73it/s]Collecting hidden states:  39%|███▉      | 39/100 [00:07<00:18,  3.34it/s]Collecting hidden states:  40%|████      | 40/100 [00:08<00:17,  3.47it/s]Collecting hidden states:  41%|████      | 41/100 [00:08<00:13,  4.31it/s]Collecting hidden states:  42%|████▏     | 42/100 [00:08<00:11,  4.84it/s]Collecting hidden states:  43%|████▎     | 43/100 [00:08<00:13,  4.21it/s]Collecting hidden states:  44%|████▍     | 44/100 [00:08<00:12,  4.47it/s]Collecting hidden states:  45%|████▌     | 45/100 [00:09<00:12,  4.39it/s]Collecting hidden states:  46%|████▌     | 46/100 [00:09<00:10,  5.06it/s]Collecting hidden states:  47%|████▋     | 47/100 [00:09<00:10,  5.08it/s]Collecting hidden states:  48%|████▊     | 48/100 [00:09<00:13,  3.79it/s]Collecting hidden states:  49%|████▉     | 49/100 [00:09<00:11,  4.46it/s]Collecting hidden states:  50%|█████     | 50/100 [00:10<00:11,  4.40it/s]Collecting hidden states:  51%|█████     | 51/100 [00:10<00:10,  4.56it/s]Collecting hidden states:  52%|█████▏    | 52/100 [00:10<00:09,  4.97it/s]Collecting hidden states:  53%|█████▎    | 53/100 [00:10<00:08,  5.55it/s]Collecting hidden states:  54%|█████▍    | 54/100 [00:11<00:10,  4.40it/s]Collecting hidden states:  55%|█████▌    | 55/100 [00:11<00:11,  3.88it/s]Collecting hidden states:  56%|█████▌    | 56/100 [00:11<00:09,  4.43it/s]Collecting hidden states:  57%|█████▋    | 57/100 [00:11<00:11,  3.83it/s]Collecting hidden states:  58%|█████▊    | 58/100 [00:12<00:13,  3.07it/s]Collecting hidden states:  59%|█████▉    | 59/100 [00:12<00:10,  3.76it/s]Collecting hidden states:  60%|██████    | 60/100 [00:12<00:09,  4.29it/s]Collecting hidden states:  61%|██████    | 61/100 [00:12<00:08,  4.76it/s]Collecting hidden states:  62%|██████▏   | 62/100 [00:12<00:08,  4.73it/s]Collecting hidden states:  63%|██████▎   | 63/100 [00:13<00:09,  3.76it/s]Collecting hidden states:  64%|██████▍   | 64/100 [00:13<00:09,  3.86it/s]Collecting hidden states:  65%|██████▌   | 65/100 [00:13<00:09,  3.70it/s]Collecting hidden states:  66%|██████▌   | 66/100 [00:14<00:08,  4.15it/s]Collecting hidden states:  67%|██████▋   | 67/100 [00:14<00:07,  4.19it/s]Collecting hidden states:  68%|██████▊   | 68/100 [00:14<00:07,  4.25it/s]Collecting hidden states:  69%|██████▉   | 69/100 [00:14<00:08,  3.47it/s]Collecting hidden states:  70%|███████   | 70/100 [00:15<00:08,  3.74it/s]Collecting hidden states:  71%|███████   | 71/100 [00:15<00:06,  4.28it/s]Collecting hidden states:  72%|███████▏  | 72/100 [00:15<00:06,  4.31it/s]Collecting hidden states:  73%|███████▎  | 73/100 [00:15<00:06,  4.23it/s]Collecting hidden states:  74%|███████▍  | 74/100 [00:16<00:06,  3.82it/s]Collecting hidden states:  75%|███████▌  | 75/100 [00:16<00:05,  4.38it/s]Collecting hidden states:  76%|███████▌  | 76/100 [00:16<00:05,  4.60it/s]Collecting hidden states:  77%|███████▋  | 77/100 [00:16<00:04,  5.17it/s]Collecting hidden states:  78%|███████▊  | 78/100 [00:16<00:05,  3.97it/s]Collecting hidden states:  79%|███████▉  | 79/100 [00:17<00:05,  3.93it/s]Collecting hidden states:  80%|████████  | 80/100 [00:17<00:06,  3.09it/s]Collecting hidden states:  81%|████████  | 81/100 [00:17<00:05,  3.36it/s]Collecting hidden states:  82%|████████▏ | 82/100 [00:18<00:04,  3.91it/s]Collecting hidden states:  83%|████████▎ | 83/100 [00:18<00:03,  4.55it/s]Collecting hidden states:  84%|████████▍ | 84/100 [00:18<00:03,  5.01it/s]Collecting hidden states:  85%|████████▌ | 85/100 [00:18<00:02,  5.42it/s]Collecting hidden states:  86%|████████▌ | 86/100 [00:18<00:02,  4.96it/s]Collecting hidden states:  87%|████████▋ | 87/100 [00:18<00:02,  5.31it/s]Collecting hidden states:  88%|████████▊ | 88/100 [00:19<00:02,  4.53it/s]Collecting hidden states:  89%|████████▉ | 89/100 [00:19<00:02,  4.52it/s]Collecting hidden states:  90%|█████████ | 90/100 [00:19<00:02,  4.94it/s]Collecting hidden states:  91%|█████████ | 91/100 [00:19<00:01,  5.52it/s]Collecting hidden states:  92%|█████████▏| 92/100 [00:19<00:01,  5.77it/s]Collecting hidden states:  93%|█████████▎| 93/100 [00:20<00:01,  5.67it/s]Collecting hidden states:  94%|█████████▍| 94/100 [00:20<00:01,  4.47it/s]Collecting hidden states:  95%|█████████▌| 95/100 [00:20<00:01,  4.95it/s]Collecting hidden states:  96%|█████████▌| 96/100 [00:20<00:00,  4.92it/s]Collecting hidden states:  97%|█████████▋| 97/100 [00:21<00:00,  4.34it/s]Collecting hidden states:  98%|█████████▊| 98/100 [00:21<00:00,  4.99it/s]Collecting hidden states:  99%|█████████▉| 99/100 [00:21<00:00,  5.38it/s]Collecting hidden states: 100%|██████████| 100/100 [00:21<00:00,  5.88it/s]Collecting hidden states: 100%|██████████| 100/100 [00:21<00:00,  4.65it/s]
+2025-12-11 20:50:28,756 | INFO | Collected 100 wrong embeddings with steering (shape: (100, 4096))
+2025-12-11 20:50:28,804 | INFO | Shift statistics:
+2025-12-11 20:50:28,804 | INFO |   Steering shift - Mean L2: 18.9452
+2025-12-11 20:50:28,805 | INFO |   Distance to correct (before) - Mean L2: 12.6953
+2025-12-11 20:50:28,805 | INFO |   Distance to correct (after) - Mean L2: 22.8200
+2025-12-11 20:50:28,805 | INFO |   Improvement - Mean L2 reduction: -10.1236
+2025-12-11 20:50:28,805 | INFO | Advanced Metrics:
+2025-12-11 20:50:28,805 | INFO |   Projected Shift (Useful):   0.1859
+2025-12-11 20:50:28,805 | INFO |   Orthogonal Shift (Useless): 18.9443
+2025-12-11 20:50:28,805 | INFO |   Shift Ratio (Proj/Total):   0.0098
+2025-12-11 20:50:28,805 | INFO |   Recovery Score:             -0.8449 (1.0 = perfect, 0.0 = no change)
+2025-12-11 20:50:28,805 | INFO |   Positive Recovery %:        0.0%
+2025-12-11 20:50:28,805 | INFO | Saved statistics to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample/layer29_shift_statistics_offset0.json
+2025-12-11 20:50:28,806 | INFO | Creating visualizations...
+2025-12-11 20:50:35,697 | INFO | Saved comparison plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample/layer29_pca_comparison_offset0.png
+2025-12-11 20:50:36,322 | INFO | Saved overlay plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample/layer29_pca_overlay_offset0.png
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/umap/umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  warn(
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/numba/np/ufunc/parallel.py:373: NumbaWarning: The TBB threading layer requires TBB version 2021 update 6 or later i.e., TBB_INTERFACE_VERSION >= 12060. Found TBB_INTERFACE_VERSION = 12050. The TBB threading layer is disabled.
+  warnings.warn(problem)
+2025-12-11 20:50:50,125 | INFO | Saved comparison plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample/layer29_umap_comparison_offset0.png
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/umap/umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  warn(
+2025-12-11 20:50:55,448 | INFO | Saved overlay plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample/layer29_umap_overlay_offset0.png
+2025-12-11 20:50:55,449 | INFO | All visualizations saved to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2025-12-11 20:51:11,041 | INFO | Loaded 100 triples for comparison
+2025-12-11 20:51:11,041 | INFO | Loaded steering vector for layer 29 (shape: (4096,), norm: 18.9452)
+2025-12-11 20:51:11,265 | INFO | Loading model meta-llama/Llama-3.1-8B-Instruct on cuda with dtype torch.float16
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards: 100%|██████████| 4/4 [00:00<00:00, 14550.92it/s]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:07,  2.49s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:05<00:05,  2.73s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:07<00:02,  2.64s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:08<00:00,  1.85s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:08<00:00,  2.14s/it]
+2025-12-11 20:51:22,939 | INFO | Collecting correct embeddings (prompt + correct_chain)... [offset=100, max=100]
+Collecting hidden states:   0%|          | 0/100 [00:00<?, ?it/s]Collecting hidden states:   1%|          | 1/100 [00:01<02:23,  1.45s/it]Collecting hidden states:   2%|▏         | 2/100 [00:01<01:08,  1.43it/s]Collecting hidden states:   3%|▎         | 3/100 [00:01<00:51,  1.87it/s]Collecting hidden states:   4%|▍         | 4/100 [00:02<00:42,  2.26it/s]Collecting hidden states:   5%|▌         | 5/100 [00:02<00:32,  2.92it/s]Collecting hidden states:   6%|▌         | 6/100 [00:02<00:26,  3.60it/s]Collecting hidden states:   7%|▋         | 7/100 [00:03<00:33,  2.79it/s]Collecting hidden states:   8%|▊         | 8/100 [00:03<00:26,  3.41it/s]Collecting hidden states:   9%|▉         | 9/100 [00:03<00:31,  2.89it/s]Collecting hidden states:  10%|█         | 10/100 [00:03<00:28,  3.21it/s]Collecting hidden states:  11%|█         | 11/100 [00:04<00:27,  3.23it/s]Collecting hidden states:  12%|█▏        | 12/100 [00:04<00:25,  3.49it/s]Collecting hidden states:  13%|█▎        | 13/100 [00:04<00:27,  3.12it/s]Collecting hidden states:  14%|█▍        | 14/100 [00:05<00:23,  3.59it/s]Collecting hidden states:  15%|█▌        | 15/100 [00:05<00:20,  4.20it/s]Collecting hidden states:  16%|█▌        | 16/100 [00:05<00:22,  3.70it/s]Collecting hidden states:  17%|█▋        | 17/100 [00:05<00:24,  3.33it/s]Collecting hidden states:  18%|█▊        | 18/100 [00:06<00:23,  3.56it/s]Collecting hidden states:  19%|█▉        | 19/100 [00:06<00:25,  3.17it/s]Collecting hidden states:  20%|██        | 20/100 [00:06<00:26,  3.05it/s]Collecting hidden states:  21%|██        | 21/100 [00:07<00:25,  3.12it/s]Collecting hidden states:  22%|██▏       | 22/100 [00:07<00:24,  3.19it/s]Collecting hidden states:  23%|██▎       | 23/100 [00:07<00:23,  3.33it/s]Collecting hidden states:  24%|██▍       | 24/100 [00:08<00:30,  2.53it/s]Collecting hidden states:  25%|██▌       | 25/100 [00:08<00:25,  2.91it/s]Collecting hidden states:  26%|██▌       | 26/100 [00:09<00:39,  1.86it/s]Collecting hidden states:  27%|██▋       | 27/100 [00:09<00:30,  2.40it/s]Collecting hidden states:  28%|██▊       | 28/100 [00:10<00:28,  2.53it/s]Collecting hidden states:  29%|██▉       | 29/100 [00:10<00:23,  2.99it/s]Collecting hidden states:  30%|███       | 30/100 [00:10<00:22,  3.11it/s]Collecting hidden states:  31%|███       | 31/100 [00:10<00:23,  2.99it/s]Collecting hidden states:  32%|███▏      | 32/100 [00:11<00:20,  3.37it/s]Collecting hidden states:  33%|███▎      | 33/100 [00:11<00:20,  3.28it/s]Collecting hidden states:  34%|███▍      | 34/100 [00:11<00:21,  3.05it/s]Collecting hidden states:  35%|███▌      | 35/100 [00:12<00:18,  3.61it/s]Collecting hidden states:  36%|███▌      | 36/100 [00:12<00:21,  3.00it/s]Collecting hidden states:  37%|███▋      | 37/100 [00:12<00:20,  3.07it/s]Collecting hidden states:  38%|███▊      | 38/100 [00:13<00:21,  2.92it/s]Collecting hidden states:  39%|███▉      | 39/100 [00:13<00:26,  2.32it/s]Collecting hidden states:  40%|████      | 40/100 [00:14<00:22,  2.72it/s]Collecting hidden states:  41%|████      | 41/100 [00:14<00:21,  2.79it/s]Collecting hidden states:  42%|████▏     | 42/100 [00:14<00:24,  2.33it/s]Collecting hidden states:  43%|████▎     | 43/100 [00:15<00:20,  2.72it/s]Collecting hidden states:  44%|████▍     | 44/100 [00:15<00:21,  2.55it/s]Collecting hidden states:  45%|████▌     | 45/100 [00:16<00:27,  2.03it/s]Collecting hidden states:  46%|████▌     | 46/100 [00:17<00:30,  1.80it/s]Collecting hidden states:  47%|████▋     | 47/100 [00:17<00:24,  2.21it/s]Collecting hidden states:  48%|████▊     | 48/100 [00:17<00:18,  2.78it/s]Collecting hidden states:  49%|████▉     | 49/100 [00:17<00:17,  2.93it/s]Collecting hidden states:  50%|█████     | 50/100 [00:18<00:17,  2.85it/s]Collecting hidden states:  51%|█████     | 51/100 [00:18<00:17,  2.82it/s]Collecting hidden states:  52%|█████▏    | 52/100 [00:18<00:15,  3.07it/s]Collecting hidden states:  53%|█████▎    | 53/100 [00:19<00:16,  2.77it/s]Collecting hidden states:  54%|█████▍    | 54/100 [00:19<00:16,  2.71it/s]Collecting hidden states:  55%|█████▌    | 55/100 [00:19<00:16,  2.72it/s]Collecting hidden states:  56%|█████▌    | 56/100 [00:20<00:16,  2.70it/s]Collecting hidden states:  57%|█████▋    | 57/100 [00:20<00:16,  2.67it/s]Collecting hidden states:  58%|█████▊    | 58/100 [00:21<00:22,  1.88it/s]Collecting hidden states:  59%|█████▉    | 59/100 [00:21<00:17,  2.31it/s]Collecting hidden states:  60%|██████    | 60/100 [00:22<00:16,  2.42it/s]Collecting hidden states:  61%|██████    | 61/100 [00:22<00:14,  2.63it/s]Collecting hidden states:  62%|██████▏   | 62/100 [00:22<00:12,  3.04it/s]Collecting hidden states:  63%|██████▎   | 63/100 [00:23<00:13,  2.82it/s]Collecting hidden states:  64%|██████▍   | 64/100 [00:23<00:18,  1.98it/s]Collecting hidden states:  65%|██████▌   | 65/100 [00:24<00:15,  2.30it/s]Collecting hidden states:  66%|██████▌   | 66/100 [00:24<00:12,  2.76it/s]Collecting hidden states:  67%|██████▋   | 67/100 [00:24<00:09,  3.38it/s]Collecting hidden states:  68%|██████▊   | 68/100 [00:24<00:07,  4.01it/s]Collecting hidden states:  69%|██████▉   | 69/100 [00:24<00:07,  4.05it/s]Collecting hidden states:  70%|███████   | 70/100 [00:25<00:07,  3.85it/s]Collecting hidden states:  71%|███████   | 71/100 [00:25<00:08,  3.52it/s]Collecting hidden states:  72%|███████▏  | 72/100 [00:25<00:08,  3.18it/s]Collecting hidden states:  73%|███████▎  | 73/100 [00:26<00:07,  3.48it/s]Collecting hidden states:  74%|███████▍  | 74/100 [00:26<00:08,  3.00it/s]Collecting hidden states:  75%|███████▌  | 75/100 [00:27<00:14,  1.78it/s]Collecting hidden states:  76%|███████▌  | 76/100 [00:28<00:11,  2.05it/s]Collecting hidden states:  77%|███████▋  | 77/100 [00:28<00:11,  1.95it/s]Collecting hidden states:  78%|███████▊  | 78/100 [00:28<00:09,  2.39it/s]Collecting hidden states:  79%|███████▉  | 79/100 [00:28<00:07,  2.84it/s]Collecting hidden states:  80%|████████  | 80/100 [00:29<00:06,  3.11it/s]Collecting hidden states:  81%|████████  | 81/100 [00:29<00:05,  3.24it/s]Collecting hidden states:  82%|████████▏ | 82/100 [00:29<00:05,  3.38it/s]Collecting hidden states:  83%|████████▎ | 83/100 [00:30<00:04,  3.47it/s]Collecting hidden states:  84%|████████▍ | 84/100 [00:30<00:04,  3.76it/s]Collecting hidden states:  85%|████████▌ | 85/100 [00:30<00:03,  4.44it/s]Collecting hidden states:  86%|████████▌ | 86/100 [00:30<00:03,  3.58it/s]Collecting hidden states:  87%|████████▋ | 87/100 [00:31<00:03,  3.75it/s]Collecting hidden states:  88%|████████▊ | 88/100 [00:31<00:03,  3.31it/s]Collecting hidden states:  89%|████████▉ | 89/100 [00:31<00:03,  3.56it/s]Collecting hidden states:  90%|█████████ | 90/100 [00:31<00:02,  3.52it/s]Collecting hidden states:  91%|█████████ | 91/100 [00:32<00:02,  3.24it/s]Collecting hidden states:  92%|█████████▏| 92/100 [00:32<00:02,  3.88it/s]Collecting hidden states:  93%|█████████▎| 93/100 [00:33<00:02,  2.43it/s]Collecting hidden states:  94%|█████████▍| 94/100 [00:33<00:02,  2.93it/s]Collecting hidden states:  95%|█████████▌| 95/100 [00:33<00:01,  3.35it/s]Collecting hidden states:  96%|█████████▌| 96/100 [00:33<00:01,  3.22it/s]Collecting hidden states:  97%|█████████▋| 97/100 [00:34<00:01,  2.75it/s]Collecting hidden states:  98%|█████████▊| 98/100 [00:34<00:00,  3.19it/s]Collecting hidden states:  99%|█████████▉| 99/100 [00:34<00:00,  3.17it/s]Collecting hidden states: 100%|██████████| 100/100 [00:35<00:00,  3.79it/s]Collecting hidden states: 100%|██████████| 100/100 [00:35<00:00,  2.85it/s]
+2025-12-11 20:51:58,010 | INFO | Collected 100 correct embeddings (shape: (100, 4096))
+2025-12-11 20:51:58,010 | INFO | Collecting wrong embeddings without steering (prompt only)...
+Collecting hidden states:   0%|          | 0/100 [00:00<?, ?it/s]Collecting hidden states:   1%|          | 1/100 [00:00<00:25,  3.83it/s]Collecting hidden states:   2%|▏         | 2/100 [00:00<00:21,  4.49it/s]Collecting hidden states:   3%|▎         | 3/100 [00:00<00:23,  4.16it/s]Collecting hidden states:   4%|▍         | 4/100 [00:00<00:22,  4.25it/s]Collecting hidden states:   5%|▌         | 5/100 [00:01<00:21,  4.38it/s]Collecting hidden states:   6%|▌         | 6/100 [00:01<00:18,  5.13it/s]Collecting hidden states:   7%|▋         | 7/100 [00:01<00:22,  4.07it/s]Collecting hidden states:   8%|▊         | 8/100 [00:01<00:18,  4.91it/s]Collecting hidden states:   9%|▉         | 9/100 [00:01<00:17,  5.30it/s]Collecting hidden states:  10%|█         | 10/100 [00:02<00:16,  5.62it/s]Collecting hidden states:  11%|█         | 11/100 [00:02<00:15,  5.83it/s]Collecting hidden states:  12%|█▏        | 12/100 [00:02<00:14,  6.22it/s]Collecting hidden states:  13%|█▎        | 13/100 [00:02<00:13,  6.23it/s]Collecting hidden states:  14%|█▍        | 14/100 [00:02<00:13,  6.57it/s]Collecting hidden states:  16%|█▌        | 16/100 [00:02<00:13,  6.34it/s]Collecting hidden states:  17%|█▋        | 17/100 [00:03<00:14,  5.81it/s]Collecting hidden states:  18%|█▊        | 18/100 [00:03<00:15,  5.32it/s]Collecting hidden states:  19%|█▉        | 19/100 [00:03<00:14,  5.76it/s]Collecting hidden states:  20%|██        | 20/100 [00:03<00:16,  4.87it/s]Collecting hidden states:  21%|██        | 21/100 [00:04<00:16,  4.73it/s]Collecting hidden states:  22%|██▏       | 22/100 [00:04<00:15,  5.11it/s]Collecting hidden states:  23%|██▎       | 23/100 [00:04<00:13,  5.64it/s]Collecting hidden states:  24%|██▍       | 24/100 [00:04<00:12,  5.92it/s]Collecting hidden states:  25%|██▌       | 25/100 [00:04<00:12,  6.12it/s]Collecting hidden states:  26%|██▌       | 26/100 [00:05<00:19,  3.70it/s]Collecting hidden states:  27%|██▋       | 27/100 [00:05<00:17,  4.25it/s]Collecting hidden states:  28%|██▊       | 28/100 [00:05<00:17,  4.02it/s]Collecting hidden states:  29%|██▉       | 29/100 [00:05<00:17,  4.06it/s]Collecting hidden states:  30%|███       | 30/100 [00:05<00:14,  4.70it/s]Collecting hidden states:  31%|███       | 31/100 [00:06<00:13,  5.09it/s]Collecting hidden states:  32%|███▏      | 32/100 [00:06<00:12,  5.59it/s]Collecting hidden states:  33%|███▎      | 33/100 [00:06<00:15,  4.44it/s]Collecting hidden states:  34%|███▍      | 34/100 [00:06<00:14,  4.48it/s]Collecting hidden states:  35%|███▌      | 35/100 [00:07<00:14,  4.48it/s]Collecting hidden states:  36%|███▌      | 36/100 [00:07<00:12,  4.93it/s]Collecting hidden states:  37%|███▋      | 37/100 [00:07<00:11,  5.27it/s]Collecting hidden states:  38%|███▊      | 38/100 [00:07<00:11,  5.52it/s]Collecting hidden states:  39%|███▉      | 39/100 [00:07<00:13,  4.61it/s]Collecting hidden states:  40%|████      | 40/100 [00:08<00:12,  4.69it/s]Collecting hidden states:  41%|████      | 41/100 [00:08<00:11,  5.15it/s]Collecting hidden states:  42%|████▏     | 42/100 [00:08<00:13,  4.39it/s]Collecting hidden states:  43%|████▎     | 43/100 [00:08<00:12,  4.59it/s]Collecting hidden states:  44%|████▍     | 44/100 [00:08<00:11,  5.00it/s]Collecting hidden states:  45%|████▌     | 45/100 [00:09<00:12,  4.45it/s]Collecting hidden states:  46%|████▌     | 46/100 [00:09<00:12,  4.50it/s]Collecting hidden states:  47%|████▋     | 47/100 [00:09<00:11,  4.61it/s]Collecting hidden states:  49%|████▉     | 49/100 [00:09<00:09,  5.18it/s]Collecting hidden states:  50%|█████     | 50/100 [00:10<00:11,  4.53it/s]Collecting hidden states:  51%|█████     | 51/100 [00:10<00:09,  4.92it/s]Collecting hidden states:  52%|█████▏    | 52/100 [00:10<00:09,  5.11it/s]Collecting hidden states:  53%|█████▎    | 53/100 [00:10<00:08,  5.39it/s]Collecting hidden states:  54%|█████▍    | 54/100 [00:10<00:09,  4.85it/s]Collecting hidden states:  55%|█████▌    | 55/100 [00:11<00:09,  4.68it/s]Collecting hidden states:  56%|█████▌    | 56/100 [00:11<00:11,  3.99it/s]Collecting hidden states:  57%|█████▋    | 57/100 [00:11<00:11,  3.74it/s]Collecting hidden states:  58%|█████▊    | 58/100 [00:11<00:09,  4.26it/s]Collecting hidden states:  59%|█████▉    | 59/100 [00:12<00:09,  4.28it/s]Collecting hidden states:  60%|██████    | 60/100 [00:12<00:09,  4.25it/s]Collecting hidden states:  61%|██████    | 61/100 [00:12<00:08,  4.75it/s]Collecting hidden states:  62%|██████▏   | 62/100 [00:12<00:08,  4.43it/s]Collecting hidden states:  63%|██████▎   | 63/100 [00:13<00:08,  4.61it/s]Collecting hidden states:  64%|██████▍   | 64/100 [00:13<00:08,  4.39it/s]Collecting hidden states:  65%|██████▌   | 65/100 [00:13<00:07,  4.41it/s]Collecting hidden states:  66%|██████▌   | 66/100 [00:13<00:07,  4.40it/s]Collecting hidden states:  67%|██████▋   | 67/100 [00:13<00:07,  4.43it/s]Collecting hidden states:  68%|██████▊   | 68/100 [00:14<00:07,  4.43it/s]Collecting hidden states:  69%|██████▉   | 69/100 [00:14<00:07,  4.41it/s]Collecting hidden states:  70%|███████   | 70/100 [00:14<00:06,  4.30it/s]Collecting hidden states:  71%|███████   | 71/100 [00:14<00:06,  4.20it/s]Collecting hidden states:  72%|███████▏  | 72/100 [00:15<00:07,  3.89it/s]Collecting hidden states:  73%|███████▎  | 73/100 [00:15<00:06,  4.45it/s]Collecting hidden states:  74%|███████▍  | 74/100 [00:15<00:05,  4.35it/s]Collecting hidden states:  75%|███████▌  | 75/100 [00:16<00:07,  3.49it/s]Collecting hidden states:  76%|███████▌  | 76/100 [00:16<00:06,  3.45it/s]Collecting hidden states:  77%|███████▋  | 77/100 [00:16<00:05,  4.13it/s]Collecting hidden states:  78%|███████▊  | 78/100 [00:16<00:05,  4.02it/s]Collecting hidden states:  79%|███████▉  | 79/100 [00:16<00:04,  4.57it/s]Collecting hidden states:  80%|████████  | 80/100 [00:17<00:04,  4.21it/s]Collecting hidden states:  81%|████████  | 81/100 [00:17<00:04,  4.09it/s]Collecting hidden states:  82%|████████▏ | 82/100 [00:17<00:04,  4.24it/s]Collecting hidden states:  83%|████████▎ | 83/100 [00:17<00:03,  4.61it/s]Collecting hidden states:  84%|████████▍ | 84/100 [00:18<00:03,  4.23it/s]Collecting hidden states:  85%|████████▌ | 85/100 [00:18<00:03,  4.57it/s]Collecting hidden states:  86%|████████▌ | 86/100 [00:18<00:03,  3.91it/s]Collecting hidden states:  87%|████████▋ | 87/100 [00:18<00:02,  4.56it/s]Collecting hidden states:  88%|████████▊ | 88/100 [00:19<00:03,  3.92it/s]Collecting hidden states:  89%|████████▉ | 89/100 [00:19<00:02,  4.10it/s]Collecting hidden states:  90%|█████████ | 90/100 [00:19<00:02,  4.22it/s]Collecting hidden states:  91%|█████████ | 91/100 [00:19<00:02,  4.33it/s]Collecting hidden states:  93%|█████████▎| 93/100 [00:20<00:01,  3.83it/s]Collecting hidden states:  94%|█████████▍| 94/100 [00:20<00:01,  4.38it/s]Collecting hidden states:  95%|█████████▌| 95/100 [00:20<00:01,  4.96it/s]Collecting hidden states:  96%|█████████▌| 96/100 [00:20<00:00,  4.46it/s]Collecting hidden states:  97%|█████████▋| 97/100 [00:21<00:00,  4.57it/s]Collecting hidden states:  98%|█████████▊| 98/100 [00:21<00:00,  5.17it/s]Collecting hidden states:  99%|█████████▉| 99/100 [00:21<00:00,  4.59it/s]Collecting hidden states: 100%|██████████| 100/100 [00:21<00:00,  4.58it/s]Collecting hidden states: 100%|██████████| 100/100 [00:21<00:00,  4.60it/s]
+2025-12-11 20:52:19,730 | INFO | Collected 100 wrong embeddings without steering (shape: (100, 4096))
+2025-12-11 20:52:19,730 | INFO | Collecting wrong embeddings with steering (simulated by adding steering vector)...
+Collecting hidden states:   0%|          | 0/100 [00:00<?, ?it/s]Collecting hidden states:   1%|          | 1/100 [00:00<00:27,  3.66it/s]Collecting hidden states:   2%|▏         | 2/100 [00:00<00:22,  4.31it/s]Collecting hidden states:   3%|▎         | 3/100 [00:00<00:24,  3.93it/s]Collecting hidden states:   4%|▍         | 4/100 [00:00<00:23,  4.03it/s]Collecting hidden states:   5%|▌         | 5/100 [00:01<00:21,  4.33it/s]Collecting hidden states:   6%|▌         | 6/100 [00:01<00:18,  5.08it/s]Collecting hidden states:   7%|▋         | 7/100 [00:01<00:22,  4.05it/s]Collecting hidden states:   8%|▊         | 8/100 [00:01<00:18,  4.88it/s]Collecting hidden states:   9%|▉         | 9/100 [00:01<00:17,  5.28it/s]Collecting hidden states:  10%|█         | 10/100 [00:02<00:16,  5.61it/s]Collecting hidden states:  11%|█         | 11/100 [00:02<00:15,  5.83it/s]Collecting hidden states:  12%|█▏        | 12/100 [00:02<00:14,  6.22it/s]Collecting hidden states:  13%|█▎        | 13/100 [00:02<00:13,  6.25it/s]Collecting hidden states:  14%|█▍        | 14/100 [00:02<00:13,  6.60it/s]Collecting hidden states:  16%|█▌        | 16/100 [00:03<00:13,  6.36it/s]Collecting hidden states:  17%|█▋        | 17/100 [00:03<00:14,  5.82it/s]Collecting hidden states:  18%|█▊        | 18/100 [00:03<00:15,  5.33it/s]Collecting hidden states:  19%|█▉        | 19/100 [00:03<00:14,  5.77it/s]Collecting hidden states:  20%|██        | 20/100 [00:03<00:16,  4.81it/s]Collecting hidden states:  21%|██        | 21/100 [00:04<00:17,  4.63it/s]Collecting hidden states:  22%|██▏       | 22/100 [00:04<00:15,  5.03it/s]Collecting hidden states:  23%|██▎       | 23/100 [00:04<00:13,  5.57it/s]Collecting hidden states:  24%|██▍       | 24/100 [00:04<00:12,  5.85it/s]Collecting hidden states:  25%|██▌       | 25/100 [00:04<00:12,  6.05it/s]Collecting hidden states:  26%|██▌       | 26/100 [00:05<00:19,  3.71it/s]Collecting hidden states:  27%|██▋       | 27/100 [00:05<00:17,  4.27it/s]Collecting hidden states:  28%|██▊       | 28/100 [00:05<00:18,  3.95it/s]Collecting hidden states:  29%|██▉       | 29/100 [00:05<00:17,  4.10it/s]Collecting hidden states:  30%|███       | 30/100 [00:06<00:14,  4.74it/s]Collecting hidden states:  31%|███       | 31/100 [00:06<00:13,  5.11it/s]Collecting hidden states:  32%|███▏      | 32/100 [00:06<00:12,  5.55it/s]Collecting hidden states:  33%|███▎      | 33/100 [00:06<00:15,  4.41it/s]Collecting hidden states:  34%|███▍      | 34/100 [00:06<00:14,  4.48it/s]Collecting hidden states:  35%|███▌      | 35/100 [00:07<00:14,  4.57it/s]Collecting hidden states:  36%|███▌      | 36/100 [00:07<00:12,  5.00it/s]Collecting hidden states:  37%|███▋      | 37/100 [00:07<00:13,  4.79it/s]Collecting hidden states:  38%|███▊      | 38/100 [00:07<00:13,  4.46it/s]Collecting hidden states:  39%|███▉      | 39/100 [00:08<00:14,  4.22it/s]Collecting hidden states:  40%|████      | 40/100 [00:08<00:13,  4.44it/s]Collecting hidden states:  41%|████      | 41/100 [00:08<00:12,  4.81it/s]Collecting hidden states:  42%|████▏     | 42/100 [00:08<00:13,  4.39it/s]Collecting hidden states:  43%|████▎     | 43/100 [00:08<00:11,  4.85it/s]Collecting hidden states:  44%|████▍     | 44/100 [00:08<00:10,  5.09it/s]Collecting hidden states:  45%|████▌     | 45/100 [00:09<00:11,  4.61it/s]Collecting hidden states:  46%|████▌     | 46/100 [00:09<00:11,  4.61it/s]Collecting hidden states:  47%|████▋     | 47/100 [00:09<00:11,  4.73it/s]Collecting hidden states:  49%|████▉     | 49/100 [00:09<00:09,  5.26it/s]Collecting hidden states:  50%|█████     | 50/100 [00:10<00:10,  4.58it/s]Collecting hidden states:  51%|█████     | 51/100 [00:10<00:09,  4.96it/s]Collecting hidden states:  52%|█████▏    | 52/100 [00:10<00:10,  4.75it/s]Collecting hidden states:  53%|█████▎    | 53/100 [00:10<00:09,  4.91it/s]Collecting hidden states:  54%|█████▍    | 54/100 [00:11<00:10,  4.37it/s]Collecting hidden states:  55%|█████▌    | 55/100 [00:11<00:10,  4.29it/s]Collecting hidden states:  56%|█████▌    | 56/100 [00:11<00:11,  3.80it/s]Collecting hidden states:  57%|█████▋    | 57/100 [00:12<00:11,  3.62it/s]Collecting hidden states:  58%|█████▊    | 58/100 [00:12<00:10,  4.16it/s]Collecting hidden states:  59%|█████▉    | 59/100 [00:12<00:09,  4.24it/s]Collecting hidden states:  60%|██████    | 60/100 [00:12<00:09,  4.24it/s]Collecting hidden states:  61%|██████    | 61/100 [00:12<00:08,  4.75it/s]Collecting hidden states:  62%|██████▏   | 62/100 [00:13<00:08,  4.61it/s]Collecting hidden states:  63%|██████▎   | 63/100 [00:13<00:07,  4.86it/s]Collecting hidden states:  64%|██████▍   | 64/100 [00:13<00:07,  4.72it/s]Collecting hidden states:  65%|██████▌   | 65/100 [00:13<00:07,  4.71it/s]Collecting hidden states:  66%|██████▌   | 66/100 [00:13<00:07,  4.45it/s]Collecting hidden states:  67%|██████▋   | 67/100 [00:14<00:07,  4.29it/s]Collecting hidden states:  68%|██████▊   | 68/100 [00:14<00:07,  4.19it/s]Collecting hidden states:  69%|██████▉   | 69/100 [00:14<00:07,  4.07it/s]Collecting hidden states:  70%|███████   | 70/100 [00:14<00:07,  3.94it/s]Collecting hidden states:  71%|███████   | 71/100 [00:15<00:07,  3.98it/s]Collecting hidden states:  72%|███████▏  | 72/100 [00:15<00:07,  3.75it/s]Collecting hidden states:  73%|███████▎  | 73/100 [00:15<00:06,  4.32it/s]Collecting hidden states:  74%|███████▍  | 74/100 [00:15<00:06,  4.08it/s]Collecting hidden states:  75%|███████▌  | 75/100 [00:16<00:07,  3.36it/s]Collecting hidden states:  76%|███████▌  | 76/100 [00:16<00:07,  3.35it/s]Collecting hidden states:  77%|███████▋  | 77/100 [00:16<00:05,  4.03it/s]Collecting hidden states:  78%|███████▊  | 78/100 [00:17<00:05,  3.83it/s]Collecting hidden states:  79%|███████▉  | 79/100 [00:17<00:05,  4.09it/s]Collecting hidden states:  80%|████████  | 80/100 [00:17<00:04,  4.61it/s]Collecting hidden states:  81%|████████  | 81/100 [00:17<00:04,  4.19it/s]Collecting hidden states:  82%|████████▏ | 82/100 [00:17<00:04,  4.31it/s]Collecting hidden states:  83%|████████▎ | 83/100 [00:18<00:03,  4.46it/s]Collecting hidden states:  84%|████████▍ | 84/100 [00:18<00:03,  4.14it/s]Collecting hidden states:  85%|████████▌ | 85/100 [00:18<00:03,  4.35it/s]Collecting hidden states:  86%|████████▌ | 86/100 [00:18<00:03,  3.78it/s]Collecting hidden states:  87%|████████▋ | 87/100 [00:19<00:02,  4.35it/s]Collecting hidden states:  88%|████████▊ | 88/100 [00:19<00:03,  3.80it/s]Collecting hidden states:  89%|████████▉ | 89/100 [00:19<00:02,  4.01it/s]Collecting hidden states:  90%|█████████ | 90/100 [00:19<00:02,  4.15it/s]Collecting hidden states:  91%|█████████ | 91/100 [00:20<00:02,  4.25it/s]Collecting hidden states:  93%|█████████▎| 93/100 [00:20<00:01,  3.79it/s]Collecting hidden states:  94%|█████████▍| 94/100 [00:20<00:01,  4.34it/s]Collecting hidden states:  95%|█████████▌| 95/100 [00:20<00:01,  4.92it/s]Collecting hidden states:  96%|█████████▌| 96/100 [00:21<00:00,  4.42it/s]Collecting hidden states:  97%|█████████▋| 97/100 [00:21<00:00,  4.52it/s]Collecting hidden states:  98%|█████████▊| 98/100 [00:21<00:00,  5.12it/s]Collecting hidden states:  99%|█████████▉| 99/100 [00:21<00:00,  4.55it/s]Collecting hidden states: 100%|██████████| 100/100 [00:22<00:00,  4.62it/s]Collecting hidden states: 100%|██████████| 100/100 [00:22<00:00,  4.53it/s]
+2025-12-11 20:52:41,826 | INFO | Collected 100 wrong embeddings with steering (shape: (100, 4096))
+2025-12-11 20:52:41,878 | INFO | Shift statistics:
+2025-12-11 20:52:41,878 | INFO |   Steering shift - Mean L2: 18.9452
+2025-12-11 20:52:41,878 | INFO |   Distance to correct (before) - Mean L2: 5.7891
+2025-12-11 20:52:41,878 | INFO |   Distance to correct (after) - Mean L2: 19.9654
+2025-12-11 20:52:41,878 | INFO |   Improvement - Mean L2 reduction: -14.1771
+2025-12-11 20:52:41,878 | INFO | Advanced Metrics:
+2025-12-11 20:52:41,878 | INFO |   Projected Shift (Useful):   0.0219
+2025-12-11 20:52:41,878 | INFO |   Orthogonal Shift (Useless): 18.9452
+2025-12-11 20:52:41,878 | INFO |   Shift Ratio (Proj/Total):   0.0012
+2025-12-11 20:52:41,878 | INFO |   Recovery Score:             -3.3091 (1.0 = perfect, 0.0 = no change)
+2025-12-11 20:52:41,879 | INFO |   Positive Recovery %:        0.0%
+2025-12-11 20:52:41,879 | INFO | Saved statistics to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample/layer29_shift_statistics_offset100.json
+2025-12-11 20:52:41,879 | INFO | Creating visualizations...
+2025-12-11 20:52:42,705 | INFO | Saved comparison plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample/layer29_pca_comparison_offset100.png
+2025-12-11 20:52:43,168 | INFO | Saved overlay plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample/layer29_pca_overlay_offset100.png
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/umap/umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  warn(
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/numba/np/ufunc/parallel.py:373: NumbaWarning: The TBB threading layer requires TBB version 2021 update 6 or later i.e., TBB_INTERFACE_VERSION >= 12060. Found TBB_INTERFACE_VERSION = 12050. The TBB threading layer is disabled.
+  warnings.warn(problem)
+2025-12-11 20:52:53,900 | INFO | Saved comparison plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample/layer29_umap_comparison_offset100.png
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/umap/umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  warn(
+2025-12-11 20:52:59,464 | INFO | Saved overlay plot to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample/layer29_umap_overlay_offset100.png
+2025-12-11 20:52:59,464 | INFO | All visualizations saved to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample
+Embedding comparison complete. Results saved to /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample and /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample
+
+=== Done! ===
+Results:
+  - Triples source: ./artifacts/manual_review/12062025_human_review.json
+  - Train offset: 0, Eval offset: 100
+  - Hidden states: /nobackup/bdeka/huggingface_cache/artifacts/hidden_states/
+  - Alignments: /nobackup/bdeka/huggingface_cache/artifacts/alignments/
+  - Probe data: /nobackup/bdeka/huggingface_cache/artifacts/probe_data/
+  - Computed probes: /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/
+  - Visualizations: /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/
+  - Steering vectors: /nobackup/bdeka/huggingface_cache/artifacts/steering_vectors/
+  - Steering evaluation (in-sample): /nobackup/bdeka/huggingface_cache/artifacts/steering_evaluation_in_sample/
+  - Steering evaluation (out-of-sample): /nobackup/bdeka/huggingface_cache/artifacts/steering_evaluation_out_of_sample/
+  - Embedding comparison (in-sample): /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample/
+  - Embedding comparison (out-of-sample): /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample/
+
+Processed layers: 26 27 28 29 30 31
+    Extracted HF_HOME from log output path: /nobackup/bdeka/huggingface_cache
+    Using HF_HOME: /nobackup/bdeka/huggingface_cache
+    Creating HF_HOME images directory: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+    ✓ Successfully created HF_HOME images directory: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+
+=== Copying generated images to experiment directory ===
+  Copying generated images to:
+    Local: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+    HF_HOME: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+    Source HF_HOME: /nobackup/bdeka/huggingface_cache
+    Checking for Step 4 images in: /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+    ✓ Copied 12 image(s) from Step 4 (probe visualizations)
+    Checking for Step 5 images in: /nobackup/bdeka/huggingface_cache/reports/critical_tokens_per_token
+    ✓ Copied 6 image(s) from Step 5 (critical tokens)
+    Checking for Step 8 images in:
+      HF_HOME: /nobackup/bdeka/huggingface_cache
+      In-sample dir: /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample
+      Out-of-sample dir: /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample
+    ✓ Copied 4 image(s) from Step 8 (embedding comparison in-sample)
+    ✓ Copied 4 image(s) from Step 8 (embedding comparison out-of-sample)
+  ✓ Copied 26 total image(s) to:
+    - Local: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/
+    - HF_HOME: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_dp_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/
