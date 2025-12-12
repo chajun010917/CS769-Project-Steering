@@ -1,24 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---- Initialize conda ----
-# Source conda.sh to enable conda commands in this script
-# Try common conda installation locations
-CONDA_SH=""
-for conda_path in "$HOME/anaconda3" "$HOME/miniconda3" "$CONDA_PREFIX/../.." "$(dirname $(dirname $(which conda 2>/dev/null) 2>/dev/null) 2>/dev/null)"; do
-    if [ -f "$conda_path/etc/profile.d/conda.sh" ]; then
-        CONDA_SH="$conda_path/etc/profile.d/conda.sh"
-        break
-    fi
-done
-if [ -n "$CONDA_SH" ]; then
-    source "$CONDA_SH"
-else
-    echo "Error: conda.sh not found. Please ensure Anaconda/Miniconda is installed."
-    exit 1
-fi
+# ============================================================================
+# Gating Steering Experiment Runner
+# ============================================================================
+# This script runs the full pipeline for Gating Steering experiments.
+#
+# Usage:
+#   ./run.bash
+#
+# Prerequisite:
+#   Run ./setup.sh first to set up the environment.
+# ============================================================================
 
-# ---- config for the smoke test ----
+
+
+# ---- Configuration Guide ----
+# You can override these variables by setting them in your environment or editing below.
+# Example: export POOLING_METHOD="mean" && ./run.bash
+#
+# Key Variables:
+#   POOLING_METHOD: "per_token" (default), "mean", or "last_token"
+#   TOKEN_SELECTION_METHOD: "last_token" (default), "gradient", "token_mlp"
+#   MAX_SAMPLES: Number of samples to process (default: 100)
+#   LAYERS: Space-separated list of layers to analyze (default: "26 27 28 29 30 31")
+#   
+# Skip Step Flags (set to 1 to skip):
+#   SKIP_HIDDEN: Skip hidden state capture (Step 2)
+#   SKIP_PROBES: Skip probe computation (Step 3)
+#   SKIP_PLOTS: Skip visualization generation (Step 4)
+#   SKIP_CRITICAL: Skip critical token analysis (Step 5)
+#   SKIP_STEERING: Skip steering vector computation (Step 6)
+#   SKIP_EVAL: Skip steering evaluation (Step 7)
+
+# ---- Configuration ----
 MODEL_ID="meta-llama/Llama-3.1-8B-Instruct"
 MAX_SAMPLES=100
 MAX_NEW_TOKENS=1024
@@ -33,10 +48,9 @@ LAYERS="26 27 28 29 30 31"
 
 PROBE_MAX=1000  # Max samples per layer for probe data
 DATASET_PATH="UW-Madison-Lee-Lab/MMLU-Pro-CoT-Eval"
-DATASET_CONFIG="ALL"
 
 # Hugging Face caches (define before using HF_HOME in paths)
-export HF_HOME="${HF_HOME:-/nobackup/bdeka/huggingface_cache}"
+export HF_HOME="${HF_HOME:-$(pwd)/.cache/huggingface}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-${HF_HOME}/transformers}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-${HF_HOME}/datasets}"
 export HF_HUB_CACHE="${HF_HUB_CACHE:-${HF_HOME}/hub}"
@@ -55,39 +69,17 @@ SKIP_EVAL="${SKIP_EVAL:-0}"
 SKIP_EMBED="${SKIP_EMBED:-0}"
 
 TOKEN_SELECTION_METHOD="last_token"  # last_token | gradient | dp_gradient | dp_average | token_mlp
-TOKEN_SELECTOR_MLP_PATH="${HF_HOME}/artifacts/mlp_models/token_selector.pt"
-LAYER_SELECTION_METHOD="fixed"  # fixed | mlp
-LAYER_SELECTOR_MLP_PATH="${HF_HOME}/artifacts/mlp_models/layer_selector.pt"
-LAYER_SELECTOR_TOPK=1
+LAYER_SELECTION_METHOD="fixed"  
 
 DP_ALIGNMENT_ARGS=(--dp-alignment)
 
 SYSTEM_PROMPT="You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
 
-# ---- setup ----
-
-# Create environment if it doesn't exist
-# if ! conda info --envs | grep -q '^steering'; then
-#   conda create -y -n steering python=3.10
-# fi
-# conda activate steering
-# export HF_HOME="$(pwd)/.cache/huggingface"
-# export HF_DATASETS_CACHE="${HF_HOME}/datasets"
-# export HF_HUB_CACHE="${HF_HOME}/hub"
-# export TRANSFORMERS_CACHE="$(pwd)/.cache/transformers"
-
+# ---- Setup Verification ----
+# Ensure HF directories exist
 mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
 
-
-# echo "Installing requirements..."
-# pip install -q --upgrade pip
-# pip3 install -q torch torchvision --index-url https://download.pytorch.org/whl/cu118
-# pip install -q -r requirements.txt
-
-# If first time using HF Hub, uncomment and run once (will prompt for token)
-#hf auth login
-
-# ---- step 1: generate triple set ----
+# ---- step 1: use triple set ----
 TRIPLES_PATH="./artifacts/manual_review/12062025_human_review.json"
 TRAIN_OFFSET=0
 EVAL_OFFSET=100
@@ -96,43 +88,29 @@ if [ -f "${TRIPLES_PATH}" ]; then
   echo "=== Step 1: Using manually reviewed triples: ${TRIPLES_PATH} ==="
 else
   echo "ERROR: Manual triples file not found at ${TRIPLES_PATH}"
+  echo "Please check the path or ensure the file exists."
   exit 1
 fi
 
-if [ -f "${TRIPLES_OUT}" ]; then
-  echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
-  echo "To regenerate, delete the file and rerun."
+# ---- step 2: capture hidden states ----
+# This step generates the probe data (.npz) files needed for Step 3.
+if [ "${SKIP_HIDDEN}" = "1" ]; then
+    echo "=== Step 2: Skipping hidden state capture (SKIP_HIDDEN=1) ==="
 else
-  echo "=== Step 1: Generating triples ==="
-  export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-  export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-  python scripts/prepare_triples.py \
-    --dataset-name "${DATASET_PATH}" \
-    --split test \
-    --model-name "${MODEL_ID}" \
-    --layers ${LAYERS} \
-    --probe-max-samples "${PROBE_MAX}" \
-    --max-samples "${MAX_SAMPLES}" \
-    --max-new-tokens "${MAX_NEW_TOKENS}" \
-    --only-wrong \
-    --output-path "${TRIPLES_OUT}" \
-    --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+    echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
+    
+    python scripts/collect_hidden_states.py \
+      --triples-path "${TRIPLES_PATH}" \
+      --model-name "${MODEL_ID}" \
+      --layers ${LAYERS} \
+      --probe-max-samples "${PROBE_MAX}" \
+      --max-samples "${MAX_SAMPLES}" \
+      --pooling-method "${POOLING_METHOD}" \
+      --alignment-layer 28 \
+      --dp-max-shift 40 \
+      --system-prompt "${SYSTEM_PROMPT}" \
+      "${DP_ALIGNMENT_ARGS[@]}"
 fi
-
-# # ---- step 2: capture hidden states ----
-# echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
-# # Note: collect_hidden_states.py will generate probe data for all layers specified
-# python scripts/collect_hidden_states.py \
-#   --triples-path "${TRIPLES_PATH}" \
-#   --model-name "${MODEL_ID}" \
-#   --layers ${LAYERS} \
-#   --probe-max-samples "${PROBE_MAX}" \
-#   --max-samples "${MAX_SAMPLES}" \
-#   --pooling-method "${POOLING_METHOD}" \
-#   --alignment-layer 28 \
-#   --dp-max-shift 40 \
-#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
-#   "${DP_ALIGNMENT_ARGS[@]}"
 
 # ---- step 3: compute probes and vectors for multiple layers ----
 if [ "${SKIP_PROBES}" = "1" ]; then
@@ -157,6 +135,7 @@ else
       "${cmd[@]}"
     else
       echo "  Warning: Probe data not found for layer ${layer} at ${PROBE_DATA}"
+      echo "  Ensure Step 2 ran successfully."
     fi
   done
 fi
@@ -256,11 +235,6 @@ if [ -d "${STEERING_VECTORS_DIR}" ]; then
   # To test a specific layer (e.g., layer 26), change BEST_LAYER="26"
   BEST_LAYER="29"  # Can be changed based on visualization results  # can add a list of layers here
   EVAL_LAYERS="${BEST_LAYER}"
-  LAYER_SELECTOR_ARGS=()
-  if [ "${LAYER_SELECTION_METHOD}" = "mlp" ]; then
-    EVAL_LAYERS="${LAYERS}"
-    LAYER_SELECTOR_ARGS+=(--layer-selection-mlp-path "${LAYER_SELECTOR_MLP_PATH}")
-  fi
   
   # Baseline results (known: 8 correct, 92 incorrect for 100 samples)
   # Set SKIP_BASELINE=1 to skip baseline computation and use provided values
@@ -292,10 +266,7 @@ if [ -d "${STEERING_VECTORS_DIR}" ]; then
       --max-new-tokens "${MAX_NEW_TOKENS}" \
       --system-prompt "${SYSTEM_PROMPT}" \
       --sample-offset "${TRAIN_OFFSET}" \
-      --layer-selection-method "${LAYER_SELECTION_METHOD}" \
-      --layer-selection-topk "${LAYER_SELECTOR_TOPK}" \
       "${SKIP_ARGS[@]}" \
-      "${LAYER_SELECTOR_ARGS[@]}"
 
     echo "Evaluating out-of-sample steering performance..."
     python scripts/evaluate_steering.py \
@@ -310,10 +281,7 @@ if [ -d "${STEERING_VECTORS_DIR}" ]; then
       --max-new-tokens "${MAX_NEW_TOKENS}" \
       --system-prompt "${SYSTEM_PROMPT}" \
       --sample-offset "${EVAL_OFFSET}" \
-      --layer-selection-method "${LAYER_SELECTION_METHOD}" \
-      --layer-selection-topk "${LAYER_SELECTOR_TOPK}" \
       "${SKIP_ARGS[@]}" \
-      "${LAYER_SELECTOR_ARGS[@]}"
     
     echo "Steering evaluation complete. Results saved to ${STEERING_EVAL_DIR_IN} and ${STEERING_EVAL_DIR_OUT}"
   else
