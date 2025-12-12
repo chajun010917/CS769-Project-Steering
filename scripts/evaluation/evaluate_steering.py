@@ -102,6 +102,12 @@ def parse_args() -> argparse.Namespace:
         help="Number of incorrect baseline predictions (required if --skip-baseline is used).",
     )
     parser.add_argument(
+        "--baseline-cache-dir",
+        type=Path,
+        default=None,
+        help="Optional directory to cache baseline (no-steering) predictions to avoid regenerating them.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("artifacts/steered_embeddings"),
@@ -149,9 +155,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pooling-method",
         type=str,
-        choices=["last_token", "mean"],
+        choices=["last_token", "mean", "per_token"],
         default="last_token",
-        help="Method to pool hidden states when saving steered embeddings: last_token or mean.",
+        help="Method to pool hidden states when saving steered embeddings: last_token, mean, or per_token (per_token uses mean pooling for saving).",
     )
     parser.add_argument(
         "--steering-metadata-path",
@@ -209,6 +215,64 @@ def load_triples(path: Path) -> List[Dict]:
         if isinstance(payload, dict) and payload.get("correct_chain"):
             triples.append(payload)
     return triples
+
+
+def _maybe_load_cached_baseline(
+    cache_dir: Optional[Path],
+    sample_id: str,
+    model_name: str,
+    system_prompt: str,
+    max_new_tokens: int,
+) -> Optional[Tuple[str, bool, str]]:
+    """Return (predicted_answer, correct_flag, raw_response) if cache hit and matches config."""
+    if cache_dir is None:
+        return None
+    path = cache_dir / f"{sample_id}.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if (
+        payload.get("model_name") != model_name
+        or payload.get("system_prompt") != system_prompt
+        or payload.get("max_new_tokens") != max_new_tokens
+    ):
+        return None
+
+    predicted = payload.get("predicted_answer", "")
+    correct_flag = bool(payload.get("correct", False))
+    raw_response = payload.get("raw_response", "")
+    return predicted, correct_flag, raw_response
+
+
+def _save_cached_baseline(
+    cache_dir: Optional[Path],
+    sample_id: str,
+    model_name: str,
+    system_prompt: str,
+    max_new_tokens: int,
+    predicted: str,
+    correct_flag: bool,
+    raw_response: str,
+) -> None:
+    if cache_dir is None:
+        return
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "model_name": model_name,
+            "system_prompt": system_prompt,
+            "max_new_tokens": max_new_tokens,
+            "predicted_answer": predicted,
+            "correct": bool(correct_flag),
+            "raw_response": raw_response,
+        }
+        (cache_dir / f"{sample_id}.json").write_text(json.dumps(payload), encoding="utf-8")
+    except Exception:
+        LOGGER.warning("Failed to save baseline cache for sample %s", sample_id)
 
 
 def load_steering_vectors(steering_dir: Path, layers: List[int]) -> Dict[int, np.ndarray]:
@@ -462,26 +526,46 @@ def main() -> None:
         # Reconstruct prompt using template from metadata
         formatted_prompt = reconstruct_prompt(metadata, prompt_text)    # this contains the {questions} and then the {prompt_template}
 
-        # Generate without steering (skip if baseline is skipped)
+        # Generate without steering (skip if baseline is skipped). Cacheable if enabled.
         predicted_no_steering = ""
         correct_no_steering = False
         response_no_steering = ""
         if not args.skip_baseline:
-            try:
-                response_no_steering = model.generate(
-                    formatted_prompt,
-                    max_new_tokens=args.max_new_tokens,
-                    temperature=0.0,
-                    strip_prompt=True,
-                    system_prompt=args.system_prompt,
-                )
-                predicted_no_steering = extract_final_answer(response_no_steering)
-                correct_no_steering = answers_match(predicted_no_steering, correct_answer)
-            except Exception as e:
-                LOGGER.warning("Error generating without steering for sample %s: %s", sample_id, e)
-                response_no_steering = ""
-                predicted_no_steering = ""
-                correct_no_steering = False
+            cached = _maybe_load_cached_baseline(
+                args.baseline_cache_dir,
+                sample_id,
+                args.model_name,
+                args.system_prompt,
+                args.max_new_tokens,
+            )
+            if cached is not None:
+                predicted_no_steering, correct_no_steering, response_no_steering = cached
+            else:
+                try:
+                    response_no_steering = model.generate(
+                        formatted_prompt,
+                        max_new_tokens=args.max_new_tokens,
+                        temperature=0.0,
+                        strip_prompt=True,
+                        system_prompt=args.system_prompt,
+                    )
+                    predicted_no_steering = extract_final_answer(response_no_steering)
+                    correct_no_steering = answers_match(predicted_no_steering, correct_answer)
+                    _save_cached_baseline(
+                        args.baseline_cache_dir,
+                        sample_id,
+                        args.model_name,
+                        args.system_prompt,
+                        args.max_new_tokens,
+                        predicted_no_steering,
+                        correct_no_steering,
+                        response_no_steering,
+                    )
+                except Exception as e:
+                    LOGGER.warning("Error generating without steering for sample %s: %s", sample_id, e)
+                    response_no_steering = ""
+                    predicted_no_steering = ""
+                    correct_no_steering = False
 
         # Generate with steering
         try:

@@ -443,6 +443,8 @@ def main() -> None:
                     scores[:prompt_token_count] = -float("inf")
                 token_idx = int(torch.argmax(scores).item())
                 selected_positions[layer_id] = token_idx
+                # Clean up intermediate tensors
+                del hidden_states, rel_positions, scores
 
         if method != "dp_average":
             # Fallback or last token selection
@@ -517,6 +519,14 @@ def main() -> None:
 
                 if gradient_used and layer_id in gradient_norms:
                     gradient_norms_per_layer[layer_id].append(gradient_norms[layer_id])
+
+        # Clean up GPU memory after processing each triple
+        del wrong_forward, right_forward
+        if use_gradient:
+            model.model.zero_grad(set_to_none=True)
+        # Clear CUDA cache periodically (every 10 samples to avoid overhead)
+        if processed % 10 == 0:
+            torch.cuda.empty_cache()
 
         processed += 1
 

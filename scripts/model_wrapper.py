@@ -230,12 +230,22 @@ class ModelWrapper:
         
         inputs = self.tokenize(formatted_text, return_offsets_mapping=False)
 
-        outputs = self.model(
-            **inputs,
-            output_hidden_states=True,
-            use_cache=False,
-            return_dict=True,
-        )
+        # Use no_grad when gradients aren't needed to save memory
+        if enable_grad:
+            outputs = self.model(
+                **inputs,
+                output_hidden_states=True,
+                use_cache=False,
+                return_dict=True,
+            )
+        else:
+            with torch.no_grad():
+                outputs = self.model(
+                    **inputs,
+                    output_hidden_states=True,
+                    use_cache=False,
+                    return_dict=True,
+                )
 
         hidden_states: Tuple[torch.Tensor, ...] = outputs.hidden_states  # type: ignore[attr-defined]
         captures: Dict[int, torch.Tensor] = {}

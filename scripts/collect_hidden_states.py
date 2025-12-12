@@ -616,7 +616,7 @@ def main() -> None:
         # Apply system prompt formatting for tokenization (to match get_hidden_states)
         wrong_text_formatted = wrong_text
         right_text_formatted = right_text
-        if hasattr(model.tokenizer, "apply_chat_template") and args.system_prompt:
+        if hasattr(model.tokenizer, "apply_chat_template") and args.system_prompt:  # apply_chat_template present in models like llama
             wrong_messages = [
                 {"role": "system", "content": args.system_prompt},
                 {"role": "user", "content": wrong_text},
@@ -625,6 +625,10 @@ def main() -> None:
                 {"role": "system", "content": args.system_prompt},
                 {"role": "user", "content": right_text},
             ]
+            # below produces string like: 
+            # <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+            # You are a careful reasoning assistant...<|eot_id|><|start_header_id|>user<|end_header_id|>
+            # [user content here]<|eot_id|>
             wrong_text_formatted = model.tokenizer.apply_chat_template(
                 wrong_messages, tokenize=False, add_generation_prompt=False
             )
@@ -637,8 +641,8 @@ def main() -> None:
         right_inputs = model.tokenize(right_text_formatted, return_offsets_mapping=True)
 
         # Get hidden states
-        wrong_hidden = model.get_hidden_states(wrong_text, capture_layers, system_prompt=args.system_prompt)
-        right_hidden = model.get_hidden_states(right_text, capture_layers, system_prompt=args.system_prompt)
+        wrong_hidden = model.get_hidden_states(wrong_inputs, capture_layers, system_prompt=args.system_prompt)
+        right_hidden = model.get_hidden_states(right_inputs, capture_layers, system_prompt=args.system_prompt)
 
         # Get tokens and align
         wrong_tokens = model.token_strings(wrong_inputs["input_ids"].squeeze(0))
