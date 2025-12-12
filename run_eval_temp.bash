@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ====== CONFIG ======
-TRIPLES="./artifacts/manual_review/10232025_human_review.json"
+TRIPLES="./artifacts/manual_review/12062025_human_review.json"
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
 LAYERS="28"
 OUTDIR="results/alpha_sweeptest"
@@ -22,7 +22,7 @@ for a in "${ALPHAS[@]}"; do
 
     # ⚠️ Only for alpha=0: DO NOT skip baseline
     if [ "$a" == "0.0" ]; then
-        python scripts/evaluate_steering_alpha_sweep.py \
+        python scripts/evaluation/evaluate_steering_alpha_sweep.py \
             --triples-path "$TRIPLES" \
             --model-name "$MODEL" \
             --layers $LAYERS \
@@ -34,7 +34,7 @@ for a in "${ALPHAS[@]}"; do
             --output-dir "$OUTDIR" \
             --system-prompt "$PROMPT"
     else
-        python scripts/evaluate_steering_alpha_sweep.py \
+        python scripts/evaluation/evaluate_steering_alpha_sweep.py \
             --triples-path "$TRIPLES" \
             --model-name "$MODEL" \
             --layers $LAYERS \
@@ -51,3 +51,22 @@ done
 
 echo -e "\n===== ALL ALPHAS FINISHED ====="
 echo "JSON results stored in: $OUTDIR/"
+
+CUDA_VISIBLE_DEVICES="" python scripts/compute_steering_vectors.py \
+  --triples-path artifacts/manual_review/10232025_human_review.json \
+  --model-name meta-llama/Llama-3.1-8B-Instruct \
+  --layers 28 \
+  --output-dir artifacts/steering_vectors_ss10 \
+  --max-samples 10 \
+  --token-selection-method last_token \
+  --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+
+CUDA_VISIBLE_DEVICES="" python scripts/compute_steering_vectors.py \
+  --triples-path artifacts/manual_review/10232025_human_review.json \
+  --model-name meta-llama/Llama-3.1-8B-Instruct \
+  --layers 28 \
+  --output-dir artifacts/steering_vectors_ss50 \
+  --max-samples 50 \
+  --token-selection-method last_token \
+  --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
+

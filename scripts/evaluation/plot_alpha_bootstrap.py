@@ -111,9 +111,13 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]  # .../<repo>/
+RESULTS_DIR = REPO_ROOT / "results"
+ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 # Directory where evaluation json files are stored
-RESULT_DIR = "results/alpha_sweep"
+RESULT_DIR = RESULTS_DIR / "alpha_sweep"
 
 # Number of bootstrap draws – large enough but still fast
 BOOTSTRAP_N = 3000

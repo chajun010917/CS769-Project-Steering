@@ -69,7 +69,7 @@ mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
 #hf auth login
 
 # ---- step 1: generate triple set ----
-TRIPLES_PATH="./artifacts/manual_review/10232025_human_review.json"
+TRIPLES_PATH="./artifacts/manual_review/12062025_human_review.json"
 TRAIN_OFFSET=0
 EVAL_OFFSET=100
 
@@ -79,7 +79,7 @@ else
   echo "ERROR: Manual triples file not found at ${TRIPLES_PATH}"
   exit 1
 fi
-
+: <<'END'
 if [ -f "${TRIPLES_OUT}" ]; then
   echo "=== Step 1: Skipping triple generation (file exists: ${TRIPLES_OUT}) ==="
   echo "To regenerate, delete the file and rerun."
@@ -97,21 +97,21 @@ else
     --output-path "${TRIPLES_OUT}" \
     --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'."
 fi
-
+END
 # # ---- step 2: capture hidden states ----
-# echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
-# # Note: collect_hidden_states.py will generate probe data for all layers specified
-# python scripts/collect_hidden_states.py \
-#   --triples-path "${TRIPLES_PATH}" \
-#   --model-name "${MODEL_ID}" \
-#   --layers ${LAYERS} \
-#   --probe-max-samples "${PROBE_MAX}" \
-#   --max-samples "${MAX_SAMPLES}" \
-#   --pooling-method "${POOLING_METHOD}" \
-#   --alignment-layer 28 \
-#   --dp-max-shift 40 \
-#   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
-#   "${DP_ALIGNMENT_ARGS[@]}"
+echo "=== Step 2: Capturing hidden states with ${POOLING_METHOD} pooling ==="
+# Note: collect_hidden_states.py will generate probe data for all layers specified
+python scripts/collect_hidden_states.py \
+   --triples-path "${TRIPLES_PATH}" \
+   --model-name "${MODEL_ID}" \
+   --layers ${LAYERS} \
+   --probe-max-samples "${PROBE_MAX}" \
+   --max-samples "${MAX_SAMPLES}" \
+   --pooling-method "${POOLING_METHOD}" \
+   --alignment-layer 28 \
+   --dp-max-shift 40 \
+   --system-prompt "You are a careful reasoning assistant. Think step by step and end with 'Final answer: <choice>'." \
+   "${DP_ALIGNMENT_ARGS[@]}"
 
 # ---- step 3: compute probes and vectors for multiple layers ----
 echo "=== Step 3: Computing probes and vectors ==="

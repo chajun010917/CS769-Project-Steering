@@ -10,9 +10,14 @@ Using:
 
 import json, os
 import matplotlib.pyplot as plt
+from pathlib import Path
 
-RESULT_DIR = "results/alpha_sweep"
-ABLATION_DIR = "results/ablation"
+REPO_ROOT = Path(__file__).resolve().parents[2]  # .../<repo>/
+RESULTS_DIR = REPO_ROOT / "results"
+ARTIFACTS_DIR = REPO_ROOT / "artifacts"
+
+RESULT_DIR = RESULTS_DIR / "alpha_sweep"
+ABLATION_DIR = RESULTS_DIR / "ablation"
 os.makedirs(ABLATION_DIR, exist_ok=True)
 
 # ==== Helper to load accuracy from sweep file ====

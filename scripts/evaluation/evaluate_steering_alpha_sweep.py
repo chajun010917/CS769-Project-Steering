@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """Evaluate steering vectors on triples to see if they improve predictions."""
+from pathlib import Path
+import sys
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]  # .../scripts
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 from __future__ import annotations
 
@@ -20,6 +25,11 @@ from setup import (
     answers_match,
     reconstruct_prompt,
 )
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]  # .../<repo>/
+RESULTS_DIR = REPO_ROOT / "results"
+ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 
 LOGGER = logging.getLogger("evaluate_steering")
 
@@ -28,12 +38,12 @@ LOGGER = logging.getLogger("evaluate_steering")
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--triples-path", type=Path, required=True)
-    parser.add_argument("--steering-vectors-dir", type=Path, default=Path("artifacts/steering_vectors"))
+    parser.add_argument("--steering-vectors-dir", type=Path, default=ARTIFACTS_DIR / "steering_vectors")
     parser.add_argument("--model-name", default="meta-llama/Llama-3.1-8B-Instruct")
     parser.add_argument("--layers", nargs="+", required=True, type=int)
     parser.add_argument("--steering-coefficient", type=float, default=1.0)
     parser.add_argument("--skip-baseline", action="store_true")     # always passed from sweep
-    parser.add_argument("--output-dir", type=Path, default=Path("results"))
+    parser.add_argument("--output-dir", type=Path, default=RESULTS_DIR / "alpha_sweep")
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--sample-offset", type=int, default=0)
     parser.add_argument("--max-new-tokens", type=int, default=1024)

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """Evaluate steering vectors on triples to see if they improve predictions."""
+from pathlib import Path
+import sys
+
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]  # .../scripts
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 from __future__ import annotations
 

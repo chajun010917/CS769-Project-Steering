@@ -196,14 +196,18 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]  # .../<repo>/
+RESULTS_DIR = REPO_ROOT / "results"
+ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 # ---------- Paths ----------
-ALPHA_DIR = "results/alpha_sweep"
-OUT_DIR = "results/ablation"
+ALPHA_DIR = RESULTS_DIR / "alpha_sweep"
+OUT_DIR = RESULTS_DIR / "ablation"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-alpha0_path = os.path.join(ALPHA_DIR, "alpha_0_0_offset0.json")  # baseline + α=0 loaded
-alpha1_path = os.path.join(ALPHA_DIR, "alpha_1_0_offset0.json")  # α=1 steering
+alpha0_path = ALPHA_DIR / "alpha_0_0_offset0.json"  # baseline + α=0 loaded
+alpha1_path = ALPHA_DIR / "alpha_1_0_offset0.json"  # α=1 steering
 
 # ---------- Helper: bootstrap CI ----------
 def bootstrap_mean_ci(correct_flags, n_boot=3000, alpha=0.05):
