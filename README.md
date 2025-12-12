@@ -87,4 +87,4 @@ export TOKEN_SELECTION_METHOD="gradient"
 ```
 
 ## Reproducibility
-The code is well-organized, including all experiment scripts (e.g., bash scripts, python files). All experimental results can be easily reproducible without errors. Detailed instructions on the readme are provided. Every team member contributes roughly the same amounts of efforts to the repository.
+The code is well-organized, including all experiment scripts (e.g., bash scripts, python files). All experimental results can be easily reproducible without errors. 
