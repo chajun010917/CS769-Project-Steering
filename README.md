@@ -88,3 +88,6 @@ export TOKEN_SELECTION_METHOD="gradient"
 
 ## Reproducibility
 The code is well-organized, including all experiment scripts (e.g., bash scripts, python files). All experimental results can be easily reproducible without errors. 
+
+## Contribution Statement:
+Each team member worked on an individual branch, which were later merged into the main branch. caclassen is one of the authors of Zeng et al. 2025 (the dataset we use) and contributor made from xinyu-jiao is a commit made by Zhizhe Liu from his friend's laptop.

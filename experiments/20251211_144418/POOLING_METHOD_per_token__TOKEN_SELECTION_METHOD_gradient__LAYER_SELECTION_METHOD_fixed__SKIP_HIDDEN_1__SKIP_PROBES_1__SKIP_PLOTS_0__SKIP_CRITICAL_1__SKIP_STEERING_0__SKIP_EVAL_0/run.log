@@ -1,0 +1,156 @@
+=== Step 1: Using manually reviewed triples: ./artifacts/manual_review/12062025_human_review.json ===
+=== Step 2: Skipping hidden state capture (SKIP_HIDDEN=1) ===
+=== Step 3: Skipping probe computation (SKIP_PROBES=1) ===
+=== Step 4: Generating visualizations ===
+  Plotting layer 26...
+2025-12-11 17:31:19,218 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer26_pca_data.npz
+2025-12-11 17:31:19,221 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:19,228 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:19,534 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer26_pca_clusters_dp.png
+2025-12-11 17:31:19,534 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer26_umap_data.npz
+2025-12-11 17:31:19,535 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:19,535 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:19,815 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer26_umap_clusters_dp.png
+2025-12-11 17:31:19,815 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 27...
+2025-12-11 17:31:20,503 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer27_pca_data.npz
+2025-12-11 17:31:20,505 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:20,511 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:20,825 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer27_pca_clusters_dp.png
+2025-12-11 17:31:20,825 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer27_umap_data.npz
+2025-12-11 17:31:20,826 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:20,826 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:21,091 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer27_umap_clusters_dp.png
+2025-12-11 17:31:21,091 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 28...
+2025-12-11 17:31:21,745 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer28_pca_data.npz
+2025-12-11 17:31:21,748 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:21,754 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:22,063 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer28_pca_clusters_dp.png
+2025-12-11 17:31:22,063 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer28_umap_data.npz
+2025-12-11 17:31:22,064 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:22,065 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:22,318 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer28_umap_clusters_dp.png
+2025-12-11 17:31:22,318 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 29...
+2025-12-11 17:31:22,977 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer29_pca_data.npz
+2025-12-11 17:31:22,979 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:22,985 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:23,304 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer29_pca_clusters_dp.png
+2025-12-11 17:31:23,304 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer29_umap_data.npz
+2025-12-11 17:31:23,305 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:23,305 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:23,564 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer29_umap_clusters_dp.png
+2025-12-11 17:31:23,565 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 30...
+2025-12-11 17:31:24,228 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer30_pca_data.npz
+2025-12-11 17:31:24,230 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:24,236 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:24,579 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer30_pca_clusters_dp.png
+2025-12-11 17:31:24,579 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer30_umap_data.npz
+2025-12-11 17:31:24,580 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:24,580 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:24,841 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer30_umap_clusters_dp.png
+2025-12-11 17:31:24,842 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+  Plotting layer 31...
+2025-12-11 17:31:25,490 | INFO | Loading PCA data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer31_pca_data.npz
+2025-12-11 17:31:25,493 | INFO | PCA DP filter retained 1336 samples
+2025-12-11 17:31:25,499 | INFO | Applying DP tail filter to PCA data (retained 446 samples).
+2025-12-11 17:31:25,806 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer31_pca_clusters_dp.png
+2025-12-11 17:31:25,807 | INFO | Loading UMAP data from /nobackup/bdeka/huggingface_cache/artifacts/probe_analysis/layer31_umap_data.npz
+2025-12-11 17:31:25,808 | INFO | UMAP DP filter retained 1336 samples
+2025-12-11 17:31:25,808 | INFO | Applying DP tail filter to UMAP data (retained 446 samples).
+2025-12-11 17:31:26,083 | INFO | Saved cluster overlay to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token/cluster_overlays_dp/layer31_umap_clusters_dp.png
+2025-12-11 17:31:26,083 | INFO | All plots saved to /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+=== Step 5: Skipping critical token analysis (SKIP_CRITICAL=1) ===
+=== Step 6: Computing steering vectors from last_token representations ===
+/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2025-12-11 17:31:28,474 | INFO | Loaded 100 triples
+2025-12-11 17:31:28,474 | INFO | Target layers for steering vector computation: [26, 27, 28, 29, 30, 31]
+2025-12-11 17:31:28,538 | INFO | Loading model meta-llama/Llama-3.1-8B-Instruct on cuda with dtype torch.float16
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards: 100%|██████████| 4/4 [00:00<00:00, 12043.95it/s]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.30s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:04<00:04,  2.26s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:06<00:02,  2.29s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.60s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.85s/it]
+Computing steering vectors:   0%|          | 0/100 [00:00<?, ?it/s]2025-12-11 17:31:40,429 | WARNING | Gradient-based token selection failed for sample 12192_mmlu_engineering: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   1%|          | 1/100 [00:02<03:43,  2.25s/it]2025-12-11 17:31:42,096 | WARNING | Gradient-based token selection failed for sample 11127_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   2%|▏         | 2/100 [00:03<02:51,  1.75s/it]2025-12-11 17:31:43,532 | WARNING | Gradient-based token selection failed for sample 10563_mmlu_computer science: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 228.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.94 GiB memory in use. Including non-PyTorch memory, this process has 3.64 GiB memory in use. Of the allocated memory 2.38 GiB is allocated by PyTorch, and 1.07 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   3%|▎         | 3/100 [00:05<02:35,  1.61s/it]2025-12-11 17:31:44,058 | WARNING | Gradient-based token selection failed for sample 5894_mmlu_other: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   4%|▍         | 4/100 [00:06<02:09,  1.35s/it]2025-12-11 17:31:45,874 | WARNING | Gradient-based token selection failed for sample 1683_mmlu_law: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 844.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.05 GiB memory in use. Including non-PyTorch memory, this process has 3.92 GiB memory in use. Of the allocated memory 2.55 GiB is allocated by PyTorch, and 1.18 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   5%|▌         | 5/100 [00:07<02:09,  1.36s/it]2025-12-11 17:31:46,937 | WARNING | Gradient-based token selection failed for sample 4549_mmlu_chemistry: CUDA out of memory. Tried to allocate 386.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 136.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.84 GiB memory in use. Including non-PyTorch memory, this process has 3.82 GiB memory in use. Of the allocated memory 3.04 GiB is allocated by PyTorch, and 598.16 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:   6%|▌         | 6/100 [00:08<02:02,  1.30s/it]2025-12-11 17:31:47,644 | WARNING | Gradient-based token selection failed for sample 9631_mmlu_physics: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   7%|▋         | 7/100 [00:09<01:56,  1.25s/it]2025-12-11 17:31:48,674 | WARNING | Gradient-based token selection failed for sample 2710_mmlu_psychology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   8%|▊         | 8/100 [00:10<01:44,  1.14s/it]2025-12-11 17:31:49,562 | WARNING | Gradient-based token selection failed for sample 11088_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:   9%|▉         | 9/100 [00:11<01:29,  1.02it/s]2025-12-11 17:31:50,345 | WARNING | Gradient-based token selection failed for sample 11000_mmlu_philosophy: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  10%|█         | 10/100 [00:12<01:33,  1.04s/it]2025-12-11 17:31:51,429 | WARNING | Gradient-based token selection failed for sample 2809_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  11%|█         | 11/100 [00:13<01:39,  1.12s/it]2025-12-11 17:31:52,885 | WARNING | Gradient-based token selection failed for sample 3333_mmlu_biology: Gradient not available for layer 26.. Falling back to last token.
+Computing steering vectors:  12%|█▏        | 12/100 [00:14<01:33,  1.06s/it]2025-12-11 17:31:54,227 | WARNING | Gradient-based token selection failed for sample 10153_mmlu_physics: CUDA out of memory. Tried to allocate 1002.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 36.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.87 GiB memory in use. Including non-PyTorch memory, this process has 3.90 GiB memory in use. Of the allocated memory 2.56 GiB is allocated by PyTorch, and 1.15 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:  13%|█▎        | 13/100 [00:16<01:50,  1.27s/it]2025-12-11 17:31:56,094 | WARNING | Gradient-based token selection failed for sample 11728_mmlu_engineering: CUDA out of memory. Tried to allocate 612.00 MiB. GPU 0 has a total capacity of 10.75 GiB of which 140.69 MiB is free. Process 3682962 has 3.55 GiB memory in use. Process 4040820 has 398.00 MiB memory in use. Process 4080928 has 2.87 GiB memory in use. Including non-PyTorch memory, this process has 3.80 GiB memory in use. Of the allocated memory 3.32 GiB is allocated by PyTorch, and 294.03 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables). Falling back to last token.
+Computing steering vectors:  14%|█▍        | 14/100 [00:17<01:47,  1.25s/it]Computing steering vectors:  14%|█▍        | 14/100 [00:17<01:49,  1.27s/it]
+Traceback (most recent call last):
+  File "/afs/cs.wisc.edu/u/b/d/bdeka/Desktop/CS769/Project/git_repos/CS769-Project-Steering/scripts/compute_steering_vectors.py", line 633, in <module>
+    main()
+  File "/afs/cs.wisc.edu/u/b/d/bdeka/Desktop/CS769/Project/git_repos/CS769-Project-Steering/scripts/compute_steering_vectors.py", line 373, in main
+    wrong_forward = model.forward_with_hidden_states(
+  File "/afs/cs.wisc.edu/u/b/d/bdeka/Desktop/CS769/Project/git_repos/CS769-Project-Steering/scripts/model_wrapper.py", line 235, in forward_with_hidden_states
+    outputs = self.model(
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/accelerate/hooks.py", line 175, in new_forward
+    output = module._old_forward(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1189, in forward
+    outputs = self.model(
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1001, in forward
+    layer_outputs = decoder_layer(
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/accelerate/hooks.py", line 175, in new_forward
+    output = module._old_forward(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 750, in forward
+    hidden_states = self.mlp(hidden_states)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/accelerate/hooks.py", line 175, in new_forward
+    output = module._old_forward(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 309, in forward
+    down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/modules/activation.py", line 432, in forward
+    return F.silu(input, inplace=self.inplace)
+  File "/u/b/d/bdeka/miniconda3/envs/steering/lib/python3.10/site-packages/torch/nn/functional.py", line 2380, in silu
+    return torch._C._nn.silu(input)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 58.00 MiB. GPU 1 has a total capacity of 10.75 GiB of which 8.69 MiB is free. Process 4040820 has 312.00 MiB memory in use. Process 4080928 has 5.48 GiB memory in use. Including non-PyTorch memory, this process has 4.95 GiB memory in use. Of the allocated memory 4.43 GiB is allocated by PyTorch, and 331.22 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+    Using default HF_HOME: /nobackup/bdeka/huggingface_cache
+    Creating HF_HOME images directory: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+    ✓ Successfully created HF_HOME images directory: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+
+=== Copying generated images to experiment directory ===
+  Copying generated images to:
+    Local: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+    HF_HOME: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images
+    Source HF_HOME: /nobackup/bdeka/huggingface_cache
+    Checking for Step 4 images in: /nobackup/bdeka/huggingface_cache/reports/hidden_state_viz_per_token
+    ✓ Copied 12 image(s) from Step 4 (probe visualizations)
+    Checking for Step 5 images in: /nobackup/bdeka/huggingface_cache/reports/critical_tokens_per_token
+    ✓ Copied 6 image(s) from Step 5 (critical tokens)
+    Checking for Step 8 images in:
+      HF_HOME: /nobackup/bdeka/huggingface_cache
+      In-sample dir: /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_in_sample
+      Out-of-sample dir: /nobackup/bdeka/huggingface_cache/reports/steering_embedding_comparison_out_of_sample
+    ✓ Copied 4 image(s) from Step 8 (embedding comparison in-sample)
+    ✓ Copied 4 image(s) from Step 8 (embedding comparison out-of-sample)
+  ✓ Copied 26 total image(s) to:
+    - Local: experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/
+    - HF_HOME: /nobackup/bdeka/huggingface_cache/experiments/20251211_144418/POOLING_METHOD_per_token__TOKEN_SELECTION_METHOD_gradient__LAYER_SELECTION_METHOD_fixed__SKIP_HIDDEN_1__SKIP_PROBES_1__SKIP_PLOTS_0__SKIP_CRITICAL_1__SKIP_STEERING_0__SKIP_EVAL_0/images/
